@@ -1195,8 +1195,6 @@ Write-Host -foregroundcolor White " Should be $exchangeOnPremLocalDomain/Users/E
 }
 }
 
-
-
 Function ApplicationAccountSTV{
 Write-Host $bar
 Write-Host -foregroundcolor Green " Configuration Example" 
@@ -1253,8 +1251,6 @@ Write-Host -foregroundcolor White " Should be AccountDisabled, PasswordNotRequir
 
 }
 
-
-
 Function ManagementRoleAssignmentSTV{
 Write-Host $spacebar
 Write-Host -foregroundcolor Green " Configuration Example" 
@@ -1269,6 +1265,92 @@ Write-Host -foregroundcolor Yellow "   TeamMailboxLifecycleApplication-Exchange 
 Write-Host -foregroundcolor Yellow "   MailboxSearchApplication-Exchange Online-ApplicationAccount      MailboxSearchApplication `n "
 }
 
+Function ManagementRoleAssignmentCheck{
+
+Write-Host -foregroundcolor Green "Get-ManagementRoleAssignment -RoleAssignee Exchange Online-ApplicationAccount | Select Name,Role -AutoSize" 
+Write-Host $bar
+
+$ManagementRoleAssignment =  Get-ManagementRoleAssignment -RoleAssignee "Exchange Online-ApplicationAccount"  | ft Name,Role -AutoSize
+$ManagementRoleAssignment
+$ManagementRoleAssignment = Get-ManagementRoleAssignment -RoleAssignee "Exchange Online-ApplicationAccount"  | Select Name,Role 
+
+
+Write-Host $spacebar
+Write-Host -foregroundcolor Green " SUMARY - Management Role Assignment for the Exchange Online-ApplicationAccount (non standard values will show up in Red. Standard Values in Green)" 
+Write-Host $barspace
+
+
+Write-Host -foregroundcolor White " Role: " 
+
+if ($ManagementRoleAssignment.Role -like "*UserApplication*" ){
+Write-Host -foregroundcolor Green " UserApplication Role Assigned" 
+}
+else
+{
+Write-Host -foregroundcolor Red " UserApplication Role not present for the Exchange Online-ApplicationAccount `n "
+
+}
+
+
+if ($ManagementRoleAssignment.Role -like "*ArchiveApplication*" ){
+Write-Host -foregroundcolor Green " ArchiveApplication Role Assigned" 
+}
+else
+{
+Write-Host -foregroundcolor Red " ArchiveApplication Role not present for the Exchange Online-ApplicationAccount `n "
+
+}
+
+if ($ManagementRoleAssignment.Role -like "*LegalHoldApplication*" ){
+Write-Host -foregroundcolor Green " LegalHoldApplication Role Assigned" 
+}
+else
+{
+Write-Host -foregroundcolor Red " LegalHoldApplication Role not present for the Exchange Online-ApplicationAccount `n "
+
+}
+
+if ($ManagementRoleAssignment.Role -like "*Mailbox Search*" ){
+Write-Host -foregroundcolor Green " Mailbox Search Role Assigned" 
+}
+else
+{
+Write-Host -foregroundcolor Red " Mailbox Search Role not present for the Exchange Online-ApplicationAccount `n "
+
+}
+
+
+if ($ManagementRoleAssignment.Role -like "*TeamMailboxLifecycleApplication*" ){
+Write-Host -foregroundcolor Green " TeamMailboxLifecycleApplication Role Assigned" 
+}
+else
+{
+Write-Host -foregroundcolor Red " TeamMailboxLifecycleApplication Role not present for the Exchange Online-ApplicationAccount `n "
+
+}
+
+
+if ($ManagementRoleAssignment.Role -like "*MailboxSearchApplication*" ){
+Write-Host -foregroundcolor Green " MailboxSearchApplication Role Assigned" 
+}
+else
+{
+Write-Host -foregroundcolor Red " MailboxSearchApplication Role not present for the Exchange Online-ApplicationAccount `n "
+
+}
+
+
+if ($ManagementRoleAssignment.Role -like "*MeetingGraphApplication*" ){
+Write-Host -foregroundcolor Green " MeetingGraphApplication Role Assigned" 
+}
+else
+{
+Write-Host -foregroundcolor Red " MeetingGraphApplication Role not present for the Exchange Online-ApplicationAccount `n "
+
+}
+
+}
+
 Function AuthConfigSTV{
 
 Write-Host $spacebar
@@ -1280,6 +1362,50 @@ Write-Host -foregroundcolor Yellow "  NextCertificateThumbprint     :"
 Write-Host -foregroundcolor Yellow "  ServiceName                   : 00000002-0000-0ff1-ce00-000000000000"
 Write-Host -foregroundcolor Yellow "  Realm                         :"
 Write-Host -foregroundcolor Yellow "  Name                          : Auth Configuration `n "
+}
+
+Function AuthConfigCheck{
+
+Write-Host -foregroundcolor Green " Get-AuthConfig | Select *Thumbprint, ServiceName, Realm, Name" 
+Write-Host $bar
+$AuthConfig = Get-AuthConfig | fl *Thumbprint, ServiceName, Realm, Name
+$AuthConfig
+$AuthConfig = Get-AuthConfig | Select *Thumbprint, ServiceName, Realm, Name
+
+Write-Host $spacebar
+Write-Host -foregroundcolor Green " SUMARY - Auth Config (non standard values will show up in Red. Standard Values in Green)" 
+Write-Host $barspace
+
+
+if (![string]::IsNullOrWhitespace($AuthConfig.CurrentCertificateThumbprint)) {
+Write-Host -foregroundcolor Green " Certificate is Assigned" 
+}
+else
+{
+Write-Host -foregroundcolor Red " No certificate Assigned `n "
+
+}
+
+
+if ($AuthConfig.ServiceName -like "00000002-0000-0ff1-ce00-000000000000" ){
+Write-Host -foregroundcolor Green " Service Name Seems correct" 
+}
+else
+{
+Write-Host -foregroundcolor Red " Service Name does not Seems correct. Should be 00000002-0000-0ff1-ce00-000000000000 `n "
+
+}
+
+
+if ([string]::IsNullOrWhitespace($AuthConfig.Realm)) {
+Write-Host -foregroundcolor Green " Realm is Blank" 
+}
+else
+{
+Write-Host -foregroundcolor Red " Realm should be Blank `n "
+
+}
+
 }
 
 Function CurrentCertificateThumbprintSTV{
@@ -1314,8 +1440,62 @@ Write-Host -foregroundcolor White "  - The certificate referenced should exist o
 
 }
 
+Function CurrentCertificateThumbprintCheck{
+
+$thumb = Get-AuthConfig | Select CurrentCertificateThumbprint  
+Write-Host $bar
+Write-Host -ForegroundColor Green "Get-ExchangeCertificate -Thumbprint $thumb.CurrentCertificateThumbprint | Select *" 
+Write-Host $barspace
+$CurrentCertificate = get-exchangecertificate $thumb.CurrentCertificateThumbprint | Fl
+$CurrentCertificate
+$CurrentCertificate = get-exchangecertificate $thumb.CurrentCertificateThumbprint | Select *
+
+Write-Host $spacebar
+Write-Host -foregroundcolor Green " SUMARY - Microsoft Exchange Server Auth Certificate (non standard values will show up in Red. Standard Values in Green)" 
+Write-Host $barspace
 
 
+if ($CurrentCertificate.Issuer -like "CN=Microsoft Exchange Server Auth Certificate" ){
+Write-Host -foregroundcolor Green " Subject is CN=Microsoft Exchange Server Auth Certificate" 
+}
+else
+{
+Write-Host -foregroundcolor Red " Subject is not CN=Microsoft Exchange Server Auth Certificate `n "
+
+}
+
+
+if ($CurrentCertificate.Services -like "SMTP" ){
+Write-Host -foregroundcolor Green "Certificate enabled for SMTP" 
+}
+else
+{
+Write-Host -foregroundcolor Red " Certificate Not enabled for SMTP `n "
+
+}
+
+
+if ($CurrentCertificate.Status -like "Valid" ){
+Write-Host -foregroundcolor Green "Certificate is valid" 
+}
+else
+{
+Write-Host -foregroundcolor Red " Certificate is not Valid `n "
+
+}
+
+
+if ($CurrentCertificate.Subject -like "CN=Microsoft Exchange Server Auth Certificate" ){
+Write-Host -foregroundcolor Green " Subject is CN=Microsoft Exchange Server Auth Certificate" 
+}
+else
+{
+Write-Host -foregroundcolor Red " Subject is not CN=Microsoft Exchange Server Auth Certificate `n "
+
+}
+
+
+}
 
 Function AutoDVirtualDCheckOauth{
 Write-Host -foregroundcolor Green " `n On-Prem Autodiscover Virtual Directory `n "  
@@ -1324,22 +1504,30 @@ Write-Host -foregroundcolor Green " Get-AutodiscoverVirtualDirectory | FL Identi
 
 Write-Host $spacebarspace
 
-$AutoDiscoveryVirtualDirectoryOAuth = Get-AutodiscoverVirtualDirectory | FL Identity,Name,ExchangeVersion,*authentication*  
+
+
+
+$AutoDiscoveryVirtualDirectoryOAuth = Get-AutodiscoverVirtualDirectory | fl Identity,Name,ExchangeVersion,*authentication*  
 
 #Check if null or set
 $AutoDiscoveryVirtualDirectoryOAuth
+#$Auth
+if ($Auth -like "OAuth"){
+$Global:AutoDiscoveryVirtualDirectory = Get-AutodiscoverVirtualDirectory | Select Identity,Name,ExchangeVersion,*authentication*  
+}
+
 Write-Host $spacebar
 
 Write-Host -foregroundcolor Green " SUMARY - On-Prem Autodiscover Virtual Directory (non standard values will show up in Red. Standard Values in Green)" 
 
 Write-Host $barspace
 
-Write-Host -foregroundcolor White "  WSSecurityAuthentication:" 
+#Write-Host -foregroundcolor White "  WSSecurityAuthentication:" 
 
 if ($Global:AutoDiscoveryVirtualDirectory.WSSecurityAuthentication -like  "True"){
 #Write-Host -foregroundcolor Green " `n  " $Global:AutoDiscoveryVirtualDirectory.WSSecurityAuthentication
 foreach( $ser in $Global:AutoDiscoveryVirtualDirectory) { 
-Write-Host " $($ser.Identity) `n "
+Write-Host " $($ser.Identity) "
 Write-Host -ForegroundColor Green " WSSecurityAuthentication: $($ser.WSSecurityAuthentication) `n  " 
 }
 
@@ -1349,12 +1537,14 @@ else
 {
 Write-Host -foregroundcolor Red " `n WSSecurityAuthentication setting is NOT correct."
 foreach( $ser in $Global:AutoDiscoveryVirtualDirectory) { 
-Write-Host " $($ser.Identity) `n "
+Write-Host " $($ser.Identity) "
 Write-Host -ForegroundColor Red " WSSecurityAuthentication: $($ser.WSSecurityAuthentication) `n  " 
 }
 
-Write-Host $spacebar
+
 }
+
+Write-Host $spacebar
 }
 
 Function EWSVirtualDirectoryCheckOAuth{
@@ -1367,6 +1557,12 @@ Write-Host $spacebarspace
 $WebServicesVirtualDirectoryOAuth = Get-WebServicesVirtualDirectory | fl Name,ExchangeVersion,*Authentication*,*url
 
 $WebServicesVirtualDirectoryOAuth
+
+
+if ($Auth -like "OAuth"){
+$Global:WebServicesVirtualDirectory = Get-WebServicesVirtualDirectory | Select Name,ExchangeVersion,*Authentication*,*url
+}
+
 Write-Host $spacebar
 Write-Host -foregroundcolor Green " SUMARY - On-Prem Web Services Virtual Directory (non standard values will show up in Red. Standard Values in Green)" 
 Write-Host $barspace
@@ -1375,7 +1571,7 @@ if ($Global:WebServicesVirtualDirectory.WSSecurityAuthentication -like  "True"){
 #Write-Host -foregroundcolor Green "  " $Global:WebServicesVirtualDirectory.WSSecurityAuthentication
 
 foreach( $EWS in $Global:WebServicesVirtualDirectory) { 
-Write-Host " $($EWS.Identity) `n "
+Write-Host " $($EWS.Identity) "
 Write-Host -ForegroundColor Green " WSSecurityAuthentication: $($EWS.WSSecurityAuthentication) `n  " 
 }
 
@@ -1384,7 +1580,7 @@ else
 {
 Write-Host -foregroundcolor Red " `n WSSecurityAuthentication is NOT correct."
 foreach( $EWS in $Global:AutoDiscoveryVirtualDirectory) { 
-Write-Host " $($EWS.Identity) `n "
+Write-Host " $($EWS.Identity) "
 Write-Host -ForegroundColor Red " WSSecurityAuthentication: $($ser.WSSecurityAuthentication) `n  " 
 }
 Write-Host -foregroundcolor White "  Should be True `n"
@@ -1429,6 +1625,11 @@ Write-Host -foregroundcolor Green "Get-AvailabilityAddressSpace $exchangeOnlineD
 #Write-Host $barspace
 $AvailabilityAddressSpaceOAuth = Get-AvailabilityAddressSpace $exchangeOnlineDomain | fl ForestName, UserName, UseServiceAccount, AccessMethod, ProxyUrl, Name
 $AvailabilityAddressSpaceOAuth
+
+if ($Auth -like "OAuth"){
+
+$AvailabilityAddressSpace = Get-AvailabilityAddressSpace $exchangeOnlineDomain | Select ForestName, UserName, UseServiceAccount, AccessMethod, ProxyUrl, Name
+}
 Write-Host $spacebar
 Write-Host -foregroundcolor Green " SUMARY - On-Prem Availability Address Space (non standard values will show up in Red. Standard Values in Green)" 
 Write-Host $barspace
@@ -1487,18 +1688,65 @@ Write-Host -foregroundcolor White "   Should be $exchangeOnPremEWS"
 #Write-Host $spacebar
 }
 
-
-
 Function OAuthConnectivitySTV{
+
+
+<#
+
+
 Write-Host $spacebar
 Write-Host -foregroundcolor Green " Standard Configuration Values"
 Write-Host $barspace
+
+
+
 Write-Host -foregroundcolor Green " Note:" 
 Write-Host -foregroundcolor Yellow " You can ignore the warning 'The SMTP address has no mailbox associated with it'" 
 Write-Host -foregroundcolor Yellow " when the Test-OAuthConnectivity returns a Success `n "
 Write-Host -foregroundcolor Green " Reference: "
 Write-Host -foregroundcolor White " Configure OAuth authentication between Exchange and Exchange Online organizations `n "
 Write-Host -foregroundcolor Yellow " https://technet.microsoft.com/en-us/library/dn594521(v=exchg.150).aspx" 
+
+
+#>
+
+}
+
+Function OAuthConnectivityCheck{
+
+
+Write-Host -foregroundcolor Green " Test-OAuthConnectivity -Service EWS -TargetUri https://outlook.office365.com/EWS/Exchange.asmx -Mailbox $useronprem | fl" 
+Write-Host $barspace
+
+
+$OAuthConnectivity = Test-OAuthConnectivity -Service EWS -TargetUri https://outlook.office365.com/EWS/Exchange.asmx -Mailbox $useronprem | fl
+$OAuthConnectivity
+
+$OAuthConnectivity = Test-OAuthConnectivity -Service EWS -TargetUri https://outlook.office365.com/EWS/Exchange.asmx -Mailbox $useronprem | Select *
+
+Write-Host $spacebar
+Write-Host -foregroundcolor Green " SUMARY - Test OAuth COnnectivity (non standard values will show up in Red. Standard Values in Green)" 
+Write-Host $barspace
+
+
+
+if ($OAuthConnectivity.ResultType -like  "Success"){
+Write-Host -foregroundcolor Green " OAuth Test was completed successfully`n " 
+}
+else
+{
+Write-Host -foregroundcolor Red " `n OAuth Test was completed with Error. `n "
+Write-Host -foregroundcolor White " Please rerun Test-OAuthConnectivity -Service EWS -TargetUri https://outlook.office365.com/EWS/Exchange.asmx -Mailbox $useronprem | fl to confirm the test failure `n "
+}
+
+
+Write-Host -foregroundcolor Green " Note:" 
+Write-Host -foregroundcolor Yellow " You can ignore the warning 'The SMTP address has no mailbox associated with it'" 
+Write-Host -foregroundcolor Yellow " when the Test-OAuthConnectivity returns a Success `n "
+Write-Host -foregroundcolor Green " Reference: "
+Write-Host -foregroundcolor White " Configure OAuth authentication between Exchange and Exchange Online organizations `n "
+Write-Host -foregroundcolor Yellow " https://technet.microsoft.com/en-us/library/dn594521(v=exchg.150).aspx"
+
 }
 #endregion
 
@@ -1768,18 +2016,12 @@ $nobrakes = Read-Host " Press Enter when ready to check the ManagementRoleAssign
 Write-Host $bar
 }
   
-Write-Host -foregroundcolor Green "Get-ManagementRoleAssignment -RoleAssignee "Exchange Online-ApplicationAccount"  | ft Name,Role -AutoSize" 
-Write-Host $bar
-$ManagementRoleAssignment = Get-ManagementRoleAssignment -RoleAssignee "Exchange Online-ApplicationAccount"  | ft Name,Role -AutoSize
-$ManagementRoleAssignment
+
+ManagementRoleAssignmentCheck
+
 If (!$ConfigurationOnly)
 {
-
-
-
 ManagementRoleAssignmentSTV
-
-
 }
 Write-Host $bar
 if ($nobrakes -ne "NB")
@@ -1788,11 +2030,9 @@ $nobrakes = Read-Host " Press Enter when ready to Grab Auth config Details. Ctrl
 Write-Host $bar
 }
   
-Write-Host -foregroundcolor Green " Get-AuthConfig | fl *Thumbprint, ServiceName, Realm, Name" 
-Write-Host $bar
-$AuthConfig = Get-AuthConfig | fl *Thumbprint, ServiceName, Realm, Name
-$AuthConfig
 
+
+AuthConfigCheck
 
 If (!$ConfigurationOnly)
 {
@@ -1808,12 +2048,13 @@ if ($nobrakes -ne "NB")
 $nobrakes = Read-Host " Press Enter when ready to Grab information for the Auth Certificate. Ctrl+C to exit. Type NB for no Brakes"   
 Write-Host $bar
 }
-$thumb = Get-AuthConfig | Select CurrentCertificateThumbprint  
-Write-Host $bar
-Write-Host -ForegroundColor Green "Get-ExchangeCertificate -Thumbprint $thumb.CurrentCertificateThumbprint | fl" 
-Write-Host $barspace
-$CurrentCertificate = get-exchangecertificate $thumb.CurrentCertificateThumbprint | fl
-$CurrentCertificate
+
+
+
+ CurrentCertificateThumbprintCheck
+
+
+
 If (!$ConfigurationOnly)
 {
 
@@ -1876,13 +2117,9 @@ $nobrakes = Read-Host " Press Enter when ready to test the Test-OAuthConnectivit
 Write-Host $bar
 }
 
-Write-Host -foregroundcolor Green " Test-OAuthConnectivity -Service EWS -TargetUri https://outlook.office365.com/EWS/Exchange.asmx -Mailbox $useronprem | fl" 
-Write-Host $barspace
 
 
-$OAuthConnectivity = Test-OAuthConnectivity -Service EWS -TargetUri https://outlook.office365.com/EWS/Exchange.asmx -Mailbox $useronprem | fl
-$OAuthConnectivity
-
+OAuthConnectivityCheck
 
 If (!$ConfigurationOnly)
 {
