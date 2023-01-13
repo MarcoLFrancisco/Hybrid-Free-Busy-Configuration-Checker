@@ -62,54 +62,6 @@ $ExchangeOnPremLocalDomain = $exchangeOnPremDomain
 
 #endregion
 
-Function Get-Sumary {
-
-
-Write-Host -foregroundcolor Green " Sumary - Free Busy Configuration GLobal View (non standard values will show up in Red. Standard Values in Green)" 
-Write-Host $bar
-  if ($IntraOrgConEnabled.enabled -Like "True" )
-    {
-    Write-Host -foregroundcolor Green " Intra Organization Connector is Enabled" 
-    if ($OrgRel.enabled -like "True" )
-        {
-            Write-Host -foregroundcolor Green " Organization Relationship is Enabled for Hybrid Use." 
-            Write-Host -foregroundcolor White " Intra Organization Connector takes precedence over Organization Relationship."  
-            Write-Host -foregroundcolor Green " - Free Busy Lookup Configured Methods:"  
-            Write-Host -foregroundcolor White " 
-            - Intra Organization Connector
-            - Authentication Method -> oAuth
-            - Intra Organization Connector is Configured/Enabled for Hybrid use.
-            - Organization Relationship is Enabled for Hybrid Use. `n " 
-           
-            Write-Host -foregroundcolor Green " => Free Busy Lookup From On Premise to Exchange Online is done using Intra Org Connector" 
-        }
-    }
-else
-    {
-    Write-Host " Intra Organization Connector is NOT Enabled." 
-    if ($OrgRel.enabled -like "True" )
-        {
-            Write-Host -foregroundcolor Green " `n Organization Relationship is Enabled for Hybrid Use." 
-            Write-Host -foregroundcolor Green " - Free Busy Lookup Method:"  
-            Write-Host -foregroundcolor White " 
-            - Organization Relationship
-            - Authentication Method -> dAuth
-            - Intra Organization Connector is NOT Configured/Enabled for Hybrid use.
-            - Organization Relationship is Enabled for Hybrid Use. `n "   
-            Write-Host -foregroundcolor Green " => Free Busy Lookup From On Premise to Exchange Online is done using Organization Relationship" 
-        }
-        else
-            {
-            Write-Host -foregroundcolor Red " 
-            - Organization Relationship is NOT Enabled or correctly configured for Hybrid Use.
-            - Intra Org Connector is NOT Enabled or configured for Hybrid use. `n`n "  
-            Write-Host -foregroundcolor Red " => Free Busy Lookup From On Premise to Exchange Online is NOT correctly Configured for Hybrid Lookup" 
-            }
-    
-    }
- # Write-Host $bar
-}
-
 
 #region Edit Parameters
 
@@ -588,7 +540,7 @@ $TestFedTrustFail = 0
 $a = Test-FederationTrust -UserIdentity $useronprem -verbose  #fails the frist time on multiple ocasions
 Write-Host -foregroundcolor Green  " Test-FederationTrust -UserIdentity $useronprem -verbose"  
 Write-Host $bar
-$TestFedTrust = Test-FederationTrust -UserIdentity $useronprem -verbose  
+$TestFedTrust = Test-FederationTrust -UserIdentity $useronprem -verbose -ErrorAction silentlycontinue
 $TestFedTrust
 
 
@@ -1184,13 +1136,18 @@ Function OAuthConnectivityCheck{
 
 Write-Host -foregroundcolor Green " Test-OAuthConnectivity -Service EWS -TargetUri https://outlook.office365.com/EWS/Exchange.asmx -Mailbox $useronprem | fl" 
 Write-Host $bar
-$OAuthConnectivity = Test-OAuthConnectivity -Service EWS -TargetUri https://outlook.office365.com/EWS/Exchange.asmx -Mailbox $useronprem | fl
-$OAuthConnectivity
+#$OAuthConnectivity = Test-OAuthConnectivity -Service EWS -TargetUri https://outlook.office365.com/EWS/Exchange.asmx -Mailbox $useronprem | fl
+#$OAuthConnectivity
 $OAuthConnectivity = Test-OAuthConnectivity -Service EWS -TargetUri https://outlook.office365.com/EWS/Exchange.asmx -Mailbox $useronprem | Select *
-
+$OAC = $OAuthConnectivity | fl
+$OAC
+$bar
+$OAuthConnectivity.Detail.FullId
+$bar
 if ($OAuthConnectivity.Detail.FullId -like '*(401) Unauthorized*'){
 write-host -ForegroundColor Red "Error: (401) Unauthorized"
-if ($OAuthConnectivity.Detail.FullId -like '*reason="The user specified by the user-context in the token does not exist*'){
+if ($OAuthConnectivity.Detail.FullId -like 'The user specified by the user-context in the token does not exist*'){
+write-host "The user specified by the user-context in the token does not exist"
 write-host "Please run Test-OAuthConnectivity with a different Exchange On Premises Mailbox"
 
 }
@@ -1405,7 +1362,7 @@ Write-Host $bar
 OAuthConnectivityCheck
 Write-Host $bar
 }
-$bar
+#$bar
 #endregion
 
 #region Exo
@@ -1416,12 +1373,15 @@ $bar
 #Exchange Online Management Shell 
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 install-module AzureAD -AllowClobber
-$CreateEXOPSSession = (Get-ChildItem -Path $env:userprofile -Filter CreateExoPSSession.ps1 -Recurse -ErrorAction SilentlyContinue -Force | Select -Last 1).DirectoryName. "$CreateEXOPSSession\CreateExoPSSession.ps1"
-Import-Module $((Get-ChildItem -Path $($env:LOCALAPPDATA+"\Apps\2.0\") -Filter CreateExoPSSession.ps1 -Recurse ).FullName | Select-Object -Last 1)
+#$CreateEXOPSSession = (Get-ChildItem -Path $env:userprofile -Filter CreateExoPSSession.ps1 -Recurse -ErrorAction SilentlyContinue -Force | Select -Last 1).DirectoryName. "$CreateEXOPSSession\CreateExoPSSession.ps1"
+#Import-Module $((Get-ChildItem -Path $($env:LOCALAPPDATA+"\Apps\2.0\") -Filter CreateExoPSSession.ps1 -Recurse ).FullName | Select-Object -Last 1)
 #Connect-EXOPSSession 
-Connect-EXOPSSession
+#Connect-EXOPSSession
 
+#RestV3 connection
 
+Install-Module -Name ExchangeOnlineManagement
+Connect-ExchangeOnline 
 Write-Host "========================================================="
 Write-Host "Get-OrganizationRelationship | FL"
 Write-Host "========================================================="
@@ -1446,22 +1406,14 @@ Get-IntraOrganizationConnector | fl Name,TargetAddressDomains,DiscoveryEndpoint,
 Write-Host "========================================================="
 
 
-
-Write-Host -foregroundcolor Green " That is all for the Exchange OnLine Side'" 
-Read-Host "Ctrl+C to exit. Enter to Exit."   
-Write-Host " ==================================================================================================================" 
-
- 
-Write-Host " ==================================================================================================================" 
-Write-Host " " 
-Write-Host " " 
-Write-Host " " 
-
+disConnect-ExchangeOnline  -Confirm:$False
+Write-Host -foregroundcolor Green " That is all for the Exchange Online Side'" 
+#Read-Host "Ctrl+C to exit. Enter to Exit."   
+$bar
 
  #endregion
-# Make sure you have FreeBusyInfo_EXP.ps1 and Healthchecker.ps1 files in the same folder where this script resides."   
 
 
 
 stop-transcript
-Read-Host " `n `n Ctrl+C to exit. Enter to Exit." 
+#Read-Host " `n `n Ctrl+C to exit. Enter to Exit." 
