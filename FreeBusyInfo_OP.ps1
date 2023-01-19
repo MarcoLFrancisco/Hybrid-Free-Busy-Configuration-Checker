@@ -10,7 +10,8 @@ param(
     [Parameter(Mandatory = $false, ParameterSetName = "Auth")]
     [string]$Auth,
     [switch]$ConfigurationOnly,
-    [string]$pause
+    [string]$pause,
+    [string]$Organization
 )
 
 
@@ -20,9 +21,10 @@ Add-PSSnapin microsoft.exchange.management.powershell.snapin
 import-module ActiveDirectory 
 cls
 $countOrgRelIssues = (0)
-$FedTrust = $null
+$Global:FedTrust = $null
 $Global:AutoDiscoveryVirtualDirectory = $null
 $Global:OrgRel
+$Global:SPDomainsOnprem
 $AvailabilityAddressSpace = $null
 $Global:WebServicesVirtualDirectory = $null
 $bar = " ==================================================================================================================" 
@@ -52,16 +54,15 @@ $UserOnPrem = get-mailbox -resultsize 1 -WarningAction SilentlyContinue | Where{
 $UserOnPrem = $UserOnPrem.PrimarySmtpAddress.Address
 $ExchangeOnPremDomain = ($UserOnPrem -split "@")[1]
 $EWSVirtualDirectory = Get-WebServicesVirtualDirectory
-$ExchangeOnPremEWS = ($EWSVirtualDirectory.externalURL.AbsoluteUri)[0]
+$Global:ExchangeOnPremEWS = ($EWSVirtualDirectory.externalURL.AbsoluteUri)[0]
 $ADDomain=Get-ADDomain
 $ExchangeOnPremLocalDomain=$ADDomain.forest
 if ([string]::IsNullOrWhitespace($ADDomain)){
 $ExchangeOnPremLocalDomain = $exchangeOnPremDomain
-
 }
 
-#endregion
 
+#endregion
 
 #region Edit Parameters
 
@@ -149,7 +150,7 @@ Write-Host   "  Color Scheme"
 Write-Host $bar
 Write-Host -ForegroundColor Red "  Look out for Red!"
 Write-Host -ForegroundColor Yellow "  Yellow - Example information or Links"
-Write-Host -ForegroundColor Green "  Green - In Sumary Sections it means OK. Anywhere else it's just a visual aid."
+Write-Host -ForegroundColor Green "  Green - In SUMMARY Sections it means OK. Anywhere else it's just a visual aid."
 Write-Host $bar
 Write-Host   "  Parameters:"
 Write-Host $bar
@@ -164,7 +165,7 @@ Write-Host -foregroundcolor White " Exchange On Premises Domain:  "
 Write-Host -foregroundcolor Green "  $exchangeOnPremDomain"
 Write-Host " Exchange On Premises External EWS url:"
 Write-Host -foregroundcolor Green "  $exchangeOnPremEWS"
-Write-Host " On Premises Hybrid Mailboxr:"
+Write-Host " On Premises Hybrid Mailbox:"
 Write-Host -foregroundcolor Green "  $useronprem"
 Write-Host " Exchange Online Mailbox:"
 Write-Host -foregroundcolor Green "  $userOnline"
@@ -179,7 +180,7 @@ Write-Host -foregroundcolor Green " Get-OrganizationRelationship  | Where{($_.Do
 Write-Host $bar
 $OrgRel
 Write-Host $bar
-Write-Host  -foregroundcolor Green " Sumary - Organization Relationship (non standard values will show up in Red. Standard Values in Green)" 
+Write-Host  -foregroundcolor Green " SUMMARY - Organization Relationship (non standard values will show up in Red. Standard Values in Green)" 
 Write-Host $bar
 #$exchangeonlinedomain
 Write-Host  " Domain Names:" 
@@ -283,7 +284,7 @@ $fedinfo = get-federationInformation -DomainName $exchangeOnlineDomain  -BypassA
 }
 $fedinfo
 Write-Host $bar
-Write-Host -foregroundcolor Green " SUMARY - Federation Information" 
+Write-Host -foregroundcolor Green " SUMMARY - Federation Information" 
 Write-Host $bar
 #TargetApplicationUri
 if ($fedinfo.TargetApplicationUri -eq "outlook.com"){
@@ -345,10 +346,10 @@ Function FedTrustCheck{
 Write-Host -foregroundcolor Green " Get-FederationTrust | fl ApplicationUri,TokenIssuerUri,OrgCertificate,TokenIssuerCertificate,
 TokenIssuerPrevCertificate, TokenIssuerMetadataEpr,TokenIssuerEpr" 
 Write-Host $bar
-$fedtrust = Get-FederationTrust | select ApplicationUri,TokenIssuerUri,OrgCertificate,TokenIssuerCertificate,TokenIssuerPrevCertificate, TokenIssuerMetadataEpr,TokenIssuerEpr
+$Global:fedtrust = Get-FederationTrust | select ApplicationUri,TokenIssuerUri,OrgCertificate,TokenIssuerCertificate,TokenIssuerPrevCertificate, TokenIssuerMetadataEpr,TokenIssuerEpr
 $fedtrust
 Write-Host $bar
-Write-Host -foregroundcolor Green " SUMARY - Federation Trust" 
+Write-Host -foregroundcolor Green " SUMMARY - Federation Trust" 
 Write-Host $bar
 $CurrentTime = get-date
 Write-Host -foregroundcolor White " Federation Trust Aplication Uri:" 
@@ -423,7 +424,7 @@ $Global:AutoDiscoveryVirtualDirectory = Get-AutodiscoverVirtualDirectory | Selec
 #$AutoDiscoveryVirtualDirectory
 $Global:AutoDiscoveryVirtualDirectory
 Write-Host $bar
-Write-Host -foregroundcolor Green " SUMARY - On-Prem Autodiscover Virtual Directory" 
+Write-Host -foregroundcolor Green " SUMMARY - On-Prem Autodiscover Virtual Directory" 
 Write-Host $bar
 if ($Global:AutoDiscoveryVirtualDirectory.WSSecurityAuthentication -eq "True"){
 foreach( $ser in $Global:AutoDiscoveryVirtualDirectory) { 
@@ -450,7 +451,7 @@ Write-Host $bar
 $Global:WebServicesVirtualDirectory = Get-WebServicesVirtualDirectory | Select Identity,Name,ExchangeVersion,*Authentication*,*url
 $Global:WebServicesVirtualDirectory
 Write-Host $bar
-Write-Host -foregroundcolor Green " SUMARY - On-Prem Web Services Virtual Directory" 
+Write-Host -foregroundcolor Green " SUMMARY - On-Prem Web Services Virtual Directory" 
 Write-Host $bar
 #Write-Host -foregroundcolor White "  WSSecurityAuthentication: `n " 
 if ($Global:WebServicesVirtualDirectory.WSSecurityAuthentication -like  "True"){
@@ -484,7 +485,7 @@ $AvailabilityAddressSpace = Get-AvailabilityAddressSpace $exchangeOnlineDomain -
 }
 $AvailabilityAddressSpace
 Write-Host $bar
-Write-Host -foregroundcolor Green " SUMARY - On-Prem Availability Address Space" 
+Write-Host -foregroundcolor Green " SUMMARY - On-Prem Availability Address Space" 
 Write-Host $bar
 Write-Host -foregroundcolor White " ForestName: " 
 if ($AvailabilityAddressSpace.ForestName -like  $ExchangeOnlineDomain){
@@ -626,7 +627,7 @@ Write-Host $bar
 $IOC=$IntraOrgCon | fl
 $IOC
 Write-Host $bar
-Write-Host -foregroundcolor Green " SUMARY - On-Prem Intra Organization Connector" 
+Write-Host -foregroundcolor Green " SUMMARY - On-Prem Intra Organization Connector" 
 Write-Host $bar
 $IntraOrgTargetAddressDomain = $IntraOrgCon.TargetAddressDomains.Domain
 $IntraOrgTargetAddressDomain = $IntraOrgTargetAddressDomain.Tolower()
@@ -673,7 +674,7 @@ $AuthServer = Get-AuthServer | Where {$_.Name -like "ACS*"} | Select Name,Issuer
 $AuthServer
 
 Write-Host $bar
-Write-Host -foregroundcolor Green " SUMARY - Auth Server" 
+Write-Host -foregroundcolor Green " SUMMARY - Auth Server" 
 Write-Host $bar
 
 Write-Host -foregroundcolor White " IssuerIdentifier: " 
@@ -733,7 +734,7 @@ Write-Host $bar
 $PartnerApplication = Get-PartnerApplication |  ?{$_.ApplicationIdentifier -eq '00000002-0000-0ff1-ce00-000000000000' -and $_.Realm -eq ''} | Select Enabled, ApplicationIdentifier, CertificateStrings, AuthMetadataUrl, Realm, UseAuthServer, AcceptSecurityIdentifierInformation, LinkedAccount, IssuerIdentifier, AppOnlyPermissions, ActAsPermissions, Name
 $PartnerApplication
 Write-Host $bar
-Write-Host -foregroundcolor Green " SUMARY - Partner Application" 
+Write-Host -foregroundcolor Green " SUMMARY - Partner Application" 
 Write-Host $bar
 
 
@@ -801,7 +802,7 @@ $ApplicationAccount = Get-user "$exchangeOnPremLocalDomain/Users/Exchange Online
 $ApplicationAccount
 
 Write-Host $bar
-Write-Host -foregroundcolor Green " SUMARY - Application Account" 
+Write-Host -foregroundcolor Green " SUMMARY - Application Account" 
 Write-Host $bar
 
 Write-Host -foregroundcolor White " RecipientType: " 
@@ -845,7 +846,7 @@ $ManagementRoleAssignment = Get-ManagementRoleAssignment -RoleAssignee "Exchange
 $M= $ManagementRoleAssignment | Out-String
 $M
 Write-Host $bar
-Write-Host -foregroundcolor Green " SUMARY - Management Role Assignment for the Exchange Online-ApplicationAccount (non standard values will show up in Red. Standard Values in Green)" 
+Write-Host -foregroundcolor Green " SUMMARY - Management Role Assignment for the Exchange Online-ApplicationAccount (non standard values will show up in Red. Standard Values in Green)" 
 Write-Host $bar
 Write-Host -foregroundcolor White " Role: " 
 if ($ManagementRoleAssignment.Role -like "*UserApplication*" ){
@@ -923,7 +924,7 @@ $AuthConfig = Get-AuthConfig | Select *Thumbprint, ServiceName, Realm, Name
 $AC=$AuthConfig | fl
 $AC
 Write-Host $bar
-Write-Host -foregroundcolor Green " SUMARY - Auth Config (non standard values will show up in Red. Standard Values in Green)" 
+Write-Host -foregroundcolor Green " SUMMARY - Auth Config (non standard values will show up in Red. Standard Values in Green)" 
 Write-Host $bar
 if (![string]::IsNullOrWhitespace($AuthConfig.CurrentCertificateThumbprint)) {
 Write-HOst " Thumbprint: "$AuthConfig.CurrentCertificateThumbprint 
@@ -973,7 +974,7 @@ $CurrentCertificate = get-exchangecertificate $thumb.CurrentCertificateThumbprin
 $CC = $CurrentCertificate | fl
 $CC
 Write-Host $bar
-Write-Host -foregroundcolor Green " SUMARY - Microsoft Exchange Server Auth Certificate (non standard values will show up in Red. Standard Values in Green)" 
+Write-Host -foregroundcolor Green " SUMMARY - Microsoft Exchange Server Auth Certificate (non standard values will show up in Red. Standard Values in Green)" 
 Write-Host $bar
 if ($CurrentCertificate.Issuer -like "CN=Microsoft Exchange Server Auth Certificate" ){
 write-Host " Issuer: " $CurrentCertificate.Issuer
@@ -1020,7 +1021,7 @@ $AD
 if ($Auth -like "OAuth"){
 }
 Write-Host $bar
-Write-Host -foregroundcolor Green " SUMARY - On-Prem Autodiscover Virtual Directory" 
+Write-Host -foregroundcolor Green " SUMMARY - On-Prem Autodiscover Virtual Directory" 
 Write-Host $bar
 if ($AutoDiscoveryVirtualDirectoryOAuth.WSSecurityAuthentication -like  "True"){
 #Write-Host -foregroundcolor Green " `n  " $Global:AutoDiscoveryVirtualDirectory.WSSecurityAuthentication
@@ -1049,7 +1050,7 @@ $W
 if ($Auth -like "OAuth"){
 }
 Write-Host $bar
-Write-Host -foregroundcolor Green " SUMARY - On-Prem Web Services Virtual Directory" 
+Write-Host -foregroundcolor Green " SUMMARY - On-Prem Web Services Virtual Directory" 
 Write-Host $bar
 if ($WebServicesVirtualDirectoryOAuth.WSSecurityAuthentication -like  "True"){
 foreach( $EWS in $WebServicesVirtualDirectoryOAuth) { 
@@ -1080,7 +1081,7 @@ $AAS
 if ($Auth -like "OAuth"){
 }
 Write-Host $bar
-Write-Host -foregroundcolor Green " SUMARY - On-Prem Availability Address Space" 
+Write-Host -foregroundcolor Green " SUMMARY - On-Prem Availability Address Space" 
 Write-Host $bar
 Write-Host -foregroundcolor White " ForestName: " 
 if ($AvailabilityAddressSpace.ForestName -like  $ExchangeOnlineDomain){
@@ -1154,7 +1155,7 @@ write-host "Please run Test-OAuthConnectivity with a different Exchange On Premi
    
 Write-Host $bar
 #$OAuthConnectivity.detail.LocalizedString
-Write-Host -foregroundcolor Green " SUMARY - Test OAuth COnnectivity" 
+Write-Host -foregroundcolor Green " SUMMARY - Test OAuth COnnectivity" 
 Write-Host $bar
 if ($OAuthConnectivity.ResultType -like  "Success"){
 Write-Host -foregroundcolor Green " OAuth Test was completed successfully " 
@@ -1176,6 +1177,365 @@ Write-Host -foregroundcolor Yellow " https://technet.microsoft.com/en-us/library
 
 }
 #endregion
+
+Get-MailboxFolderStatistics -Identity "Soumya Singhi" -FolderScope RecoverableItems | Format-List
+# EXO FUNCTIONS
+
+#region ExoDauthFuntions (1 fix)
+
+Function ExoOrgRelCheck (){
+Write-Host $bar
+Write-Host -foregroundcolor Green " Get-OrganizationRelationship  | Where{($_.DomainNames -like $ExchangeOnPremDomain )} | Select Identity,DomainNames,FreeBusy*,Target*,Enabled" 
+Write-Host $bar
+$ExoOrgRel
+Write-Host $bar
+Write-Host  -foregroundcolor Green " Summary - Organization Relationship" 
+Write-Host $bar
+Write-Host  " Domain Names:" 
+if ($exoOrgRel.DmainNames -like $exchangeonpremdomain){
+Write-Host -foregroundcolor Green "  Domain Names Include the $exchangeOnpremDomain Domain" 
+}
+else
+{
+Write-Host -foregroundcolor Red "  Domain Names do Not Include the $exchangeOnpremDomain Domain" 
+}
+
+#FreeBusyAccessEnabled
+
+Write-Host  " FreeBusyAccessEnabled:" 
+if ($exoOrgRel.FreeBusyAccessEnabled -like "True" ){
+Write-Host -foregroundcolor Green "  FreeBusyAccessEnabled is set to True" 
+}
+else
+{
+Write-Host -foregroundcolor Red "  FreeBusyAccessEnabled : False" 
+#$countOrgRelIssues++
+}
+
+
+#FreeBusyAccessLevel
+Write-Host  " FreeBusyAccessLevel:" 
+if ($exoOrgRel.FreeBusyAccessLevel -like "AvailabilityOnly" ){
+Write-Host -foregroundcolor Green "  FreeBusyAccessLevel is set to AvailabilityOnly" 
+}
+if ($exoOrgRel.FreeBusyAccessLevel -like "LimitedDetails" ){
+Write-Host -foregroundcolor Green "  FreeBusyAccessLevel is set to LimitedDetails" 
+}
+
+#fix porque este else só respeita o if anterior
+if ($exoOrgRel.FreeBusyAccessLevel -NE "AvailabilityOnly" -AND $exoOrgRel.FreeBusyAccessLevel -NE "LimitedDetails")
+{
+Write-Host -foregroundcolor Red "  FreeBusyAccessEnabled : False" 
+#$countOrgRelIssues++
+}
+#TargetApplicationUri
+Write-Host  " TargetApplicationUri:" 
+
+ if ($exoOrgRel.TargetApplicationUri -like $fedtrust.ApplicationUri){
+Write-Host -foregroundcolor Green "  TargetApplicationUri is" $fedtrust.ApplicationUri.originalstring 
+}
+else
+{
+Write-Host -foregroundcolor Red "  TargetApplicationUri should be " $fedtrust.ApplicationUri.originalstring 
+#$countOrgRelIssues++
+}
+
+#TargetSharingEpr
+Write-Host  " TargetSharingEpr:" 
+if ([string]::IsNullOrWhitespace($exoOrgRel.TargetSharingEpr)){
+Write-Host -foregroundcolor Green "  TargetSharingEpr is blank. This is the standard Value." 
+}
+else
+{
+Write-Host -foregroundcolor Red "  TargetSharingEpr should be blank. If it is set, it should be the On-Premises Exchange servers EWS ExternalUrl endpoint." 
+#$countOrgRelIssues++
+}
+#TargetAutodiscoverEpr:
+
+Write-Host  " TargetAutodiscoverEpr:"
+ 
+if ($exoOrgRel.TargetAutodiscoverEpr -like $exofedinfo.TargetAutodiscoverEpr){
+Write-Host -foregroundcolor Green "  TargetAutodiscoverEpr is" $exofedinfo.TargetAutodiscoverEpr.OriginalString 
+}
+else
+{
+Write-Host -foregroundcolor Red "  TargetAutodiscoverEpr is not" $exofedinfo.TargetAutodiscoverEpr.OriginalString 
+#$countOrgRelIssues++
+}
+#Enabled
+Write-Host  " Enabled:" 
+if ($exoOrgRel.enabled -like "True" ){
+Write-Host -foregroundcolor Green "  Enabled is set to True" 
+}
+else
+{
+Write-Host -foregroundcolor Red "  Enabled is set to False." 
+}
+}
+
+Function EXOFedOrgIdCheck{
+Write-Host -foregroundcolor Green " Get-FederatedOrganizationIdentifier | select AccountNameSpace,Domains,Enabled" 
+Write-Host $bar
+$exoFedOrgId = Get-FederatedOrganizationIdentifier | select AccountNameSpace,Domains,Enabled
+#$IntraOrgConCheck
+$efedorgid=$exoFedOrgId | fl
+$efedorgid
+Write-Host $bar
+Write-Host -foregroundcolor Green " SUMMARY - Online Federated Organization Identifier" 
+Write-Host $bar
+Write-Host -foregroundcolor White " Domains: " 
+if ($exoFedOrgId.Domains -like  "*$ExchangeOnlineDomain*"){
+Write-Host -foregroundcolor Green " " $exoFedOrgId.Domains
+}
+else
+{
+Write-Host -foregroundcolor Red " Domains are NOT correct."
+Write-Host -foregroundcolor White " Should contain the $ExchangeOnlinemDomain"
+}
+Write-Host -foregroundcolor White " Enabled: " 
+if ($exoFedOrgId.Enabled -like  "True"){ 
+Write-Host -foregroundcolor Green "  True "  
+}
+else
+{
+Write-Host -foregroundcolor Red "  Enabled is NOT correct."
+Write-Host -foregroundcolor White " Should be True"
+}
+}
+
+Function EXOTestOrgRelCheck{
+
+#fix 2
+#troquei isto Write-Host -foregroundcolor Green " Test-OrganizationRelationship -Identity 'O365 to On-premises*' -UserIdentity $UserOnline" 
+#por isto
+Write-Host -foregroundcolor Green " Test-OrganizationRelationship -Identity $ExoOrgRel.Identity -UserIdentity $UserOnline"  
+Write-Host $bar
+
+#Write-Host -ForegroundColor Green $ExoOrgRel.Identity
+
+#troquei isto $exotestorgrel= Test-OrganizationRelationship -Identity 'O365 to On-premises*' -UserIdentity $UserOnline
+$exotestorgrel= Test-OrganizationRelationship -Identity $ExoOrgRel.Identity -UserIdentity $UserOnline
+$exotor = $exotestorgrel | fl
+$exotor
+$bar
+$exotestorgrel.Detail.FullId
+#$bar
+}
+
+Function SharingPolicyCheck{
+
+Write-Host -foregroundcolor Green " Get-SharingPolicy | select *" 
+Write-Host $bar
+$Script:SPOnline= Get-SharingPolicy | select *
+$SPOnline
+Write-Host $bar
+Write-Host -foregroundcolor Green " SUMMARY - Sharing Policy" 
+Write-Host $bar
+
+
+Write-Host -foregroundcolor White " Exchange On Premises Sharing domains:"
+Write-Host -foregroundcolor White " Domain:"
+$SPOnprem.Domains.Domain[0]
+Write-Host -foregroundcolor White " Action:"
+$SPOnprem.Domains.Actions[0]
+Write-Host -foregroundcolor White " Domain:"
+$SPOnprem.Domains.Domain[1]
+Write-Host -foregroundcolor White " Action:"
+$SPOnprem.Domains.Actions[1]
+Write-Host -ForegroundColor White "Exchange OnLine Sharing Domains"
+$domain1=(($SPOnline.domains[0] -split ":") -split " ")
+$domain2=(($SPOnline.domains[1] -split ":") -split " ")
+Write-Host -foregroundcolor White "Domain:" 
+Write-Host " " $domain1[0] 
+Write-Host -foregroundcolor White "Action:" 
+Write-Host " " $domain1[1]
+Write-Host -foregroundcolor White "Domain:" 
+Write-Host " " $domain2[0] 
+Write-Host -foregroundcolor White "Action:" 
+Write-Host " " $domain2[1]
+Write-Host $bar
+
+
+Write-Host -foregroundcolor White " Domains: " 
+if ($SPDomainsOnline -like $SPDomainsOnprem){
+
+Write-Host -foregroundcolor Green " " $SPDomainsOnline.Domains
+}
+else
+{
+Write-Host -foregroundcolor Red " Domains are NOT correct."
+Write-Host -foregroundcolor White " Exchange Online Sharing domains: "
+write-Host -foregroundcolor White "Domain:" 
+Write-Host " " $domain1[0] 
+Write-Host -foregroundcolor White "Action:" 
+Write-Host " " $domain1[1]
+Write-Host -foregroundcolor White "Domain:" 
+Write-Host " " $domain2[0] 
+Write-Host -foregroundcolor White "Action:" 
+Write-Host " " $domain2[1]
+Write-Host -foregroundcolor White " Exchange On Premises Sharing domains:"
+Write-Host -foregroundcolor White " Domain:"
+Write-Host " " $SPOnprem.Domains.Domain[0]
+Write-Host -foregroundcolor White " Action:"
+Write-Host " " $SPOnprem.Domains.Actions[0]
+Write-Host -foregroundcolor White " Domain:"
+Write-Host " " $SPOnprem.Domains.Domain[1]
+Write-Host -foregroundcolor White " Action:"
+Write-Host " " $SPOnprem.Domains.Actions[1]
+Write-Host -foregroundcolor Yellow "Exchange Online Sharing domains should match the Exchange On Premises Sharing Domains"
+}
+}
+
+
+
+ #endregion 
+
+ #region ExoOauthFuntions
+
+
+ Function EXOIntraOrgConCheck{
+
+Write-Host -foregroundcolor Green " Get-IntraOrganizationConnector | Select TargetAddressDomains,DiscoveryEndpoint,Enabled" 
+Write-Host $bar
+$exoIntraOrgCon = Get-IntraOrganizationConnector | Select TargetAddressDomains,DiscoveryEndpoint,Enabled
+#$IntraOrgConCheck
+$IOC=$exoIntraOrgCon | fl
+$IOC
+Write-Host $bar
+Write-Host -foregroundcolor Green " SUMMARY - Online Intra Organization Connector" 
+Write-Host $bar
+
+Write-Host -foregroundcolor White " Target Address Domains: " 
+if ($exoIntraOrgCon.TargetAddressDomains -like  "*$ExchangeOnpremDomain*"){
+Write-Host -foregroundcolor Green " " $exoIntraOrgCon.TargetAddressDomains
+}
+else
+{
+Write-Host -foregroundcolor Red " Target Address Domains is NOT correct."
+Write-Host -foregroundcolor White " Should contain the $ExchangeOnpremDomain"
+}
+
+Write-Host -foregroundcolor White " DiscoveryEndpoint: " 
+if ($exoIntraOrgCon.DiscoveryEndpoint -like $EDiscoveryEndpoint.OnPremiseDiscoveryEndpoint){
+Write-Host -foregroundcolor Green $exoIntraOrgCon.DiscoveryEndpoint
+}
+else
+{
+Write-Host -foregroundcolor Red " DiscoveryEndpoint is NOT correct. "
+Write-Host -foregroundcolor White "  Should be " $EDiscoveryEndpoint.OnPremiseDiscoveryEndpoint
+}
+Write-Host -foregroundcolor White " Enabled: " 
+if ($exoIntraOrgCon.Enabled -like  "True"){ 
+Write-Host -foregroundcolor Green "  True "  
+}
+else
+{
+Write-Host -foregroundcolor Red "  Enabled is NOT correct."
+Write-Host -foregroundcolor White " Should be True"
+}
+}
+
+
+Function EXOIntraOrgConfigCheck{
+
+Write-Host -foregroundcolor Green " Get-IntraOrganizationConfiguration | Select OnPremiseTargetAddresses" 
+Write-Host $bar
+$exoIntraOrgConfig = Get-IntraOrganizationConfiguration | Select OnPremiseTargetAddresses
+#$IntraOrgConCheck
+$IOConfig=$exoIntraOrgConfig | fl
+$IOConfig
+Write-Host $bar
+Write-Host -foregroundcolor Green " SUMMARY - Online Intra Organization Configuration" 
+Write-Host $bar
+
+Write-Host -foregroundcolor White " OnPremiseTargetAddresses: " 
+if ($exoIntraOrgConfig.OnPremiseTargetAddresses -like  "*$ExchangeOnpremDomain*"){
+Write-Host -foregroundcolor Green " " $exoIntraOrgConfig.OnPremiseTargetAddresses
+}
+else
+{
+Write-Host -foregroundcolor Red " OnPremise Target Addressess are NOT correct."
+Write-Host -foregroundcolor White " Should contain the $ExchangeOnpremDomain"
+}
+}
+
+
+Function EXOauthservercheck{
+
+Write-Host -foregroundcolor Green " Get-AuthServer -Identity 00000001-0000-0000-c000-000000000000 | select name,issueridentifier,enabled" 
+Write-Host $bar
+$exoauthserver = Get-AuthServer -Identity 00000001-0000-0000-c000-000000000000 | select name,issueridentifier,enabled
+#$IntraOrgConCheck
+$authserver=$exoauthserver | fl
+$authserver
+Write-Host $bar
+Write-Host -foregroundcolor Green " SUMMARY - Exchange Online Authorization Server" 
+Write-Host $bar
+
+Write-Host -foregroundcolor White " IssuerIdentifier: " 
+if ($exoauthserver.IssuerIdentifier -like  "00000001-0000-0000-c000-000000000000"){
+Write-Host -foregroundcolor Green " " $exoauthserver.IssuerIdentifier
+}
+else
+{
+Write-Host -foregroundcolor Red " Authorization Server object is NOT correct."
+
+Write-Host -foregroundcolor White " Enabled: " 
+if ($exoauthserver.Enabled -like  "True"){ 
+Write-Host -foregroundcolor Green "  True "  
+}
+else
+{
+Write-Host -foregroundcolor Red "  Enabled is NOT correct."
+Write-Host -foregroundcolor White " Should be True"
+}
+}
+}
+
+Function EXOtestoauthcheck{
+Write-Host -foregroundcolor Green " Test-OAuthConnectivity -Service EWS -TargetUri $Global:ExchangeOnPremEWS -Mailbox $useronline " 
+Write-Host $bar
+
+$exotestoauth = Test-OAuthConnectivity -Service EWS -TargetUri $Global:ExchangeOnPremEWS -Mailbox $useronline | select *
+$exoOAC = $exotestoauth | fl
+$exoOAC
+$bar
+$exotestoauth.Detail.FullId
+$bar
+if ($exotestoauth.Detail.FullId -like '*(401) Unauthorized*'){
+write-host -ForegroundColor Red "Error: (401) Unauthorized"
+if ($exotestoauth.Detail.FullId -like 'The user specified by the user-context in the token does not exist*'){
+write-host "The user specified by the user-context in the token does not exist"
+write-host "Please run Test-OAuthConnectivity with a different Exchange Online Mailbox"
+
+}
+   
+Write-Host $bar
+#$OAuthConnectivity.detail.LocalizedString
+Write-Host -foregroundcolor Green " SUMMARY - Test OAuth COnnectivity" 
+Write-Host $bar
+if ($OAuthConnectivity.ResultType -like  "Success"){
+Write-Host -foregroundcolor Green " OAuth Test was completed successfully " 
+}
+else
+{
+Write-Host -foregroundcolor Red " OAuth Test was completed with Error. "
+Write-Host -foregroundcolor White " Please rerun Test-OAuthConnectivity -Service EWS -TargetUri <EWS target URI> -Mailbox <On Premises Mailbox> | fl to confirm the test failure"
+
+}
+
+}
+Write-Host -foregroundcolor Green " Note:" 
+Write-Host -foregroundcolor Yellow " You can ignore the warning 'The SMTP address has no mailbox associated with it'" 
+Write-Host -foregroundcolor Yellow " when the Test-OAuthConnectivity returns a Success"
+Write-Host -foregroundcolor Green " Reference: "
+Write-Host -foregroundcolor White " Configure OAuth authentication between Exchange and Exchange Online organizations"
+Write-Host -foregroundcolor Yellow " https://technet.microsoft.com/en-us/library/dn594521(v=exchg.150).aspx"
+
+}
+
+ #endregion 
+
 
 cls
 ShowParameters
@@ -1203,11 +1563,19 @@ ExchangeOnPremLocalDomainCheck
 # Free busy Lookup methods
 $OrgRel = Get-OrganizationRelationship | Where{($_.DomainNames -like $ExchangeOnlineDomain )} | select Enabled,Identity,DomainNames,FreeBusy*,Target*
 $IntraOrgCon = Get-IntraOrganizationConnector | Select Name,TargetAddressDomains,DiscoveryEndpoint,Enabled
+#if ($Auth -like "OAuth" -OR [string]::IsNullOrWhitespace($Auth))
+#{
+$EDiscoveryEndpoint = Get-IntraOrganizationConfiguration | select OnPremiseDiscoveryEndpoint
 
-if ([string]::IsNullOrWhitespace($Auth))
-{
-#Get-Sumary;
-}
+#fix 3
+$SPDomainsOnprem = Get-SharingPolicy | fl Domains
+$SPOnprem = Get-SharingPolicy | Select *
+#}
+
+#if ([string]::IsNullOrWhitespace($Auth))
+#{
+#Get-SUMMARY;
+#}
 
 if($Auth -like "DAuth" -and $IntraOrgCon.enabled -Like "True")
 {
@@ -1216,22 +1584,26 @@ Write-Host -foregroundcolor yellow "  Warning: Intra Organization Connector is E
 Write-Host $bar
 }
 
+if ($Organization -like "Onprem" -OR [string]::IsNullOrWhitespace($Organization))
+
+{
 #region DAutch Checks
 if ($Auth -like "dauth" -OR [string]::IsNullOrWhitespace($Auth))
 
 {
+Write-Host -foregroundcolor Green " `n `n ************************************TestingDAuth configuration************************************************* `n `n " 
 
 OrgRelCheck
 Write-Host $bar
 if ($pause -eq "True")
 {
-$pause = Read-Host " Press Enter when ready to get Federation Information Details. Ctrl+C to exit. Type NB for no Brakes "   
+$pause = Read-Host " Press Enter when ready to get Federation Information Details.  "   
 Write-Host $bar
 }
 FedInfoCheck
 if ($pause -eq "True")
 {
-$pause = Read-Host " Press Enter when ready to get Federation Trust Details. Ctrl+C to exit. Type NB for no Brakes"   
+$pause = Read-Host " Press Enter when ready to get Federation Trust Details. "   
 Write-Host $bar
 }
 FedTrustCheck
@@ -1242,28 +1614,28 @@ Test-FederationTrustCertificate
 Write-Host $bar
 if ($pause -eq "True")
 {
-$pause = Read-Host " Press Enter when ready to check On-Prem Autodiscover Virtual Directory Details. Ctrl+C to exit. Type NB for no Brakes"   
+$pause = Read-Host " Press Enter when ready to check On-Prem Autodiscover Virtual Directory Details. "   
 Write-Host $bar
 }   
 AutoDVirtualDCheck
 Write-Host $bar
 if ($pause -eq "True")
 {
-$pause = Read-Host " Press Enter when ready to Grab On-Prem Web Services Virtual Directory. Ctrl+C to exit. Type NB for no Brakes"   
+$pause = Read-Host " Press Enter when ready to Grab On-Prem Web Services Virtual Directory. "   
 Write-Host $bar
 }
 EWSVirtualDirectoryCheck
 if ($pause -eq "True")
 {
 Write-Host $bar
-$pause = Read-Host " Press Enter when ready to  check the Availability Address Space configuration. Ctrl+C to exit. Type NB for no Brakes"   
+$pause = Read-Host " Press Enter when ready to  check the Availability Address Space configuration. "   
 Write-Host $bar
 }
 AvailabilityAddressSpaceCheck
 if ($pause -eq "True")
 {
 Write-Host $bar
-$pause = Read-Host " Press Enter when ready to Test-FederationTrust. Ctrl+C to exit. Type NB for no Brakes"   
+$pause = Read-Host " Press Enter when ready to Test-FederationTrust. "   
 Write-Host $bar
 }
 #need to grab errors and provide alerts in error case 
@@ -1271,11 +1643,13 @@ TestFedTrust
 if ($pause -eq "True")
 {
 Write-Host $bar
-$pause = Read-Host " Press Enter when ready to Test the OrganizationRelationship. Ctrl+C to exit. Type NB for no Brakes"   
+$pause = Read-Host " Press Enter when ready to Test the OrganizationRelationship. "   
 Write-Host $bar
 }
 TestOrgRel
 }
+
+
 #endregion
 
 
@@ -1286,7 +1660,7 @@ if ($Auth -like "OAuth" -OR [string]::IsNullOrWhitespace($Auth))
 {
 if ($pause -eq "True")
 {
-$pause = Read-Host " Press Enter when ready to Grab OAuth Configuration Details. Ctrl+C to exit. Type NB for no Brakes"   
+$pause = Read-Host " Press Enter when ready to Grab OAuth Configuration Details. "   
 Write-Host $bar
 }
 Write-Host -foregroundcolor Green " `n `n ************************************TestingOAuth configuration************************************************* `n `n " 
@@ -1294,47 +1668,47 @@ Write-Host $bar
 IntraOrgConCheck
 Write-Host $bar
 if ($pause -eq "True"){
-$pause = Read-Host " Press Enter when ready to Grab the Auth Server Details. Ctrl+C to exit. Type NB for no Brakes"   
+$pause = Read-Host " Press Enter when ready to Grab the Auth Server Details. "   
 Write-Host $bar
 }
 AuthServerCheck
 if ($pause -eq "True"){
-$pause = Read-Host " Press Enter when ready to Grab the Partner Application Details. Ctrl+C to exit. Type NB for no Brakes"   
+$pause = Read-Host " Press Enter when ready to Grab the Partner Application Details. "   
 Write-Host $bar
 }
 PartnerApplicationCheck
 Write-Host $bar
 if ($pause -eq "True")
 {
-$pause = Read-Host " Press Enter when ready to Check the Exchange Online-ApplicationAccount. Ctrl+C to exit. Type NB for no Brakes"   
+$pause = Read-Host " Press Enter when ready to Check the Exchange Online-ApplicationAccount. "   
 Write-Host $bar
 }
 ApplicationAccounCheck
 Write-Host $bar
 if ($pause -eq "True")
 {
-$pause = Read-Host " Press Enter when ready to check the ManagementRoleAssignment of the Exchange Online-ApplicationAccount . Ctrl+C to exit. Type NB for no Brakes"   
+$pause = Read-Host " Press Enter when ready to check the ManagementRoleAssignment of the Exchange Online-ApplicationAccount . "   
 Write-Host $bar
 }
 ManagementRoleAssignmentCheck
 Write-Host $bar
 if ($pause -eq "True")
 {
-$pause = Read-Host " Press Enter when ready to Grab Auth config Details. Ctrl+C to exit. Type NB for no Brakes"   
+$pause = Read-Host " Press Enter when ready to Grab Auth config Details. "   
 Write-Host $bar
 }
 AuthConfigCheck
 Write-Host $bar
 if ($pause -eq "True")
 {
-$pause = Read-Host " Press Enter when ready to Grab information for the Auth Certificate. Ctrl+C to exit. Type NB for no Brakes"   
+$pause = Read-Host " Press Enter when ready to Grab information for the Auth Certificate. "   
 Write-Host $bar
 }
 CurrentCertificateThumbprintCheck
 Write-Host $bar
 if ($pause -eq "True")
 {
-$pause = Read-Host " Press Enter when ready to  check the On Prem Autodiscover Virtual Directory Configuration. Ctrl+C to exit. Type NB for no Brakes"   
+$pause = Read-Host " Press Enter when ready to  check the On Prem Autodiscover Virtual Directory Configuration. "   
 Write-Host $bar
 }
 AutoDVirtualDCheckOAuth
@@ -1342,21 +1716,21 @@ $AutoDiscoveryVirtualDirectoryOAuth
 Write-Host $bar
 if ($pause -eq "True")
 {
-$pause = Read-Host " Press Enter when ready to On-Prem Web Services Virtual Directory. Ctrl+C to exit. Type NB for no Brakes"   
+$pause = Read-Host " Press Enter when ready to On-Prem Web Services Virtual Directory. "   
 Write-Host $bar
 }
 EWSVirtualDirectoryCheckOAuth
 Write-Host $bar
 if ($pause -eq "True")
 {
-$pause = Read-Host " Press Enter when ready to Grab AvailabilityAddressSpace. Ctrl+C to exit. Type NB for no Brakes"   
+$pause = Read-Host " Press Enter when ready to Grab AvailabilityAddressSpace. "   
 Write-Host $bar
 }
 AvailabilityAddressSpaceCheckOAuth
 Write-Host $bar
 if ($pause -eq "True")
 {
-$pause = Read-Host " Press Enter when ready to test the Test-OAuthConnectivity. Ctrl+C to exit. Type NB for no Brakes"   
+$pause = Read-Host " Press Enter when ready to test the Test-OAuthConnectivity. "   
 Write-Host $bar
 }
 OAuthConnectivityCheck
@@ -1364,10 +1738,17 @@ Write-Host $bar
 }
 #$bar
 #endregion
+}
 
-#region Exo
 
-Write-Host "Exchange Online Info"
+# EXO Part
+
+if ($Organization -like "Online" -OR [string]::IsNullOrWhitespace($Organization))
+
+{
+#region ConnectExo
+
+Write-Host " Exchange Online Info"
 $bar
 
 #Exchange Online Management Shell 
@@ -1382,10 +1763,7 @@ install-module AzureAD -AllowClobber
 
 Install-Module -Name ExchangeOnlineManagement
 Connect-ExchangeOnline 
-Write-Host "========================================================="
-Write-Host "Get-OrganizationRelationship | FL"
-Write-Host "========================================================="
-Get-OrganizationRelationship | FL
+
 Write-Host "========================================================="
 Write-Host "Get-SharingPolicy | FL"
 Write-Host "========================================================="
@@ -1393,27 +1771,93 @@ Get-SharingPolicy | FL
 
 
 
-#More Stuff
-
-Write-Host "========================================================="
-Write-Host "Get-FederationInformation -domainname  $exchangeOnPremDomain"
-Write-Host "=========================================================" 
-Get-FederationInformation -domainname  $exchangeOnPremDomain 
-Write-Host "========================================================="
-Write-Host "Get-IntraOrganizationConnector | fl Name,TargetAddressDomains,DiscoveryEndpoint,Enabled"
-Write-Host "========================================================="
-Get-IntraOrganizationConnector | fl Name,TargetAddressDomains,DiscoveryEndpoint,Enabled
-Write-Host "========================================================="
-
-
-disConnect-ExchangeOnline  -Confirm:$False
-Write-Host -foregroundcolor Green " That is all for the Exchange Online Side'" 
-#Read-Host "Ctrl+C to exit. Enter to Exit."   
-$bar
+# Variables
+$ExoOrgRel = Get-OrganizationRelationship | Where{($_.DomainNames -like $ExchangeOnPremDomain )} | select Enabled,Identity,DomainNames,FreeBusy*,Target*
+$ExoIntraOrgCon = Get-IntraOrganizationConnector | Select Name,TargetAddressDomains,DiscoveryEndpoint,Enabled
+$targetadepr1=("https://autodiscover." + $ExchangeOnPremDomain +"/autodiscover/autodiscover.svc/WSSecurity")
+$targetadepr2=("https://" + $ExchangeOnPremDomain +"/autodiscover/autodiscover.svc/WSSecurity")
+$exofedinfo = get-federationInformation -DomainName $exchangeOnpremDomain  -BypassAdditionalDomainValidation -ErrorAction SilentlyContinue| select *
 
  #endregion
 
+  
+  #region ExoDauthCheck
+  if ($Auth -like "dauth" -OR [string]::IsNullOrWhitespace($Auth))
 
+{
+Write-Host $bar
+Write-Host -foregroundcolor Green " `n `n ************************************Testing DAuth configuration************************************************* `n `n " 
+
+ExoOrgRelCheck
+Write-Host $bar
+if ($pause -eq "True")
+{
+$pause = Read-Host " Press Enter when ready to get Federation Organization Identifier Details.  "   
+Write-Host $bar
+}
+EXOFedOrgIdCheck
+Write-Host $bar
+if ($pause -eq "True")
+{
+$pause = Read-Host " Press Enter when ready to test Organization Relationship.  "   
+Write-Host $bar
+}
+EXOTestOrgRelCheck
+if ($pause -eq "True")
+{
+$pause = Read-Host " Press Enter when ready to get Sharing Policy Details.  "   
+Write-Host $bar
+}
+SharingPolicyCheck
+
+}
+ #endregion 
+
+  #region ExoOauthCheck
+    if ($Auth -like "oauth" -OR [string]::IsNullOrWhitespace($Auth))
+
+{
+
+Write-Host -foregroundcolor Green " `n `n ************************************Testing OAuth configuration************************************************* `n `n " 
+Write-Host $bar
+ExoIntraOrgConCheck
+
+Write-Host $bar
+if ($pause -eq "True")
+{
+$pause = Read-Host " Press Enter when ready to get Organization Configuration Details.  "   
+Write-Host $bar
+}
+
+EXOIntraOrgConfigCheck
+Write-Host $bar
+if ($pause -eq "True")
+{
+$pause = Read-Host " Press Enter when ready to get Server Authorization Details.  "   
+Write-Host $bar
+}
+
+EXOauthservercheck
+Write-Host $bar
+if ($pause -eq "True")
+{
+$pause = Read-Host " Press Enter when ready to get OAuth Connectivity Details.  "   
+Write-Host $bar
+}
+
+EXOtestoauthcheck
+Write-Host $bar
+
+}
+
+ #endregion 
+
+disConnect-ExchangeOnline  -Confirm:$False
+Write-Host -foregroundcolor Green " That is all for the Exchange Online Side" 
+#Read-Host "Ctrl+C to exit. Enter to Exit."   
+$bar
+
+}
 
 stop-transcript
 #Read-Host " `n `n Ctrl+C to exit. Enter to Exit." 
