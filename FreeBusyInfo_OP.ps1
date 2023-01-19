@@ -1178,7 +1178,6 @@ Write-Host -foregroundcolor Yellow " https://technet.microsoft.com/en-us/library
 }
 #endregion
 
-Get-MailboxFolderStatistics -Identity "Soumya Singhi" -FolderScope RecoverableItems | Format-List
 # EXO FUNCTIONS
 
 #region ExoDauthFuntions (1 fix)
