@@ -1142,13 +1142,13 @@ Write-Host $bar
 $OAuthConnectivity = Test-OAuthConnectivity -Service EWS -TargetUri https://outlook.office365.com/EWS/Exchange.asmx -Mailbox $useronprem | Select *
 $OAC = $OAuthConnectivity | fl
 $OAC
-$bar
-$OAuthConnectivity.Detail.FullId
-$bar
+#$bar
+#$OAuthConnectivity.Detail.FullId
+#$bar
 if ($OAuthConnectivity.Detail.FullId -like '*(401) Unauthorized*'){
-write-host -ForegroundColor Red "Error: (401) Unauthorized"
-if ($OAuthConnectivity.Detail.FullId -like 'The user specified by the user-context in the token does not exist*'){
-write-host "The user specified by the user-context in the token does not exist"
+write-host -ForegroundColor Red "Error: The remote server returned an error: (401) Unauthorized"
+if ($OAuthConnectivity.Detail.FullId -like '*The user specified by the user-context in the token does not exist*'){
+write-host -ForegroundColor Yellow "The user specified by the user-context in the token does not exist"
 write-host "Please run Test-OAuthConnectivity with a different Exchange On Premises Mailbox"
 
 }
@@ -1439,7 +1439,11 @@ Function EXOIntraOrgConfigCheck{
 
 Write-Host -foregroundcolor Green " Get-IntraOrganizationConfiguration | Select OnPremiseTargetAddresses" 
 Write-Host $bar
-$exoIntraOrgConfig = Get-IntraOrganizationConfiguration | Select OnPremiseTargetAddresses
+#fix because there can be multiple on prem or guid's
+#$exoIntraOrgConfig = Get-OnPremisesOrganization | select OrganizationGuid | Get-IntraOrganizationConfiguration | Select OnPremiseTargetAddresses
+$exoIntraOrgConfig = Get-OnPremisesOrganization | select OrganizationGuid | Get-IntraOrganizationConfiguration | Select * | Where-Object {$_.OnPremiseTargetAddresses -like "*$ExchangeOnPremDomain*"}
+
+
 #$IntraOrgConCheck
 $IOConfig=$exoIntraOrgConfig | fl
 $IOConfig
@@ -1498,14 +1502,19 @@ Write-Host $bar
 $exotestoauth = Test-OAuthConnectivity -Service EWS -TargetUri $Global:ExchangeOnPremEWS -Mailbox $useronline | select *
 $exoOAC = $exotestoauth | fl
 $exoOAC
-$bar
-$exotestoauth.Detail.FullId
-$bar
+#$bar
+#$exotestoauth.Detail.FullId
+#$bar
 if ($exotestoauth.Detail.FullId -like '*(401) Unauthorized*'){
-write-host -ForegroundColor Red "Error: (401) Unauthorized"
-if ($exotestoauth.Detail.FullId -like 'The user specified by the user-context in the token does not exist*'){
-write-host "The user specified by the user-context in the token does not exist"
+write-host -ForegroundColor Red "The remote server returned an error: (401) Unauthorized"
+if ($exotestoauth.Detail.FullId -like '*The user specified by the user-context in the token does not exist*'){
+write-host -ForegroundColor Yellow "The user specified by the user-context in the token does not exist"
 write-host "Please run Test-OAuthConnectivity with a different Exchange Online Mailbox"
+
+}
+
+if ($exotestoauth.Detail.FullId -like '*error_category="invalid_token"*'){
+write-host -ForegroundColor Yellow "This token profile 'S2SAppActAs' is not applicable for the current protocol"
 
 }
    
@@ -1746,8 +1755,8 @@ if ($Organization -like "Online" -OR [string]::IsNullOrWhitespace($Organization)
 
 {
 #region ConnectExo
-
-Write-Host " Exchange Online Info"
+$bar
+Write-Host -ForegroundColor Green " Collecting Exchange Online Availability Information"
 $bar
 
 #Exchange Online Management Shell 
@@ -1763,10 +1772,10 @@ install-module AzureAD -AllowClobber
 Install-Module -Name ExchangeOnlineManagement
 Connect-ExchangeOnline 
 
-Write-Host "========================================================="
-Write-Host "Get-SharingPolicy | FL"
-Write-Host "========================================================="
-Get-SharingPolicy | FL
+#Write-Host "========================================================="
+#Write-Host "Get-SharingPolicy | FL"
+#Write-Host "========================================================="
+#Get-SharingPolicy | FL
 
 
 
