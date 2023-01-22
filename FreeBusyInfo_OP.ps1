@@ -19,6 +19,8 @@ Set-ExecutionPolicy " Unrestricted"  -Scope Process -Confirm:$false
 Set-ExecutionPolicy " Unrestricted"  -Scope CurrentUser -Confirm:$false
 Add-PSSnapin microsoft.exchange.management.powershell.snapin
 import-module ActiveDirectory 
+Install-Module -Name ExchangeOnlineManagement
+disConnect-ExchangeOnline  -Confirm:$False
 cls
 $countOrgRelIssues = (0)
 $Global:FedTrust = $null
@@ -60,6 +62,8 @@ $ExchangeOnPremLocalDomain=$ADDomain.forest
 if ([string]::IsNullOrWhitespace($ADDomain)){
 $ExchangeOnPremLocalDomain = $exchangeOnPremDomain
 }
+$Script:fedinfoEOP = get-federationInformation -DomainName $ExchangeOnPremDomain  -BypassAdditionalDomainValidation -ErrorAction SilentlyContinue| select *
+
 
 
 #endregion
@@ -142,6 +146,9 @@ $exchangeOnPremLocalDomain = $exchangeOnPremLocalDomaincheck
 #region Show Parameters
 
 Function ShowParameters{
+
+#if (($exchangeOnlineDomain -ne $null) -And  ($exchangeOnPremDomain -ne $null) -And  ($exchangeOnlineDomain -ne $null) -And  ($exchangeOnPremEWS -ne $null) -And  ($useronline -ne $null) -And  ($useronprem -ne $null) ){
+
 Write-Host $bar
 write-host -foregroundcolor Green " Loading modules for AD, Exchange" 
 
@@ -171,12 +178,14 @@ Write-Host " Exchange Online Mailbox:"
 Write-Host -foregroundcolor Green "  $userOnline"
 }
 
+
+#}
 #endregion
 
 #regionDAuth Functions
 Function OrgRelCheck (){
 Write-Host $bar
-Write-Host -foregroundcolor Green " Get-OrganizationRelationship  | Where{($_.DomainNames -like $ExchangeOnlineDomain )} | Select Identity,DomainNames,FreeBusy*,Target*,Enabled" 
+Write-Host -foregroundcolor Green " Get-OrganizationRelationship  | Where{($_.DomainNames -like $ExchangeOnlineDomain )} | Select Identity,DomainNames,FreeBusy*,Target*,Enabled, ArchiveAccessEnabled" 
 Write-Host $bar
 $OrgRel
 Write-Host $bar
@@ -210,7 +219,7 @@ Write-Host -foregroundcolor Green "  FreeBusyAccessLevel is set to AvailabilityO
 if ($OrgRel.FreeBusyAccessLevel -like "LimitedDetails" ){
 Write-Host -foregroundcolor Green "  FreeBusyAccessLevel is set to LimitedDetails" 
 }
-else
+if ($OrgRel.FreeBusyAccessLevel -ne "LimitedDetails" -AND $OrgRel.FreeBusyAccessLevel -ne "AvailabilityOnly" )
 {
 Write-Host -foregroundcolor Red "  FreeBusyAccessEnabled : False" 
 $countOrgRelIssues++
@@ -228,23 +237,38 @@ $countOrgRelIssues++
 #TargetOwaURL
 Write-Host  " TargetOwaURL:" 
 if ($OrgRel.TargetOwaURL -like "http://outlook.com/owa/$exchangeonpremdomain"){
-Write-Host -foregroundcolor Green "  TargetOwaURL is http://outlook.com/owa/$exchangeonpremdomain" 
+Write-Host -foregroundcolor Green "  TargetOwaURL is http://outlook.com/owa/$exchangeonlinedomain" 
 }
 else
 {
-Write-Host -foregroundcolor Red "  TargetOwaURL IS NOT http://outlook.com/owa/$exchangeonpremdomain" 
+Write-Host -foregroundcolor Red "  TargetOwaURL IS NOT http://outlook.com/owa/$exchangeonlinedomain" 
 $countOrgRelIssues++
 }
 #TargetSharingEpr
 Write-Host  " TargetSharingEpr:" 
-if ([string]::IsNullOrWhitespace($OrgRel.TargetSharingEpr)){
-Write-Host -foregroundcolor Green "  TargetSharingEpr is blank. this is the standard Value." 
+if ([string]::IsNullOrWhitespace($OrgRel.TargetSharingEpr) -or $OrgRel.TargetSharingEpr -eq "https://outlook.office365.com/EWS/Exchange.asmx "){
+Write-Host -foregroundcolor Green "  TargetSharingEpr is ideally blank. this is the standard Value. "
+Write-Host -foregroundcolor White "  If it is set, it should be Office 365 EWS endpoint. Example: https://outlook.office365.com/EWS/Exchange.asmx " 
 }
 else
 {
-Write-Host -foregroundcolor Red "  TargetSharingEpr should be blank. If it is set, it should be Office 365 EWS endpoint" 
+Write-Host -foregroundcolor Red "  TargetSharingEpr should be blank or  https://outlook.office365.com/EWS/Exchange.asmx"
+Write-Host -foregroundcolor White "  If it is set, it should be Office 365 EWS endpoint.  Example: https://outlook.office365.com/EWS/Exchange.asmx " 
 $countOrgRelIssues++
 }
+#FreeBusyAccessScope
+
+Write-Host  " FreeBusyAccessScope:" 
+if ([string]::IsNullOrWhitespace($OrgRel.FreeBusyAccessScope)){
+Write-Host -foregroundcolor Green "  FreeBusyAccessScope is blank, this is the standard Value. "
+}
+else
+{
+Write-Host -foregroundcolor Red "  FreeBusyAccessScope is should be Blank, that is the standard Value." 
+$countOrgRelIssues++
+}
+
+
 #TargetAutodiscoverEpr:
 Write-Host  " TargetAutodiscoverEpr:" 
 if ($OrgRel.TargetAutodiscoverEpr -like "https://autodiscover-s.outlook.com/autodiscover/autodiscover.svc/WSSecurity" ){
@@ -286,45 +310,71 @@ $fedinfo
 Write-Host $bar
 Write-Host -foregroundcolor Green " SUMMARY - Federation Information" 
 Write-Host $bar
+
+
 #TargetApplicationUri
-if ($fedinfo.TargetApplicationUri -eq "outlook.com"){
 Write-Host  " TargetApplicationUri: "
+if ($fedinfo.TargetApplicationUri -like "Outlook.com"){
 Write-Host -foregroundcolor Green " "$fedinfo.TargetApplicationUri
+
+if ($OrgRel.TargetApplicationUri -like $fedinfo.TargetApplicationUri){
+
+Write-Host  " Federation Information TargetApplicationUri vs Organization Relationship TargetApplicationUri " 
+Write-Host -foregroundcolor Green "  Federation Information TargetApplicationUri matches the Organization Relationship TargetApplicationUri " 
+Write-Host -ForegroundColor White "  Organization Relationship:"  $OrgRel.TargetApplicationUri
+Write-Host -ForegroundColor White "  Federation Information:   "  $fedinfo.TargetApplicationUri
+
+
+
+}
+
+else{
+Write-Host  " Federation Information TargetApplicationUri vs Organization Relationship TargetApplicationUri " 
+Write-Host -foregroundcolor Red "  Federation Information TargetApplicationUri should matches the Organization Relationship TargetApplicationUri " 
+Write-Host -ForegroundColor White "  Organization Relationship:"  $OrgRel.TargetApplicationUri
+Write-Host -ForegroundColor White "  Federation Information:   "  $fedinfo.TargetApplicationUri
+
+}
+
 }
 else{
-Write-Host " TargetApplicationUri: "
 Write-Host -foregroundcolor Red $fedinfo.TargetApplicationUri
 Write-Host -foregroundcolor Red   " TargetApplicationUri should be Outlook.com"
 }
 
 #DomainNames
-if ($fedinfo.DomainNames -like "*$ExchangeOnlineDomain*"){
 Write-Host  "`Domain Names: "
+if ($fedinfo.DomainNames -like "*$ExchangeOnlineDomain*"){
 #if not null
 Write-Host -foregroundcolor Green " "$fedinfo.DomainNames
 }
 else{
-Write-Host " Domain Names: "
 Write-Host -foregroundcolor Red " "$fedinfo.DomainNames
 Write-Host -foregroundcolor Red  " DomainNames should contain $ExchangeOnlineDomain"
 }
 
 #TargetAutodiscoverEpr
+Write-Host  " TargetAutodiscoverEpr: "
+
+if ($OrgRel.TargetAutodiscoverEpr -like "https://autodiscover-s.outlook.com/autodiscover/autodiscover.svc/WSSecurity"){
+Write-Host -foregroundcolor Green " "$fedinfo.TargetAutodiscoverEpr
+}
+
 if ($OrgRel.TargetAutodiscoverEpr -like $fedinfo.TargetAutodiscoverEpr){
 
-Write-Host  " TargetAutodiscoverEpr: "
-Write-Host -foregroundcolor Green " "$fedinfo.TargetAutodiscoverEpr
 Write-Host  " Federation Information TargetAutodiscoverEpr vs Organization Relationship TargetAutodiscoverEpr " 
 Write-Host -foregroundcolor Green "  Federation Information TargetAutodiscoverEpr matches the Organization Relationship TargetAutodiscoverEpr " 
 }
 else
 {
 Write-Host  " Federation Information TargetAutodiscoverEpr vs Organization Relationship TargetAutodiscoverEpr " 
-Write-Host -foregroundcolor Red " =>  Federation Information TargetAutodiscoverEpr DOES NOT MATCH the Organization Relationship TargetAutodiscoverEpr" 
-
-Write-Host " Organization Relationship:"  $OrgRel.TargetAutodiscoverEpr
-Write-Host " Federation Information:   "  $fedinfo.TargetAutodiscoverEpr
+Write-Host -foregroundcolor Red " =>  Federation Information TargetAutodiscoverEpr should match the Organization Relationship TargetAutodiscoverEpr" 
+Write-Host -ForegroundColor White " Organization Relationship:"  $OrgRel.TargetAutodiscoverEpr
+Write-Host -ForegroundColor White " Federation Information:   "  $fedinfo.TargetAutodiscoverEpr
 }
+
+
+
 
 #TokenIssuerUris
 if ($fedinfo.TokenIssuerUris -like "*urn:federation:MicrosoftOnline*"){
@@ -358,8 +408,7 @@ Write-Host -foregroundcolor Green " " $fedtrust.ApplicationUri
 }
 else
 { 
-Write-Host -foregroundcolor Red "  Federation Trust Aplication Uri is NOT correct. "
-Write-Host -foregroundcolor White "  Should be "$fedtrust.ApplicationUri
+Write-Host -foregroundcolor Red "  Federation Trust Aplication Uri Should be "$fedtrust.ApplicationUri
 }
 #$fedtrust.TokenIssuerUri.AbsoluteUri
 Write-Host -foregroundcolor White " TokenIssuerUri:"
@@ -369,7 +418,7 @@ Write-Host -foregroundcolor Green " "$fedtrust.TokenIssuerUri.AbsoluteUri
 }
 else
 {
-Write-Host -foregroundcolor Red " Federation Trust TokenIssuerUri is NOT urn:federation:MicrosoftOnline"
+Write-Host -foregroundcolor Red " Federation Trust TokenIssuerUri should be urn:federation:MicrosoftOnline"
 }
 Write-Host -foregroundcolor White " Federation Trust Certificate Expiracy:"
 if ($fedtrust.OrgCertificate.NotAfter.Date -gt $CurrentTime){
@@ -426,6 +475,7 @@ $Global:AutoDiscoveryVirtualDirectory
 Write-Host $bar
 Write-Host -foregroundcolor Green " SUMMARY - On-Prem Autodiscover Virtual Directory" 
 Write-Host $bar
+Write-Host -ForegroundColor White "  WSSecurityAuthentication:" 
 if ($Global:AutoDiscoveryVirtualDirectory.WSSecurityAuthentication -eq "True"){
 foreach( $ser in $Global:AutoDiscoveryVirtualDirectory) { 
 Write-Host " $($ser.Identity) "
@@ -434,7 +484,7 @@ Write-Host -ForegroundColor Green "  WSSecurityAuthentication: $($ser.WSSecurity
 }
 else
 {
-Write-Host -foregroundcolor Red " WSSecurityAuthentication is NOT correct."
+Write-Host -foregroundcolor Red " WindowAuthentication is NOT correct."
 foreach( $ser in $Global:AutoDiscoveryVirtualDirectory) { 
 Write-Host " $($ser.Identity)"
 Write-Host -ForegroundColor Red "  WSSecurityAuthentication: $($ser.WSSecurityAuthentication)" 
@@ -442,6 +492,25 @@ Write-Host -ForegroundColor Red "  WSSecurityAuthentication: $($ser.WSSecurityAu
 
 Write-Host -foregroundcolor White "  Should be True "
 }
+
+Write-Host -ForegroundColor White "`n  WindowsAuthentication:" 
+if ($Global:AutoDiscoveryVirtualDirectory.WindowsAuthentication -eq "True"){
+foreach( $ser in $Global:AutoDiscoveryVirtualDirectory) { 
+Write-Host " $($ser.Identity) "
+Write-Host -ForegroundColor Green "  WindowsAuthentication: $($ser.WindowsAuthentication)" 
+}
+}
+else
+{
+Write-Host -foregroundcolor Red " WindowsAuthentication is NOT correct."
+foreach( $ser in $Global:AutoDiscoveryVirtualDirectory) { 
+Write-Host " $($ser.Identity)"
+Write-Host -ForegroundColor Red "  WindowsAuthentication: $($ser.WindowsAuthentication)" 
+}
+
+Write-Host -foregroundcolor White "  Should be True "
+}
+
 
 }
 
@@ -453,7 +522,8 @@ $Global:WebServicesVirtualDirectory
 Write-Host $bar
 Write-Host -foregroundcolor Green " SUMMARY - On-Prem Web Services Virtual Directory" 
 Write-Host $bar
-#Write-Host -foregroundcolor White "  WSSecurityAuthentication: `n " 
+
+Write-Host -foregroundcolor White "  WSSecurityAuthentication:" 
 if ($Global:WebServicesVirtualDirectory.WSSecurityAuthentication -like  "True"){
 
 foreach( $EWS in $Global:WebServicesVirtualDirectory) { 
@@ -464,13 +534,37 @@ Write-Host -ForegroundColor Green "  WSSecurityAuthentication: $($EWS.WSSecurity
 }
 else
 {
-Write-Host -foregroundcolor Red " WSSecurityAuthentication is NOT correct."
+Write-Host -foregroundcolor Red " WSSecurityAuthentication shoud be True."
 foreach( $EWS in $Global:AutoDiscoveryVirtualDirectory) { 
 Write-Host " $($EWS.Identity) "
 Write-Host -ForegroundColor Red "  WSSecurityAuthentication: $($ser.WSSecurityAuthentication) " 
 }
 Write-Host -foregroundcolor White "  Should be True"
 }
+
+
+
+
+Write-Host -foregroundcolor White "`n  WindowsAuthentication:" 
+if ($Global:WebServicesVirtualDirectory.WindowsAuthentication -like  "True"){
+
+foreach( $EWS in $Global:WebServicesVirtualDirectory) { 
+Write-Host " $($EWS.Identity)"
+Write-Host -ForegroundColor Green "  WindowsAuthentication: $($EWS.WindowsAuthentication) " 
+}
+
+}
+else
+{
+Write-Host -foregroundcolor Red " WindowsAuthentication shoud be True."
+foreach( $EWS in $Global:AutoDiscoveryVirtualDirectory) { 
+Write-Host " $($EWS.Identity) "
+Write-Host -ForegroundColor Red "  WindowsAuthentication: $($ser.WindowsAuthentication) " 
+}
+Write-Host -foregroundcolor White "  Should be True"
+}
+
+
 
 }
 
@@ -493,8 +587,8 @@ Write-Host -foregroundcolor Green " " $AvailabilityAddressSpace.ForestName
 }
 else
 {
-Write-Host -foregroundcolor Red "  ForestName is NOT correct."
-Write-Host -foregroundcolor White " Should be $ExchaneOnlineDomain "
+Write-Host -foregroundcolor Red "  ForestName appears not to be correct."
+Write-Host -foregroundcolor White " Should contain the " $ExchaneOnlineDomain
 }
 Write-Host -foregroundcolor White " UserName: " 
 if ($AvailabilityAddressSpace.UserName -like  ""){
@@ -503,7 +597,7 @@ Write-Host -foregroundcolor Green "  Blank"
 else
 {
 Write-Host -foregroundcolor Red " UserName is NOT correct. "
-Write-Host -foregroundcolor White "  Should be blank"
+Write-Host -foregroundcolor White "  Normally it should be blank"
 }
 Write-Host -foregroundcolor White " UseServiceAccount: " 
 if ($AvailabilityAddressSpace.UseServiceAccount -like  "True"){ 
@@ -511,7 +605,7 @@ Write-Host -foregroundcolor Green "  True"
 }
 else
 {
-Write-Host -foregroundcolor Red "  UseServiceAccount is NOT correct."
+Write-Host -foregroundcolor Red "  UseServiceAccount appears not to be correct."
 Write-Host -foregroundcolor White "  Should be True"
 }
 Write-Host -foregroundcolor White " AccessMethod:" 
@@ -520,7 +614,7 @@ Write-Host -foregroundcolor Green "  InternalProxy"
 }
 else
 {
-Write-Host -foregroundcolor Red " AccessMethod is NOT correct."
+Write-Host -foregroundcolor Red " AccessMethod appears not to be correct."
 Write-Host -foregroundcolor White " Should be InternalProxy"
 }
 Write-Host -foregroundcolor White " ProxyUrl: " 
@@ -529,7 +623,7 @@ Write-Host -foregroundcolor Green " "$AvailabilityAddressSpace.ProxyUrl
 }
 else
 {
-Write-Host -foregroundcolor Red "  ProxyUrl is NOT correct."
+Write-Host -foregroundcolor Red "  ProxyUrl appears not to be correct."
 Write-Host -foregroundcolor White "  Should be $exchangeOnPremEWS"
 }
 
@@ -538,7 +632,7 @@ Write-Host -foregroundcolor White "  Should be $exchangeOnPremEWS"
 Function TestFedTrust{
 Write-Host $bar
 $TestFedTrustFail = 0
-$a = Test-FederationTrust -UserIdentity $useronprem -verbose  #fails the frist time on multiple ocasions
+$a = Test-FederationTrust -UserIdentity $useronprem -verbose -ErrorAction silentlycontinue #fails the frist time on multiple ocasions so we have a gohst FedTrustCheck
 Write-Host -foregroundcolor Green  " Test-FederationTrust -UserIdentity $useronprem -verbose"  
 Write-Host $bar
 $TestFedTrust = Test-FederationTrust -UserIdentity $useronprem -verbose -ErrorAction silentlycontinue
@@ -577,11 +671,15 @@ Write-Host -foregroundcolor Red " Federation Trust test with Errors"
 Function TestOrgRel{
 $bar
 $TestFail = 0
-Write-Host -foregroundcolor Green "Test-OrganizationRelationship -Identity "On-premises to O365*"  -UserIdentity $useronprem" 
+$OrgRelIdentity=$OrgRel.Identity
+#$OrgRelIdentity
+#Write-Host -foregroundcolor Green "Test-OrganizationRelationship -Identity "On-premises to O365*"  -UserIdentity $useronprem" 
+Write-Host -foregroundcolor Green "Test-OrganizationRelationship -Identity $OrgRelIdentity  -UserIdentity $useronprem" 
+
 #need to grab errors and provide alerts in error case 
 Write-Host $bar
 #this test needs to be more effective and Identity passed as variable
-$TestOrgRel = Test-OrganizationRelationship -Identity "On-premises to O365*"  -UserIdentity $useronprem 
+$TestOrgRel = Test-OrganizationRelationship -Identity $OrgRelIdentity  -UserIdentity $useronprem -erroraction SilentlyContinue
 $TestOrgRel
 
 
@@ -622,8 +720,6 @@ Function IntraOrgConCheck{
 
 Write-Host -foregroundcolor Green " Get-IntraOrganizationConnector | Selecct Name,TargetAddressDomains,DiscoveryEndpoint,Enabled" 
 Write-Host $bar
-#$IntraOrgConCheck = Get-IntraOrganizationConnector | fl Name,TargetAddressDomains,DiscoveryEndpoint,Enabled
-#$IntraOrgConCheck
 $IOC=$IntraOrgCon | fl
 $IOC
 Write-Host $bar
@@ -637,8 +733,8 @@ Write-Host -foregroundcolor Green " " $IntraOrgCon.TargetAddressDomains
 }
 else
 {
-Write-Host -foregroundcolor Red " Target Address Domains is NOT correct."
-Write-Host -foregroundcolor White " Should contain the $ExchangeOnlineDomain domain or the $ExchangeOnlineAltDomain"
+Write-Host -foregroundcolor Red " Target Address Domains appears not to be correct."
+Write-Host -foregroundcolor White " Should contain the $ExchangeOnlineDomain domain or the $ExchangeOnlineAltDomain domain."
 }
 
 Write-Host -foregroundcolor White " DiscoveryEndpoint: " 
@@ -647,8 +743,9 @@ Write-Host -foregroundcolor Green "  https://autodiscover-s.outlook.com/autodisc
 }
 else
 {
-Write-Host -foregroundcolor Red " `DiscoveryEndpoint are NOT correct. "
-Write-Host -foregroundcolor White "  Should be https://autodiscover-s.outlook.com/autodiscover/autodiscover.svc"
+Write-Host -foregroundcolor Red "  The DiscoveryEndpoint appears not to be correct. "
+Write-Host -foregroundcolor White "  It should represent the address of EXO autodiscover endpoint."
+Write-Host  "  Examples: https://autodiscover-s.outlook.com/autodiscover/autodiscover.svc; https://outlook.office365.com/autodiscover/autodiscover.svc "
 }
 Write-Host -foregroundcolor White " Enabled: " 
 if ($IntraOrgCon.Enabled -like  "True"){ 
@@ -656,8 +753,9 @@ Write-Host -foregroundcolor Green "  True "
 }
 else
 {
-Write-Host -foregroundcolor Red "  Enabled is NOT correct."
-Write-Host -foregroundcolor White " Should be True"
+Write-Host -foregroundcolor Red "  On-Prem Intra Organization Connector is not Enabled"
+Write-Host -foregroundcolor White "  In order to use OAuth it Should be True." 
+write-Host "  If it is set to False, the Organization Realtionship (DAuth) , if enabled, is used for the Hybrid Availability Sharing"
 }
 
 
@@ -683,7 +781,7 @@ Write-Host -foregroundcolor Green " " $AuthServer.IssuerIdentifier
 }
 else
 {
-Write-Host -foregroundcolor Red " IssuerIdentifier is NOT correct."
+Write-Host -foregroundcolor Red " IssuerIdentifier appears not to be correct."
 Write-Host -foregroundcolor White " Should be 00000001-0000-0000-c000-000000000000"
 }
 
@@ -693,7 +791,7 @@ Write-Host -foregroundcolor Green " " $AuthServer.TokenIssuingEndpoint
 }
 else
 {
-Write-Host -foregroundcolor Red " TokenIssuingEndpoint is NOT correct."
+Write-Host -foregroundcolor Red " TokenIssuingEndpoint appears not to be correct."
 Write-Host -foregroundcolor White " Should be  https://accounts.accesscontrol.windows.net/<Cloud Tenant ID>/tokens/OAuth/2"
 }
 
@@ -704,7 +802,7 @@ Write-Host -foregroundcolor Green " " $AuthServer.AuthMetadataUrl
 }
 else
 {
-Write-Host -foregroundcolor Red " AuthMetadataUrl is NOT correct."
+Write-Host -foregroundcolor Red " AuthMetadataUrl appears not to be correct."
 Write-Host -foregroundcolor White " Should be  https://accounts.accesscontrol.windows.net/<Cloud Tenant ID>/metadata/json/1"
 }
 
@@ -754,7 +852,7 @@ Write-Host -foregroundcolor Green " " $PartnerApplication.ApplicationIdentifier
 }
 else
 {
-Write-Host -foregroundcolor Red " ApplicationIdentifier does not seem correct"
+Write-Host -foregroundcolor Red " ApplicationIdentifier does not appear to be correct"
 Write-Host -foregroundcolor White " Should be 00000002-0000-0ff1-ce00-000000000000"
 }
 
@@ -764,7 +862,7 @@ Write-Host -foregroundcolor Green "  Blank"
 }
 else
 {
-Write-Host -foregroundcolor Red " AuthMetadataUrl does not seem correct"
+Write-Host -foregroundcolor Red " AuthMetadataUrl does not aooear correct"
 Write-Host -foregroundcolor White " Should be Blank"
 }
 
@@ -776,7 +874,7 @@ Write-Host -foregroundcolor Green "  Blank"
 }
 else
 {
-Write-Host -foregroundcolor Red "  Realm does not seem correct"
+Write-Host -foregroundcolor Red "  Realm does not appear to be correct"
 Write-Host -foregroundcolor White " Should be Blank"
 }
 
@@ -787,8 +885,10 @@ Write-Host -foregroundcolor Green " " $PartnerApplication.LinkedAccount
 }
 else
 {
-Write-Host -foregroundcolor Red " LinkedAccount value does not seem correct"
-Write-Host -foregroundcolor White " Should be $exchangeOnPremLocalDomain/Users/Exchange Online-ApplicationAccount"
+Write-Host -foregroundcolor Red "  LinkedAccount value does not appear to be correct"
+Write-Host -foregroundcolor White "  Should be $exchangeOnPremLocalDomain/Users/Exchange Online-ApplicationAccount"
+Write-Host "  If you value is empty, set it to correspond to the Exchange Online-ApplicationAccount which is located at the root of Users container in AD. After you make the change, reboot the servers."
+Write-Host "  Example: contoso.com/Users/Exchange Online-ApplicationAccount"
 }
 }
 
@@ -1008,6 +1108,28 @@ else
 {
 Write-Host -foregroundcolor Red "  Subject is not CN=Microsoft Exchange Server Auth Certificate"
 }
+
+
+
+Write-Host -ForegroundColor White "`n Checking Exchange Auth Certificate Distribution `n" 
+
+$CheckAuthCertDistribution = foreach ($name in (get-exchangeserver).name) {Get-Exchangecertificate -Thumbprint (Get-AuthConfig).CurrentCertificateThumbprint -server $name -ErrorAction SilentlyContinue | Select Identity,thumbprint,services,subject}
+foreach ($serv in $CheckAuthCertDistribution)
+{
+$Servername = ($serv -split "\.")[0]
+Write-Host -ForegroundColor White  "  Server: " $servername
+#Write-Host  "   Thumbprint: " $Thumbprint
+if ($serv.Thumbprint -like $thumbprint){
+Write-Host  "   Thumbprint: "$serv.Thumbprint
+Write-Host  "   Subject: "$serv.Subject
+}
+if ($serv.Thumbprint -ne $thumbprint)
+{
+Write-Host -foregroundcolor Red "  Auth Certificate seems not to be present in "$servername
+}
+
+}
+
 }
 
 Function AutoDVirtualDCheckOauth{
@@ -1023,21 +1145,83 @@ if ($Auth -like "OAuth"){
 Write-Host $bar
 Write-Host -foregroundcolor Green " SUMMARY - On-Prem Autodiscover Virtual Directory" 
 Write-Host $bar
+
+
+
+
+Write-Host -foregroundcolor White "  InternalAuthenticationMethods"
+if ($AutoDiscoveryVirtualDirectoryOAuth.InternalAuthenticationMethods -like  "*OAuth*"){
+foreach( $EWS in $AutoDiscoveryVirtualDirectoryOAuth) { 
+Write-Host " $($EWS.Identity) "
+Write-Host -ForegroundColor Green "  InternalAuthenticationMethods Include OAuth Authentication Method " 
+}
+
+}
+else
+{
+Write-Host -foregroundcolor Red "  InternalAuthenticationMethods seems not to include OAuth Authentication Method."
+}
+
+
+
+Write-Host -foregroundcolor White "`n  ExternalAuthenticationMethods"
+if ($AutoDiscoveryVirtualDirectoryOAuth.ExternalAuthenticationMethods -like  "*OAuth*"){
+foreach( $EWS in $AutoDiscoveryVirtualDirectoryOAuth) { 
+Write-Host " $($EWS.Identity) "
+Write-Host -ForegroundColor Green "  ExternalAuthenticationMethods Include OAuth Authentication Method " 
+}
+
+}
+else
+{
+Write-Host -foregroundcolor Red "  ExternalAuthenticationMethods seems not to include OAuth Authentication Method."
+}
+
+
+
+Write-Host -ForegroundColor White "`n  WSSecurityAuthentication:" 
 if ($AutoDiscoveryVirtualDirectoryOAuth.WSSecurityAuthentication -like  "True"){
 #Write-Host -foregroundcolor Green " `n  " $Global:AutoDiscoveryVirtualDirectory.WSSecurityAuthentication
 foreach( $ADVD in $AutoDiscoveryVirtualDirectoryOAuth) { 
 Write-Host " $($ADVD.Identity) "
-Write-Host -ForegroundColor Green " WSSecurityAuthentication: $($ADVD.WSSecurityAuthentication)" 
+Write-Host -ForegroundColor Green "  WSSecurityAuthentication: $($ADVD.WSSecurityAuthentication)" 
 }
 }
 else
 {
-Write-Host -foregroundcolor Red " WSSecurityAuthentication setting is NOT correct."
+Write-Host -foregroundcolor Red "  WSSecurityAuthentication setting is NOT correct."
 foreach( $ADVD in $AutoDiscoveryVirtualDirectoryOAuth) { 
 Write-Host " $($ADVD.Identity) "
-Write-Host -ForegroundColor Red " WSSecurityAuthentication: $($ADVD.WSSecurityAuthentication)" 
+Write-Host -ForegroundColor Red "  WSSecurityAuthentication: $($ADVD.WSSecurityAuthentication)" 
+}
+Write-Host -foregroundcolor White "  Should be True "
+}
+
+
+Write-Host -ForegroundColor White "`n  WindowsAuthentication:" 
+if ($AutoDiscoveryVirtualDirectoryOAuth.WindowsAuthentication -eq "True"){
+foreach( $ser in $AutoDiscoveryVirtualDirectoryOAuth) { 
+Write-Host " $($ser.Identity) "
+Write-Host -ForegroundColor Green "  WindowsAuthentication: $($ser.WindowsAuthentication)" 
 }
 }
+else
+{
+Write-Host -foregroundcolor Red " WindowsAuthentication is NOT correct."
+foreach( $ser in $AutoDiscoveryVirtualDirectoryOAuth) { 
+Write-Host " $($ser.Identity)"
+Write-Host -ForegroundColor Red "  WindowsAuthentication: $($ser.WindowsAuthentication)" 
+}
+
+Write-Host -foregroundcolor White "  Should be True "
+}
+
+
+
+
+
+
+
 #Write-Host $bar
 }
 
@@ -1052,23 +1236,80 @@ if ($Auth -like "OAuth"){
 Write-Host $bar
 Write-Host -foregroundcolor Green " SUMMARY - On-Prem Web Services Virtual Directory" 
 Write-Host $bar
-if ($WebServicesVirtualDirectoryOAuth.WSSecurityAuthentication -like  "True"){
+
+
+Write-Host -foregroundcolor White "  InternalAuthenticationMethods"
+if ($WebServicesVirtualDirectoryOAuth.InternalAuthenticationMethods -like  "*OAuth*"){
 foreach( $EWS in $WebServicesVirtualDirectoryOAuth) { 
 Write-Host " $($EWS.Identity) "
-Write-Host -ForegroundColor Green " WSSecurityAuthentication: $($EWS.WSSecurityAuthentication) " 
+Write-Host -ForegroundColor Green "  InternalAuthenticationMethods Include OAuth Authentication Method " 
 }
 
 }
 else
 {
-Write-Host -foregroundcolor Red " WSSecurityAuthentication is NOT correct."
+Write-Host -foregroundcolor Red "  InternalAuthenticationMethods seems not to include OAuth Authentication Method."
+}
+
+
+
+Write-Host -foregroundcolor White "`n  ExternalAuthenticationMethods"
+if ($WebServicesVirtualDirectoryOAuth.ExternalAuthenticationMethods -like  "*OAuth*"){
+foreach( $EWS in $WebServicesVirtualDirectoryOAuth) { 
+Write-Host " $($EWS.Identity) "
+Write-Host -ForegroundColor Green "  ExternalAuthenticationMethods Include OAuth Authentication Method " 
+}
+
+}
+else
+{
+Write-Host -foregroundcolor Red "  ExternalAuthenticationMethods seems not to include OAuth Authentication Method."
+}
+
+
+
+Write-Host -ForegroundColor White "`n  WSSecurityAuthentication:" 
+if ($WebServicesVirtualDirectoryOAuth.WSSecurityAuthentication -like  "True"){
+foreach( $EWS in $WebServicesVirtualDirectoryOAuth) { 
+Write-Host " $($EWS.Identity) "
+Write-Host -ForegroundColor Green "  WSSecurityAuthentication: $($EWS.WSSecurityAuthentication) " 
+}
+
+}
+else
+{
+Write-Host -foregroundcolor Red "  WSSecurityAuthentication is NOT correct."
 foreach( $EWS in $WebServicesVirtualDirectoryOauth) { 
 Write-Host " $($EWS.Identity) "
-Write-Host -ForegroundColor Red " WSSecurityAuthentication: $($EWS.WSSecurityAuthentication)" 
+Write-Host -ForegroundColor Red "  WSSecurityAuthentication: $($EWS.WSSecurityAuthentication)" 
 }
 Write-Host -foregroundcolor White "  Should be True"
 }
 #Write-Host $bar
+
+
+
+
+
+Write-Host -ForegroundColor White "`n  WindowsAuthentication:" 
+if ($WebServicesVirtualDirectoryOauth.WindowsAuthentication -eq "True"){
+foreach( $ser in $WebServicesVirtualDirectoryOauth) { 
+Write-Host " $($ser.Identity) "
+Write-Host -ForegroundColor Green "  WindowsAuthentication: $($ser.WindowsAuthentication)" 
+}
+}
+else
+{
+Write-Host -foregroundcolor Red " WindowsAuthentication is NOT correct."
+foreach( $ser in $WebServicesVirtualDirectoryOauth) { 
+Write-Host " $($ser.Identity)"
+Write-Host -ForegroundColor Red "  WindowsAuthentication: $($ser.WindowsAuthentication)" 
+}
+
+Write-Host -foregroundcolor White "  Should be True "
+
+
+}
 }
 
 Function AvailabilityAddressSpaceCheckOAuth{
@@ -1094,30 +1335,30 @@ Write-Host -foregroundcolor White " Should be $ExchaneOnlineDomain "
 }
 Write-Host -foregroundcolor White " UserName: " 
 if ($AvailabilityAddressSpace.UserName -like  ""){
-Write-Host -foregroundcolor Green " Blank " 
+Write-Host -foregroundcolor Green "  Blank " 
 }
 else
 {
-Write-Host -foregroundcolor Red " UserName is NOT correct. "
-Write-Host -foregroundcolor White "Should be blank "
+Write-Host -foregroundcolor Red "  UserName is NOT correct. "
+Write-Host -foregroundcolor White "  Should be blank "
 }
 Write-Host -foregroundcolor White " UseServiceAccount: " 
 if ($AvailabilityAddressSpace.UseServiceAccount -like  "True"){ 
-Write-Host -foregroundcolor Green " True "  
+Write-Host -foregroundcolor Green "  True "  
 }
 else
 {
-Write-Host -foregroundcolor Red " UseServiceAccount is NOT correct."
-Write-Host -foregroundcolor White " Should be True "
+Write-Host -foregroundcolor Red "  UseServiceAccount is NOT correct."
+Write-Host -foregroundcolor White "  Should be True "
 }
 Write-Host -foregroundcolor White " AccessMethod: " 
 if ($AvailabilityAddressSpace.AccessMethod -like  "InternalProxy"){
-Write-Host -foregroundcolor Green " InternalProxy " 
+Write-Host -foregroundcolor Green "  InternalProxy " 
 }
 else
 {
-Write-Host -foregroundcolor Red " AccessMethod is NOT correct. "
-Write-Host -foregroundcolor White " Should be InternalProxy "
+Write-Host -foregroundcolor Red "  AccessMethod is NOT correct. "
+Write-Host -foregroundcolor White "  Should be InternalProxy "
 }
 Write-Host -foregroundcolor White " ProxyUrl: " 
 if ($AvailabilityAddressSpace.ProxyUrl -like  $exchangeOnPremEWS){
@@ -1125,11 +1366,10 @@ Write-Host -foregroundcolor Green " "$AvailabilityAddressSpace.ProxyUrl
 }
 else
 {
-Write-Host -foregroundcolor Red " ProxyUrl is NOT correct. "
-Write-Host -foregroundcolor White " Should be $exchangeOnPremEWS"
+Write-Host -foregroundcolor Red "  ProxyUrl is NOT correct. "
+Write-Host -foregroundcolor White "  Should be $exchangeOnPremEWS"
 }
-#falta o ews
-#Write-Host $bar
+
 }
 
 Function OAuthConnectivityCheck{
@@ -1191,12 +1431,15 @@ Write-Host $bar
 Write-Host  -foregroundcolor Green " Summary - Organization Relationship" 
 Write-Host $bar
 Write-Host  " Domain Names:" 
-if ($exoOrgRel.DmainNames -like $exchangeonpremdomain){
-Write-Host -foregroundcolor Green "  Domain Names Include the $exchangeOnpremDomain Domain" 
+#Write-Host  " Domain Names:"$exoOrgRel.DmainNames[0]
+#Write-Host  " Org Rel:"$exoOrgRel
+if ($exoOrgRel.DomainNames -like $ExchangeOnPremDomain){
+Write-Host -foregroundcolor Green "  Domain Names Include the $ExchangeOnPremDomain Domain" 
 }
 else
 {
-Write-Host -foregroundcolor Red "  Domain Names do Not Include the $exchangeOnpremDomain Domain" 
+Write-Host -foregroundcolor Red "  Domain Names do Not Include the $ExchangeOnPremDomain Domain"
+$exoOrgRel.DomainNames 
 }
 
 #FreeBusyAccessEnabled
@@ -1252,13 +1495,15 @@ Write-Host -foregroundcolor Red "  TargetSharingEpr should be blank. If it is se
 #TargetAutodiscoverEpr:
 
 Write-Host  " TargetAutodiscoverEpr:"
- 
-if ($exoOrgRel.TargetAutodiscoverEpr -like $exofedinfo.TargetAutodiscoverEpr){
-Write-Host -foregroundcolor Green "  TargetAutodiscoverEpr is" $exofedinfo.TargetAutodiscoverEpr.OriginalString 
+#Write-Host  "  OrgRel: " $exoOrgRel.TargetAutodiscoverEpr
+#Write-Host  "  FedInfo: " $fedinfoEOP
+#Write-Host  "  FedInfoEPR: " $fedinfoEOP.TargetAutodiscoverEpr
+if ($exoOrgRel.TargetAutodiscoverEpr -like $fedinfoEOP.TargetAutodiscoverEpr){
+Write-Host -foregroundcolor Green "  TargetAutodiscoverEpr is" $exoOrgRel.TargetAutodiscoverEpr 
 }
 else
 {
-Write-Host -foregroundcolor Red "  TargetAutodiscoverEpr is not" $exofedinfo.TargetAutodiscoverEpr.OriginalString 
+Write-Host -foregroundcolor Red "  TargetAutodiscoverEpr is not" $fedinfoEOP.TargetAutodiscoverEpr 
 #$countOrgRelIssues++
 }
 #Enabled
@@ -1303,86 +1548,103 @@ Write-Host -foregroundcolor White " Should be True"
 }
 
 Function EXOTestOrgRelCheck{
+$exoIdentity = $ExoOrgRel.Identity
+$exoIdentity
 
-#fix 2
-#troquei isto Write-Host -foregroundcolor Green " Test-OrganizationRelationship -Identity 'O365 to On-premises*' -UserIdentity $UserOnline" 
-#por isto
-Write-Host -foregroundcolor Green " Test-OrganizationRelationship -Identity $ExoOrgRel.Identity -UserIdentity $UserOnline"  
+Write-Host -foregroundcolor Green " Test-OrganizationRelationship -Identity $exoIdentity -UserIdentity $UserOnline"  
 Write-Host $bar
 
 #Write-Host -ForegroundColor Green $ExoOrgRel.Identity
 
 #troquei isto $exotestorgrel= Test-OrganizationRelationship -Identity 'O365 to On-premises*' -UserIdentity $UserOnline
-$exotestorgrel= Test-OrganizationRelationship -Identity $ExoOrgRel.Identity -UserIdentity $UserOnline
+$exotestorgrel= Test-OrganizationRelationship -Identity $exoIdentity -UserIdentity $UserOnline
 $exotor = $exotestorgrel | fl
 $exotor
-$bar
-$exotestorgrel.Detail.FullId
+#$bar
+
+#$exotestorgrel.Detail.FullId
 #$bar
 }
 
 Function SharingPolicyCheck{
 
-Write-Host -foregroundcolor Green " Get-SharingPolicy | select *" 
+Write-host $bar
+Write-Host -foregroundcolor Green " Get-SharingPolicy | select Domains,Enabled,Name,Identity" 
 Write-Host $bar
-$Script:SPOnline= Get-SharingPolicy | select *
-$SPOnline
+$Script:SPOnline= Get-SharingPolicy | select  Domains,Enabled,Name,Identity
+$SPOnline | fl
 Write-Host $bar
 Write-Host -foregroundcolor Green " SUMMARY - Sharing Policy" 
 Write-Host $bar
 
 
-Write-Host -foregroundcolor White " Exchange On Premises Sharing domains:"
-Write-Host -foregroundcolor White " Domain:"
-$SPOnprem.Domains.Domain[0]
-Write-Host -foregroundcolor White " Action:"
-$SPOnprem.Domains.Actions[0]
-Write-Host -foregroundcolor White " Domain:"
-$SPOnprem.Domains.Domain[1]
-Write-Host -foregroundcolor White " Action:"
-$SPOnprem.Domains.Actions[1]
-Write-Host -ForegroundColor White "Exchange OnLine Sharing Domains"
+Write-Host -foregroundcolor White " Exchange On Premises Sharing domains:`n"
+#for
+
+Write-Host -foregroundcolor White "  Domain:"
+Write-Host "   " $SPOnprem.Domains.Domain[0]
+Write-Host -foregroundcolor White "  Action:"
+Write-Host "   " $SPOnprem.Domains.Actions[0]
+Write-Host -foregroundcolor White "  Domain:"
+Write-Host "   " $SPOnprem.Domains.Domain[1]
+Write-Host -foregroundcolor White "  Action:"
+Write-Host "   " $SPOnprem.Domains.Actions[1]
+
+Write-Host -ForegroundColor White "`n  Exchange Online Sharing Domains: `n"
 $domain1=(($SPOnline.domains[0] -split ":") -split " ")
 $domain2=(($SPOnline.domains[1] -split ":") -split " ")
-Write-Host -foregroundcolor White "Domain:" 
-Write-Host " " $domain1[0] 
-Write-Host -foregroundcolor White "Action:" 
-Write-Host " " $domain1[1]
-Write-Host -foregroundcolor White "Domain:" 
-Write-Host " " $domain2[0] 
-Write-Host -foregroundcolor White "Action:" 
-Write-Host " " $domain2[1]
-Write-Host $bar
+
+Write-Host -foregroundcolor White "  Domain:" 
+Write-Host "   " $domain1[0] 
+Write-Host -foregroundcolor White "  Action:" 
+Write-Host "   " $domain1[1]
+Write-Host -foregroundcolor White "  Domain:" 
+Write-Host "   " $domain2[0] 
+Write-Host -foregroundcolor White "  Action:" 
+Write-Host "   " $domain2[1]
+#Write-Host $bar
 
 
-Write-Host -foregroundcolor White " Domains: " 
-if ($SPDomainsOnline -like $SPDomainsOnprem){
 
-Write-Host -foregroundcolor Green " " $SPDomainsOnline.Domains
+if (($domain1[0]) -eq ($SPOnprem.Domains.Domain[0]) -OR (($domain1[0]) -eq ($SPOnprem.Domains.Domain[1])))
+{ 
+if (($domain2[0]) -eq ($SPOnprem.Domains.Domain[0]) -OR (($domain2[0]) -eq ($SPOnprem.Domains.Domain[1]))) 
+{
+if (($domain1[1]) -eq ($SPOnprem.Domains.Actions[0]) -OR (($domain1[1]) -eq ($SPOnprem.Domains.Actions[1]))) 
+{
+if (($domain2[1]) -eq ($SPOnprem.Domains.Actions[0]) -OR (($domain1[1]) -eq ($SPOnprem.Domains.Actions[1])))
+{
+Write-Host -foregroundcolor Green "`n  Exchange Online Sharing Domains match Exchange On Premise Sharing Policy Domain" 
+}
+}
+}
 }
 else
 {
-Write-Host -foregroundcolor Red " Domains are NOT correct."
-Write-Host -foregroundcolor White " Exchange Online Sharing domains: "
-write-Host -foregroundcolor White "Domain:" 
-Write-Host " " $domain1[0] 
-Write-Host -foregroundcolor White "Action:" 
-Write-Host " " $domain1[1]
-Write-Host -foregroundcolor White "Domain:" 
-Write-Host " " $domain2[0] 
-Write-Host -foregroundcolor White "Action:" 
-Write-Host " " $domain2[1]
-Write-Host -foregroundcolor White " Exchange On Premises Sharing domains:"
-Write-Host -foregroundcolor White " Domain:"
-Write-Host " " $SPOnprem.Domains.Domain[0]
-Write-Host -foregroundcolor White " Action:"
-Write-Host " " $SPOnprem.Domains.Actions[0]
-Write-Host -foregroundcolor White " Domain:"
-Write-Host " " $SPOnprem.Domains.Domain[1]
-Write-Host -foregroundcolor White " Action:"
-Write-Host " " $SPOnprem.Domains.Actions[1]
-Write-Host -foregroundcolor Yellow "Exchange Online Sharing domains should match the Exchange On Premises Sharing Domains"
+Write-Host -foregroundcolor Red "`n   Saring Domains appear not to be correct."
+Write-Host -foregroundcolor White "   Exchange Online Sharing Domains appear not to match Exchange On Premise Sharing Policy Domains" 
+
+#Write-Host -foregroundcolor White " Exchange Online Sharing domains: "
+#write-Host -foregroundcolor White "Domain:" 
+#Write-Host " " $domain1[0] 
+#Write-Host -foregroundcolor White "Action:" 
+#Write-Host " " $domain1[1]
+#Write-Host -foregroundcolor White "Domain:" 
+#Write-Host " " $domain2[0] 
+#Write-Host -foregroundcolor White "Action:" 
+#Write-Host " " $domain2[1]
+#Write-Host -foregroundcolor White " Exchange On Premises Sharing domains:"
+#Write-Host -foregroundcolor White " Domain:"
+#Write-Host " " $SPOnprem.Domains.Domain[0]
+#Write-Host -foregroundcolor White " Action:"
+#Write-Host " " $SPOnprem.Domains.Actions[0]
+#Write-Host -foregroundcolor White " Domain:"
+#Write-Host " " $SPOnprem.Domains.Domain[1]
+#Write-Host -foregroundcolor White " Action:"
+#Write-Host " " $SPOnprem.Domains.Actions[1]
+#Write-Host -foregroundcolor Yellow "Exchange Online Sharing domains should match the Exchange On Premises Sharing Domains"
 }
+$bar
 }
 
 
@@ -1495,6 +1757,7 @@ Write-Host -foregroundcolor White " Should be True"
 }
 }
 
+
 Function EXOtestoauthcheck{
 Write-Host -foregroundcolor Green " Test-OAuthConnectivity -Service EWS -TargetUri $Global:ExchangeOnPremEWS -Mailbox $useronline " 
 Write-Host $bar
@@ -1570,20 +1833,11 @@ ExchangeOnPremLocalDomainCheck
 
 # Free busy Lookup methods
 $OrgRel = Get-OrganizationRelationship | Where{($_.DomainNames -like $ExchangeOnlineDomain )} | select Enabled,Identity,DomainNames,FreeBusy*,Target*
-$IntraOrgCon = Get-IntraOrganizationConnector | Select Name,TargetAddressDomains,DiscoveryEndpoint,Enabled
-#if ($Auth -like "OAuth" -OR [string]::IsNullOrWhitespace($Auth))
-#{
-$EDiscoveryEndpoint = Get-IntraOrganizationConfiguration | select OnPremiseDiscoveryEndpoint
+$IntraOrgCon = Get-IntraOrganizationConnector -WarningAction SilentlyContinue -ErrorAction SilentlyContinue | Select Name,TargetAddressDomains,DiscoveryEndpoint,Enabled
+$EDiscoveryEndpoint = Get-IntraOrganizationConfiguration -WarningAction SilentlyContinue -ErrorAction SilentlyContinue | select OnPremiseDiscoveryEndpoint 
+$SPDomainsOnprem = Get-SharingPolicy -WarningAction SilentlyContinue -ErrorAction SilentlyContinue | fl Domains
+$SPOnprem = Get-SharingPolicy  -WarningAction SilentlyContinue -ErrorAction SilentlyContinue| Select *
 
-#fix 3
-$SPDomainsOnprem = Get-SharingPolicy | fl Domains
-$SPOnprem = Get-SharingPolicy | Select *
-#}
-
-#if ([string]::IsNullOrWhitespace($Auth))
-#{
-#Get-SUMMARY;
-#}
 
 if($Auth -like "DAuth" -and $IntraOrgCon.enabled -Like "True")
 {
@@ -1780,7 +2034,7 @@ Connect-ExchangeOnline
 
 
 # Variables
-$ExoOrgRel = Get-OrganizationRelationship | Where{($_.DomainNames -like $ExchangeOnPremDomain )} | select Enabled,Identity,DomainNames,FreeBusy*,Target*
+$Script:ExoOrgRel = Get-OrganizationRelationship | Where{($_.DomainNames -like $ExchangeOnPremDomain )} | select Enabled,Identity,DomainNames,FreeBusy*,Target*
 $ExoIntraOrgCon = Get-IntraOrganizationConnector | Select Name,TargetAddressDomains,DiscoveryEndpoint,Enabled
 $targetadepr1=("https://autodiscover." + $ExchangeOnPremDomain +"/autodiscover/autodiscover.svc/WSSecurity")
 $targetadepr2=("https://" + $ExchangeOnPremDomain +"/autodiscover/autodiscover.svc/WSSecurity")
