@@ -2091,7 +2091,6 @@ Write-Host $bar
 
 EXOtestoauthcheck
 Write-Host $bar
-
 }
 
  #endregion 
