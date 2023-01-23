@@ -672,21 +672,13 @@ Function TestOrgRel{
 $bar
 $TestFail = 0
 $OrgRelIdentity=$OrgRel.Identity
-#$OrgRelIdentity
-#Write-Host -foregroundcolor Green "Test-OrganizationRelationship -Identity "On-premises to O365*"  -UserIdentity $useronprem" 
 Write-Host -foregroundcolor Green "Test-OrganizationRelationship -Identity $OrgRelIdentity  -UserIdentity $useronprem" 
 
 #need to grab errors and provide alerts in error case 
 Write-Host $bar
-#this test needs to be more effective and Identity passed as variable
 $TestOrgRel = Test-OrganizationRelationship -Identity $OrgRelIdentity  -UserIdentity $useronprem -erroraction SilentlyContinue
 $TestOrgRel
-
-
-
-
 foreach( $test in $TestOrgRel.type) { 
-
 #$test
 if ($test -ne "Success"){
 Write-Host -foregroundcolor Red " $($test.Type)  "
@@ -1549,21 +1541,11 @@ Write-Host -foregroundcolor White " Should be True"
 
 Function EXOTestOrgRelCheck{
 $exoIdentity = $ExoOrgRel.Identity
-$exoIdentity
-
 Write-Host -foregroundcolor Green " Test-OrganizationRelationship -Identity $exoIdentity -UserIdentity $UserOnline"  
 Write-Host $bar
-
-#Write-Host -ForegroundColor Green $ExoOrgRel.Identity
-
-#troquei isto $exotestorgrel= Test-OrganizationRelationship -Identity 'O365 to On-premises*' -UserIdentity $UserOnline
 $exotestorgrel= Test-OrganizationRelationship -Identity $exoIdentity -UserIdentity $UserOnline
 $exotor = $exotestorgrel | fl
 $exotor
-#$bar
-
-#$exotestorgrel.Detail.FullId
-#$bar
 }
 
 Function SharingPolicyCheck{
