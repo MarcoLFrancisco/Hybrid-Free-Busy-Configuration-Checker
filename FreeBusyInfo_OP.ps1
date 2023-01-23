@@ -235,15 +235,15 @@ Write-Host -foregroundcolor Red "  TargetApplicationUri should be Outlook.com"
 $countOrgRelIssues++
 }
 #TargetOwaURL
-Write-Host  " TargetOwaURL:" 
-if ($OrgRel.TargetOwaURL -like "http://outlook.com/owa/$exchangeonpremdomain"){
-Write-Host -foregroundcolor Green "  TargetOwaURL is http://outlook.com/owa/$exchangeonlinedomain" 
-}
-else
-{
-Write-Host -foregroundcolor Red "  TargetOwaURL IS NOT http://outlook.com/owa/$exchangeonlinedomain" 
-$countOrgRelIssues++
-}
+#Write-Host  " TargetOwaURL:" 
+#if ($OrgRel.TargetOwaURL -like "http://outlook.com/owa/$exchangeonpremdomain"){
+#Write-Host -foregroundcolor Green "  TargetOwaURL is http://outlook.com/owa/$exchangeonlinedomain" 
+#}
+#else
+#{
+#Write-Host -foregroundcolor Red "  TargetOwaURL IS NOT http://outlook.com/owa/$exchangeonlinedomain" 
+#$countOrgRelIssues++
+#}
 #TargetSharingEpr
 Write-Host  " TargetSharingEpr:" 
 if ([string]::IsNullOrWhitespace($OrgRel.TargetSharingEpr) -or $OrgRel.TargetSharingEpr -eq "https://outlook.office365.com/EWS/Exchange.asmx "){
