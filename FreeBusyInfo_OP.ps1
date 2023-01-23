@@ -1991,7 +1991,6 @@ if ($Organization -like "Online" -OR [string]::IsNullOrWhitespace($Organization)
 
 {
 #region ConnectExo
-$bar
 Write-Host -ForegroundColor Green " Collecting Exchange Online Availability Information"
 $bar
 
