@@ -1,4 +1,4 @@
- #Exchange on Premise
+#Exchange on Premise
 
 #>
 
@@ -236,8 +236,15 @@ $countOrgRelIssues++
 }
 #TargetOwaURL
 Write-Host  " TargetOwaURL:" 
-if ($OrgRel.TargetOwaURL -like "http://outlook.com/owa/$exchangeonpremdomain"){
-Write-Host -foregroundcolor Green "  TargetOwaURL is http://outlook.com/owa/$exchangeonlinedomain" 
+if ($OrgRel.TargetOwaURL -like "http://outlook.com/owa/$exchangeonlinedomain" -or $OrgRel.TargetOwaURL -like $Null){
+
+if ($OrgRel.TargetOwaURL -like "http://outlook.com/owa/$exchangeonlinedomain"){
+Write-Host -foregroundcolor Green "  TargetOwaURL is http://outlook.com/owa/$exchangeonlinedomain. This is a possible standard value. TargetOwaURL can also be configured to be Blank." 
+}
+if ($OrgRel.TargetOwaURL -like $Null){
+Write-Host -foregroundcolor Green "  TargetOwaURL is Blank, this is a standard value. TargetOwaURL can also be configured to be http://outlook.com/owa/$exchangeonlinedomain" 
+}
+
 }
 else
 {
