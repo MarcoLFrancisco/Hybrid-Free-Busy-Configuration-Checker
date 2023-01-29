@@ -1,4 +1,4 @@
-# On-Premises-Hybrid-Free-Busy-Configuration-Checker
+# Hybrid-Free-Busy-Configuration-Checker
 
 Use: Collects Hybrid Availability Configuration Settings Both for Exchange On Premises and Exchange Online  
 
