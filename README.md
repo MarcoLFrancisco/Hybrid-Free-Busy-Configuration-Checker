@@ -9,7 +9,7 @@ This script does not make changes to corrent settings. It collects relevant conf
 This is a Beta Version. Please doublecheck on any information provided by this script before procceding to address any changes to your envoironment. Be advised that there may be incorrections in the provided output.
 
 
-Initial Scrren Output:
+Initial Screen Output:
 
 ![image](https://user-images.githubusercontent.com/3670637/215355627-ee99b28d-1753-4461-8cef-969340cbc7a3.png)
 
