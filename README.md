@@ -34,6 +34,20 @@ Required Permissions:
 
 Please make sure that the account used is a member of the Local Administrator group. This should be fulfilled on Exchange servers by being a member of the Organization Management group. However, if the group membership was adjusted or in case the script is executed on a non-Exchange system like a management server, you need to add your account to the Local Administrator group. 
 
+Other Pre Requisites:
+
+AD management Tools:
+
+If not available, they can be installed with the following command:
+
+  Install-windowsfeature -name AD-Domain-Services -IncludeManagementTools 
+
+Imports and Intalls the following Modules (if not available):
+
+PSSnapin: microsoft.exchange.management.powershell.snapin
+Module  : ActiveDirectory Module 
+Module  : ExchangeOnlineManagement Module 
+
                 
 Syntax:
 
