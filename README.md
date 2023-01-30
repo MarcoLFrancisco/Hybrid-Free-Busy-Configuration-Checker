@@ -45,7 +45,9 @@ Syntax:
   
 How To Run:
 
-- This script must be run as Administrator in Exchange Management Shell on an Exchange Server. You can provide no parameters and the script will just run against the local server and provide the detail output of the configuration of the server.
+- This script must be run as Administrator in Exchange Management Shell on an Exchange Server. You can provide no parameters and the script will just run against Exchnage On Premises and Exchange Online to query for OAuth and DAuth configuration setting. It will compare existing values with standard values and provide detail of what may not be correct. 
+
+- Please take note that though this script may output that a specific setting is not a standard sertting, it does not mean that your configurations are incorrect. For exmaple, DNS may be configured with specific mapppings that this script can not evaluate.
 
 
 
@@ -85,7 +87,7 @@ Valid Input Option Parameters:
 Examples:
 
 
-- This cmdlet will run Free Busy Checker script and check Organization Availability OAuth and DAuth Configurations both for Exchange On Premises and Exchange Online.
+- This cmdlet will run Free Busy Checker script and check Availability OAuth and DAuth Configurations both for Exchange On Premises and Exchange Online.
 
             PS C:\> .\FreeBusyChecker.ps1
 
