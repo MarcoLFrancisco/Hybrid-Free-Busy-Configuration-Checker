@@ -151,7 +151,7 @@ Function ExchangeOnlineDomainCheck{
 
 #$ExchangeOnlineDomain
 Write-Host -foregroundcolor Green " Exchange Online Domain: $ExchangeOnlineDomain" 
-$ExchangeOnlineDomaincheck = Read-Host " Press enter if OK or type in the Exchange Online Domain and press the Enter key."
+$ExchangeOnlineDomaincheck = $RH= Read-Host " Press Enter if OK or type in the Exchange Online Domain and press the Enter key."
 
 if (![string]::IsNullOrWhitespace($ExchangeOnlineDomaincheck))
 {
@@ -161,7 +161,7 @@ if (![string]::IsNullOrWhitespace($ExchangeOnlineDomaincheck))
 
 Function UseronpremCheck {
 Write-Host -foregroundcolor Green " On Premises Hybrid Mailbox: $Useronprem" 
-$Useronpremcheck = Read-Host " Press Enter if OK or type in an Exchange OnPremises Hybrid email address and press the Enter key."
+$Useronpremcheck = $RH= Read-Host " Press Enter if OK or type in an Exchange OnPremises Hybrid email address and press the Enter key."
 
 if (![string]::IsNullOrWhitespace($Useronpremcheck))
 {
@@ -172,7 +172,7 @@ if (![string]::IsNullOrWhitespace($Useronpremcheck))
 Function ExchangeOnPremDomainCheck {
 #$exchangeOnPremDomain
 Write-Host -foregroundcolor Green " On Premises Mail Domain: $exchangeOnPremDomain" 
-$exchangeOnPremDomaincheck = Read-Host " Press enter if OK or type in the Exchange On Premises Mail Domain and press the Enter key."
+$exchangeOnPremDomaincheck = $RH= Read-Host " Press Enter if OK or type in the Exchange On Premises Mail Domain and press the Enter key."
 
 if (![string]::IsNullOrWhitespace($exchangeOnPremDomaincheck))
 {
@@ -185,7 +185,7 @@ Function ExchangeOnPremEWSCheck{
 
 Write-Host -foregroundcolor Green " On Premises EWS External URL: $exchangeOnPremEWS" 
 
-$exchangeOnPremEWScheck = Read-Host " Press enter if OK or type in the Exchange On Premises EWS URL and press the Enter key."
+$exchangeOnPremEWScheck = $RH= Read-Host " Press Enter if OK or type in the Exchange On Premises EWS URL and press the Enter key."
 
 if (![string]::IsNullOrWhitespace($exchangeOnPremEWScheck))
 {
@@ -1916,18 +1916,18 @@ OrgRelCheck
 Write-Host $bar
 if ($pause -eq "True")
 {
-$pause = Read-Host " Press Enter when ready to check the Federation Information Details.  "   
+$RH= Read-Host " Press Enter when ready to check the Federation Information Details."   
 Write-Host $bar
-$pause = "True"
+#$pause = "True"
 #$pause
 }
 FedInfoCheck
 #$pause
 if ($pause -eq "True")
 {
-$pause = Read-Host " Press Enter when ready to check the Federation Trust configuration details. "   
+$RH= Read-Host " Press Enter when ready to check the Federation Trust configuration details. "   
 Write-Host $bar
-$pause = "True"
+#$pause = "True"
 }
 FedTrustCheck
 Write-Host $bar
@@ -1937,42 +1937,42 @@ Test-FederationTrustCertificate
 Write-Host $bar
 if ($pause -eq "True")
 {
-$pause = Read-Host " Press Enter when ready to check the On-Prem Autodiscover Virtual Directory configuration details. "   
+$RH= Read-Host " Press Enter when ready to check the On-Prem Autodiscover Virtual Directory configuration details. "   
 Write-Host $bar
-$pause = "True"
+#$pause = "True"
 }   
 AutoDVirtualDCheck
 Write-Host $bar
 if ($pause -eq "True")
 {
-$pause = Read-Host " Press Enter when ready to check the On-Prem Web Services Virtual Directory configuration details.. "   
+$RH= Read-Host " Press Enter when ready to check the On-Prem Web Services Virtual Directory configuration details. "   
 Write-Host $bar
-$pause = "True"
+#$pause = "True"
 }
 EWSVirtualDirectoryCheck
 if ($pause -eq "True")
 {
 Write-Host $bar
-$pause = Read-Host " Press Enter when ready to  check the Availability Address Space configuration details. "   
+$RH= Read-Host " Press Enter when ready to  check the Availability Address Space configuration details. "   
 #Write-Host $bar
-$pause = "True"
+#$pause = "True"
 }
 AvailabilityAddressSpaceCheck
 if ($pause -eq "True")
 {
 Write-Host $bar
-$pause = Read-Host " Press Enter when ready to test the Federation Trust. "   
+$RH= Read-Host " Press Enter when ready to test the Federation Trust. "   
 #Write-Host $bar
-$pause = "True"
+#$pause = "True"
 }
 #need to grab errors and provide alerts in error case 
 TestFedTrust
 if ($pause -eq "True")
 {
 Write-Host $bar
-$pause = Read-Host " Press Enter when ready to Test the Organization Relationship. "   
+$RH= Read-Host " Press Enter when ready to Test the Organization Relationship. "   
 #Write-Host $bar
-$pause = "True"
+#$pause = "True"
 }
 TestOrgRel
 }
@@ -1988,77 +1988,87 @@ if ($Auth -like "OAuth" -OR [string]::IsNullOrWhitespace($Auth))
 {
 if ($pause -eq "True")
 {
-$pause = Read-Host " Press Enter when ready to check the OAuth configuration details. "   
+$RH= Read-Host " Press Enter when ready to check the OAuth configuration details. "   
 Write-Host $bar
+#$pause = "True"
 }
 Write-Host -foregroundcolor Green " `n `n ************************************TestingOAuth configuration************************************************* `n `n " 
 Write-Host $bar
 IntraOrgConCheck
 Write-Host $bar
 if ($pause -eq "True"){
-$pause = Read-Host " Press Enter when ready to check the Auth Server configuration details. "   
+$RH= Read-Host " Press Enter when ready to check the Auth Server configuration details. "   
 Write-Host $bar
+#$pause = "True"
 }
 AuthServerCheck
-if ($pause -eq "True"){
-$pause = Read-Host " Press Enter when ready to check the Partner Application configuration details. "   
 Write-Host $bar
+if ($pause -eq "True"){
+$RH= Read-Host " Press Enter when ready to check the Partner Application configuration details. "   
+#Write-Host $bar
+#$pause = "True"
 }
 PartnerApplicationCheck
 Write-Host $bar
 if ($pause -eq "True")
 {
-$pause = Read-Host " Press Enter when ready to check the Exchange Online-ApplicationAccount configuration details. "   
-Write-Host $bar
+$RH= Read-Host " Press Enter when ready to check the Exchange Online-ApplicationAccount configuration details. "   
+#Write-Host $bar
+#$pause = "True"
 }
 ApplicationAccounCheck
 Write-Host $bar
 if ($pause -eq "True")
 {
-$pause = Read-Host " Press Enter when ready to check the Management Role Assignments for the Exchange Online-ApplicationAccount. "   
+$RH= Read-Host " Press Enter when ready to check the Management Role Assignments for the Exchange Online-ApplicationAccount. "   
 Write-Host $bar
+#$pause = "True"
 }
 ManagementRoleAssignmentCheck
 Write-Host $bar
 if ($pause -eq "True")
 {
-$pause = Read-Host " Press Enter when ready to check Auth configuration details. "   
+$RH= Read-Host " Press Enter when ready to check Auth configuration details. "   
 Write-Host $bar
+#$pause = "True"
 }
 AuthConfigCheck
 Write-Host $bar
 if ($pause -eq "True")
 {
-$pause = Read-Host " Press Enter when ready to check the Auth Certificate configuration details. "   
+$RH= Read-Host " Press Enter when ready to check the Auth Certificate configuration details. "   
 Write-Host $bar
+#$pause = "True"
 }
 CurrentCertificateThumbprintCheck
 Write-Host $bar
 if ($pause -eq "True")
 {
-$pause = Read-Host " Press Enter when ready to  check the On Prem Autodiscover Virtual Directory configuration details. "
+$RH= Read-Host " Press Enter when ready to  check the On Prem Autodiscover Virtual Directory configuration details. "
 Write-Host $bar
+#$pause = "True"
 }
 AutoDVirtualDCheckOAuth
 $AutoDiscoveryVirtualDirectoryOAuth
 Write-Host $bar
 if ($pause -eq "True")
 {
-$pause = Read-Host " Press Enter when ready to check the On-Prem Web Services Virtual Directory configuration details. "   
+$RH= Read-Host " Press Enter when ready to check the On-Prem Web Services Virtual Directory configuration details. "   
 Write-Host $bar
+#$pause = "True"
 }
 EWSVirtualDirectoryCheckOAuth
 Write-Host $bar
 if ($pause -eq "True")
 {
-$pause = Read-Host " Press Enter when ready to check the AvailabilityAddressSpace configuration details. "   
+$RH= Read-Host " Press Enter when ready to check the AvailabilityAddressSpace configuration details. "   
 Write-Host $bar
 }
 AvailabilityAddressSpaceCheckOAuth
 Write-Host $bar
 if ($pause -eq "True")
 {
-$pause = Read-Host " Press Enter when ready to test the OAuthConnectivity configuration details. "
+$RH= Read-Host " Press Enter when ready to test the OAuthConnectivity configuration details. "
 Write-Host $bar
 }
 OAuthConnectivityCheck
@@ -2120,21 +2130,22 @@ ExoOrgRelCheck
 Write-Host $bar
 if ($pause -eq "True")
 {
-$pause = Read-Host " Press Enter when ready to check the Federation Organization Identifier configuration details. "
+$RH= Read-Host " Press Enter when ready to check the Federation Organization Identifier configuration details. "
 Write-Host $bar
 }
 EXOFedOrgIdCheck
 Write-Host $bar
 if ($pause -eq "True")
 {
-$pause = Read-Host " Press Enter when ready to check the Organization Relationship configuration details. "   
+$RH= Read-Host " Press Enter when ready to check the Organization Relationship configuration details. "   
 Write-Host $bar
 }
 EXOTestOrgRelCheck
 if ($pause -eq "True")
 {
-$pause = Read-Host " Press Enter when ready to check the Sharing Policy configuration details. "
 Write-Host $bar
+$RH= Read-Host " Press Enter when ready to check the Sharing Policy configuration details. "
+
 }
 SharingPolicyCheck
 
@@ -2153,7 +2164,7 @@ ExoIntraOrgConCheck
 Write-Host $bar
 if ($pause -eq "True")
 {
-$pause = Read-Host " Press Enter when ready to check the Organizationconfiguration details. "
+$RH= Read-Host " Press Enter when ready to check the Organizationconfiguration details. "
 Write-Host $bar
 }
 
@@ -2161,7 +2172,7 @@ EXOIntraOrgConfigCheck
 Write-Host $bar
 if ($pause -eq "True")
 {
-$pause = Read-Host " Press Enter when ready to check the Authentication Server Authorization Details.  "   
+$RH= Read-Host " Press Enter when ready to check the Authentication Server Authorization Details.  "   
 Write-Host $bar
 }
 
@@ -2169,7 +2180,7 @@ EXOauthservercheck
 Write-Host $bar
 if ($pause -eq "True")
 {
-$pause = Read-Host " Press Enter when ready to test the OAuth Connectivity Details.  "   
+$RH= Read-Host " Press Enter when ready to test the OAuth Connectivity Details.  "   
 Write-Host $bar
 }
 
