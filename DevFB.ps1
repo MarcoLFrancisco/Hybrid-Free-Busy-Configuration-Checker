@@ -74,8 +74,10 @@ $AvailabilityAddressSpace = $null
 $Global:WebServicesVirtualDirectory = $null
 $bar = " =================================================================================================================="
 $logfile = "$PSScriptRoot\FreeBusyInfo_OP.txt"
+$startingDate = (get-date -format yyyyMMdd_HHmmss)
 $Logfile = [System.IO.Path]::GetFileNameWithoutExtension($logfile) + "_" + `
-(get-date -format yyyyMMdd_HHmmss) + ([System.IO.Path]::GetExtension($logfile))
+    $startingDate + ([System.IO.Path]::GetExtension($logfile))
+$htmlfile = "$PSScriptRoot\FBCheckerOutput_$($startingDate).html"
 Write-Host " `n`n "
 Start-Transcript -path $LogFile -append
 Write-Host $bar
@@ -278,9 +280,8 @@ Function ShowParameters {
             <div class='Black'><h2>Hybrid Free Busy Configuration:</h2></div>
             
            "
-
-    $html | Out-File -FilePath "$PSScriptRoot\FBCheckerOutput.html"
-
+           (get-date -format yyyyMMdd_HHmmss)
+    $html | Out-File -FilePath $htmlfile
 }
 #}
 #endregion
@@ -482,7 +483,7 @@ Function OrgRelCheck {
    
  </tr>
   "
-    $html | Out-File -FilePath "$PSScriptRoot\FBCheckerOutput.html"
+    $html | Out-File -FilePath $htmlfile
     Write-Host -foregroundcolor Yellow "`n  Reference: https://learn.microsoft.com/en-us/exchange/create-an-organization-relationship-exchange-2013-help"
 }
 
@@ -624,7 +625,7 @@ Function FedInfoCheck {
  </tr>
   "
 
-    $html | Out-File -FilePath "$PSScriptRoot\FBCheckerOutput.html"
+    $html | Out-File -FilePath $htmlfile
 }
 
 Function FedTrustCheck {
@@ -747,7 +748,7 @@ Function FedTrustCheck {
 </tr>
   "
     
-    $html | Out-File -FilePath "$PSScriptRoot\FBCheckerOutput.html"
+    $html | Out-File -FilePath $htmlfile
     Write-Host -foregroundcolor Yellow "`n  Reference: https://learn.microsoft.com/en-us/exchange/configure-a-federation-trust-exchange-2013-help"
 }
 
@@ -858,7 +859,7 @@ Function AutoDVirtualDCheck {
         Write-Host -foregroundcolor White "  Should be True "
     }
     Write-Host -foregroundcolor Yellow "`n  Reference: https://learn.microsoft.com/en-us/powershell/module/exchange/get-autodiscovervirtualdirectory?view=exchange-ps"
-    $html | Out-File -FilePath "$PSScriptRoot\FBCheckerOutput.html"
+    $html | Out-File -FilePath $htmlfile
 }
 
 Function EWSVirtualDirectoryCheck {
@@ -962,7 +963,7 @@ Function EWSVirtualDirectoryCheck {
     </td>
     </tr>
     "
-    $html | Out-File -FilePath "$PSScriptRoot\FBCheckerOutput.html"
+    $html | Out-File -FilePath $htmlfile
 }
 
 Function AvailabilityAddressSpaceCheck {
@@ -1054,7 +1055,7 @@ Function AvailabilityAddressSpaceCheck {
     <div> <b>ProxyUrl: </b> <span style='color:$tdAvailabilityAddressSpaceProxyUrlColor'>$tdAvailabilityAddressSpaceProxyUrl</span></div>
     </td>
     </tr>"
-    $html | Out-File -FilePath "$PSScriptRoot\FBCheckerOutput.html"
+    $html | Out-File -FilePath $htmlfile
 }
 
 Function TestFedTrust {
@@ -1146,7 +1147,7 @@ Function TestFedTrust {
         }
         $Script:html += "</td>"
     }
-    $html | Out-File -FilePath "$PSScriptRoot\FBCheckerOutput.html"
+    $html | Out-File -FilePath $htmlfile
 }
 
 Function TestOrgRel {
@@ -1211,7 +1212,7 @@ Function TestOrgRel {
     Write-Host $bar
     $Script:html += "</td>
     </tr>"
-    $html | Out-File -FilePath "$PSScriptRoot\FBCheckerOutput.html"
+    $html | Out-File -FilePath $htmlfile
 }
 
 #endregion
@@ -1274,6 +1275,14 @@ Function IntraOrgConCheck {
     # Build HTML table row
 
     $Script:html += "
+    <div class='Black'><p></p></div>
+
+    <div class='Black'><h2><b>`n Exchange On Premise Free Busy Configuration: `n</b></h2></div>
+
+    <div class='Black'><p></p></div>
+
+    <table style='width:100%'>
+
    <tr>
       <th colspan='2' style='text-align:center; color:white;'>Exchange On Premise OAuth Configuration</th>
     </tr>
@@ -1291,7 +1300,7 @@ Function IntraOrgConCheck {
     </tr>
   "
 
-    $html | Out-File -FilePath "$PSScriptRoot\FBCheckerOutput.html"
+    $html | Out-File -FilePath $htmlfile
 
 } 
 
@@ -1379,7 +1388,7 @@ Function AuthServerCheck {
     </tr>
   "
 
-    $html | Out-File -FilePath "$PSScriptRoot\FBCheckerOutput.html"
+    $html | Out-File -FilePath $htmlfile
 }
 
 Function PartnerApplicationCheck {
@@ -1500,7 +1509,7 @@ Function PartnerApplicationCheck {
     </tr>
   "
 
-    $html | Out-File -FilePath "$PSScriptRoot\FBCheckerOutput.html"
+    $html | Out-File -FilePath $htmlfile
 }
 
 Function ApplicationAccounCheck {
@@ -1560,7 +1569,7 @@ Function ApplicationAccounCheck {
     </tr>
   "
 
-    $html | Out-File -FilePath "$PSScriptRoot\FBCheckerOutput.html"
+    $html | Out-File -FilePath $htmlfile
 }
 
 Function ManagementRoleAssignmentCheck {
@@ -1694,7 +1703,7 @@ Function ManagementRoleAssignmentCheck {
     </tr>
   "
 
-    $html | Out-File -FilePath "$PSScriptRoot\FBCheckerOutput.html"
+    $html | Out-File -FilePath $htmlfile
 
 }
 
@@ -1767,7 +1776,7 @@ Function AuthConfigCheck {
     </tr>
   "
 
-    $html | Out-File -FilePath "$PSScriptRoot\FBCheckerOutput.html"
+    $html | Out-File -FilePath $htmlfile
 
 
 }
@@ -1892,7 +1901,7 @@ Function CurrentCertificateThumbprintCheck {
     </tr>
   "
 
-    $html | Out-File -FilePath "$PSScriptRoot\FBCheckerOutput.html"
+    $html | Out-File -FilePath $htmlfile
 
 
 }
@@ -2059,7 +2068,7 @@ Function AutoDVirtualDCheckOauth {
     #Write-Host $bar
 
 
-    $html | Out-File -FilePath "$PSScriptRoot\FBCheckerOutput.html"
+    $html | Out-File -FilePath $htmlfile
 
 
 
@@ -2238,7 +2247,7 @@ Function EWSVirtualDirectoryCheckOAuth {
         }
         Write-Host -foregroundcolor White "  Should be True "
     }
-    $html | Out-File -FilePath "$PSScriptRoot\FBCheckerOutput.html"
+    $html | Out-File -FilePath $htmlfile
 }
 
 Function AvailabilityAddressSpaceCheckOAuth {
@@ -2352,7 +2361,7 @@ Function AvailabilityAddressSpaceCheckOAuth {
     </tr>
   "
 
-    $html | Out-File -FilePath "$PSScriptRoot\FBCheckerOutput.html"
+    $html | Out-File -FilePath $htmlfile
 }
 
 Function OAuthConnectivityCheck {
@@ -2380,7 +2389,7 @@ Function OAuthConnectivityCheck {
         }
     }
 
-   # Write-Host $bar
+    # Write-Host $bar
     #$OAuthConnectivity.detail.LocalizedString
     Write-Host -foregroundcolor Green " Summary - Test OAuth Connectivity"
     Write-Host $bar
@@ -2420,7 +2429,7 @@ Function OAuthConnectivityCheck {
     </tr>
   "
 
-    $html | Out-File -FilePath "$PSScriptRoot\FBCheckerOutput.html"
+    $html | Out-File -FilePath $htmlfile
 }
 
 #endregion
@@ -2612,7 +2621,7 @@ Function ExoOrgRelCheck () {
 
 
     
-    $html | Out-File -FilePath "$PSScriptRoot\FBCheckerOutput.html"
+    $html | Out-File -FilePath $htmlfile
 
 
 
@@ -2677,7 +2686,7 @@ Function EXOFedOrgIdCheck {
 
 
     
-    $html | Out-File -FilePath "$PSScriptRoot\FBCheckerOutput.html"
+    $html | Out-File -FilePath $htmlfile
 
 
 }
@@ -2736,7 +2745,7 @@ Function EXOTestOrgRelCheck {
     $Script:html += "</td>
     </tr>"
     
-    $html | Out-File -FilePath "$PSScriptRoot\FBCheckerOutput.html"
+    $html | Out-File -FilePath $htmlfile
 
 }
 
@@ -2813,7 +2822,7 @@ Function SharingPolicyCheck {
 
 
     
-    $html | Out-File -FilePath "$PSScriptRoot\FBCheckerOutput.html"
+    $html | Out-File -FilePath $htmlfile
 }
 
 #endregion
@@ -2903,7 +2912,7 @@ Function EXOIntraOrgConCheck {
 
 
     
-    $html | Out-File -FilePath "$PSScriptRoot\FBCheckerOutput.html"
+    $html | Out-File -FilePath $htmlfile
 
 
 
@@ -2952,7 +2961,7 @@ Function EXOIntraOrgConfigCheck {
 
 
     
-    $html | Out-File -FilePath "$PSScriptRoot\FBCheckerOutput.html"
+    $html | Out-File -FilePath $htmlfile
 
 
 }
@@ -3026,7 +3035,7 @@ Function EXOauthservercheck {
 
 
     
-    $html | Out-File -FilePath "$PSScriptRoot\FBCheckerOutput.html"
+    $html | Out-File -FilePath $htmlfile
 
 }
 
@@ -3109,7 +3118,7 @@ Function EXOtestoauthcheck {
 
 
     
-    $html | Out-File -FilePath "$PSScriptRoot\FBCheckerOutput.html"
+    $html | Out-File -FilePath $htmlfile
 
 }
 
@@ -3129,7 +3138,7 @@ if ($IntraOrgCon.enabled -Like "True") {
      <div><p></p></div><div>  This script can be Run using the -Auth paramenter to check for OAuth configurations only. `n  Example: ./FreeBusyChecker.ps1 -Auth OAuth </div> <div><p></p></div>
 
     "
-    $html | Out-File -FilePath "$PSScriptRoot\FBCheckerOutput.html"
+    $html | Out-File -FilePath $htmlfile
 }
 
 if ($IntraOrgCon.enabled -Like "False") {
@@ -3140,7 +3149,7 @@ if ($IntraOrgCon.enabled -Like "False") {
      <div><p></p></div>
      <div>  This script can be Run using the -Auth paramenter to check for OAuth configurations only. Example: ./FreeBusyChecker.ps1 -Auth OAuth</div> <div><p></p></div>
     "
-    $html | Out-File -FilePath "$PSScriptRoot\FBCheckerOutput.html"
+    $html | Out-File -FilePath $htmlfile
 }
 
 do {
