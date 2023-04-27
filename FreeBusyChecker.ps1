@@ -1273,14 +1273,13 @@ Function IntraOrgConCheck {
 
 
     # Build HTML table row
-
-    $Script:html += "
-    <div class='Black'><p></p></div>
-
-    <div class='Black'><h2><b>`n Exchange On Premise Free Busy Configuration: `n</b></h2></div>
-
-    <div class='Black'><p></p></div>
-
+    if ($Auth -like "OAuth"){
+    	$Script:html += "
+    	<div class='Black'><p></p></div>
+    	<div class='Black'><h2><b>`n Exchange On Premise Free Busy Configuration: `n</b></h2></div>
+   	<div class='Black'><p></p></div>"
+	}
+	
     <table style='width:100%'>
 
    <tr>
