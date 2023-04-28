@@ -1,3 +1,48 @@
+<#
+.SYNOPSIS
+.\FreeBusyChecker.ps1 
+.DESCRIPTION
+The script can be used to validate the Availability configuration of the following Exchange Server Versions: - Exchange Server 2013 - Exchange Server 2016 - Exchange Server 2019 - Exchange Online
+
+Required Permissions:
+    Organization Management
+    Domain Admins (only necessary for the DCCoreRatio parameter)
+Please make sure that the account used is a member of the Local Administrator group. This should be fulfilled on Exchange servers by being a member of the Organization Management group. However, if the group membership was adjusted or in case the script is executed on a non-Exchange system like a management server, you need to add your account to the Local Administrator group.
+
+How To Run:
+This script must be run as Administrator in Exchange Management Shell on an Exchange Server. You can provide no parameters and the script will just run against Exchnage On Premises and Exchange Online to query for OAuth and DAuth configuration setting. It will compare existing values with standard values and provide detail of what may not be correct.
+Please take note that though this script may output that a specific setting is not a standard sertting, it does not mean that your configurations are incorrect. For exmaple, DNS may be configured with specific mapppings that this script can not evaluate.
+
+.PARAMETER Auth
+Allow you to choosse the authentication type to validate.
+.PARAMETER Org
+Allow you to choosse the organizartion type to validate.
+.PARAMETER Pause
+Pause after each test done..
+.PARAMETER Help
+Show help of this script.
+
+
+.EXAMPLE
+.\FreeBusyChecker.ps1 
+This cmdlet will run Free Busy Checker script and check Availability OAuth and DAuth Configurations both for Exchange On Premises and Exchange Online.
+.EXAMPLE
+.\FreeBusyChecker.ps1 -Auth OAuth
+This cmdlet will run the Free Busy Checker Script against for OAuth Availability Configurations only.
+.EXAMPLE
+.\FreeBusyChecker.ps1 -Auth DAuth
+This cmdlet will run the Free Busy Checker Script against for DAuth Availability Configurations only.
+.EXAMPLE
+.\FreeBusyChecker.ps1 -Org ExchangeOnline
+This cmdlet will run the Free Busy Checker Script for Exchange Online Availability Configurations only.
+.EXAMPLE
+.\FreeBusyChecker.ps1 -Org ExchangeOnPremise
+This cmdlet will run the Free Busy Checker Script for Exchange On Premises OAuth and DAuth Availability Configurations only.
+.EXAMPLE
+.\FreeBusyChecker.ps1 -Org ExchangeOnPremise -Auth OAuth -Pause
+This cmdlet will run the Free Busy Checker Script for Exchange On Premises Availability OAuth Configurations, pausing after each test done.
+#>
+
 #Exchange on Premise
 #>
 #region Properties and Parameters
@@ -5,61 +50,44 @@
 [CmdletBinding(DefaultParameterSetName = "FreeBusyInfo_OP", SupportsShouldProcess)]
 
 param(
-    [Parameter(Mandatory = $false, ParameterSetName = "Auth")]
-    [string]$Auth,
-    [string]$Pause,
-    [string]$Org,
-    [string]$Help
+    [Parameter(Mandatory = $false, ParameterSetName = "Test")]
+    [ValidateSet('DAuth', 'OAuth')]
+    [string[]]$Auth,
+    [Parameter(Mandatory = $false, ParameterSetName = "Test")]
+    [ValidateSet('ExchangeOnPremise', 'ExchangeOnline')]
+    [string[]]$Org,
+    [Parameter(Mandatory = $false, ParameterSetName = "Test")]
+    [switch]$Pause,
+    [Parameter(Mandatory = $true, ParameterSetName = "Help")]
+    [switch]$Help
 )
 
 Function ShowHelp {
     $bar
     Write-host -ForegroundColor Yellow "`n  Valid Input Option Parameters!"
     Write-Host -ForegroundColor White "`n  Paramater: Auth"
-    Write-Host -ForegroundColor White "   Options  : DAuth; OAUth; Null"
-    Write-Host  "    DAuth        : DAuth Authentication"
-    Write-Host  "    OAuth        : OAuth Authentication"
-    Write-Host  "    Default Value: Null. No swith input means the script will collect both DAuth and OAuth Availability Configuration Detail"
+    Write-Host -ForegroundColor White "   Options  : DAuth; OAUth"
+    Write-Host  "    DAuth             : DAuth Authentication"
+    Write-Host  "    OAuth             : OAuth Authentication"
+    Write-Host  "    Default Value     : No swith input means the script will collect both DAuth and OAuth Availability Configuration Detail"
     Write-Host -ForegroundColor White "`n  Paramater: Org"
-    Write-Host -ForegroundColor White "   Options  : EOP; EOL; Null"
-    Write-Host  "    EOP          : Use EOP parameter to collect Availability information in the Exchange On Premise Tenant"
-    Write-Host  "    EOL          : Use EOL parameter to collect Availability information in the Exchange Online Tenant"
-    Write-Host  "    Default Value: Null. No swith input means the script will collect both Exchange On Premise and Exchange OnlineAvailability configuration Detail"
+    Write-Host -ForegroundColor White "   Options  : ExchangeOnPremise; Exchange Online"
+    Write-Host  "    ExchangeOnPremise : Use ExchangeOnPremise parameter to collect Availability information in the Exchange On Premise Tenant"
+    Write-Host  "    ExchangeOnline    : Use Exchange Online parameter to collect Availability information in the Exchange Online Tenant"
+    Write-Host  "    Default Value     : No swith input means the script will collect both Exchange On Premise and Exchange OnlineAvailability configuration Detail"
     Write-Host -ForegroundColor White "`n  Paramater: Pause"
-    Write-Host -ForegroundColor White "   Options  : Null; True; False"
-    Write-Host  "    True         : Use the True parameter to use this script pausing after each test done."
-    Write-Host  "    False        : To use this script not pausing after each test done no Pause Parameter is needed."
-    Write-Host  "    Default Value: False. `n"
+    Write-Host  "                 : Use the Pause parameter to use this script pausing after each test done."
     Write-Host -ForegroundColor White "`n  Paramater: Help"
-    Write-Host -ForegroundColor White "   Options  : Null; True; False"
-    Write-Host  "    True         : Use the True parameter to use display valid parameter Options. `n`n"
+    Write-Host  "                 : Use the Help parameter to use display valid parameter Options. `n`n"
 }
 
-If ($Help -like "True") {
+If ($Help) {
     Write-Host $bar
     ShowHelp;
     $bar
     exit
 }
 
-if (![string]::IsNullOrWhitespace($Auth)) {
-    if ($Auth -notlike "DAuth" -And $Auth -notlike "OAuth") {
-        Write-host -ForegroundColor Red "`n  Invalid Input Option Parameters!"
-        ShowHelp
-        exit
-    }
-}
-
-if (![string]::IsNullOrWhitespace($Org)) {
-    if ($Org -notlike "EOL" -AND $Org -notlike "EOP") {
-        Write-host -ForegroundColor Red "`n  Invalid Input Option Parameters!"
-        ShowHelp
-        exit
-    }
-}
-
-#Set-ExecutionPolicy " Unrestricted"  -Scope Process -Confirm:$false
-#Set-ExecutionPolicy " Unrestricted"  -Scope CurrentUser -Confirm:$false
 Add-PSSnapin microsoft.exchange.management.powershell.snapin
 import-module ActiveDirectory
 Install-Module -Name ExchangeOnlineManagement
@@ -72,7 +100,11 @@ $Global:OrgRel
 $Global:SPDomainsOnprem
 $AvailabilityAddressSpace = $null
 $Global:WebServicesVirtualDirectory = $null
-$bar = " =================================================================================================================="
+$ConsoleWidth = $Host.UI.RawUI.WindowSize.Width
+$bar = "="
+for ( $i=1; $i -lt $ConsoleWidth; $i++){
+    $bar += "="
+}
 $logfile = "$PSScriptRoot\FreeBusyInfo_OP.txt"
 $startingDate = (get-date -format yyyyMMdd_HHmmss)
 $Logfile = [System.IO.Path]::GetFileNameWithoutExtension($logfile) + "_" + `
@@ -119,8 +151,6 @@ if ([string]::IsNullOrWhitespace($ADDomain)) {
 }
 $Script:fedinfoEOP = get-federationInformation -DomainName $ExchangeOnPremDomain  -BypassAdditionalDomainValidation -ErrorAction SilentlyContinue | Select-Object *
 #endregion
-
-
 
 #region Edit Parameters
 
@@ -211,8 +241,6 @@ Function ShowParameters {
     Write-Host -ForegroundColor White " Exchange Online Mailbox:"
     Write-Host -foregroundcolor Green "  $userOnline"
 
-
-        
 
     $script:html = "<!DOCTYPE html>
         <html>
@@ -1923,7 +1951,7 @@ Function AutoDVirtualDCheckOauth {
 
 
 
-    if ($Auth -like "OAuth") {
+    if ($Auth -contains "OAuth") {
     }
     Write-Host $bar
     Write-Host -foregroundcolor Green " Summary - Get-AutodiscoverVirtualDirectory"
@@ -2090,7 +2118,7 @@ Function EWSVirtualDirectoryCheckOAuth {
     <td >"
 
 
-    if ($Auth -like "OAuth") {
+    if ($Auth -contains "OAuth") {
     }
     Write-Host $bar
     Write-Host -foregroundcolor Green " Summary - On-Prem Get-WebServicesVirtualDirectory"
@@ -2256,7 +2284,7 @@ Function AvailabilityAddressSpaceCheckOAuth {
     $AvailabilityAddressSpace = Get-AvailabilityAddressSpace $exchangeOnlineDomain | Select-Object ForestName, UserName, UseServiceAccount, AccessMethod, ProxyUrl, Name
     $AAS = $AvailabilityAddressSpace | Format-List
     $AAS
-    if ($Auth -like "OAuth") {
+    if ($Auth -contains "OAuth") {
     }
     Write-Host $bar
     Write-Host -foregroundcolor Green " Summary - On-Prem Availability Address Space"
@@ -3125,7 +3153,7 @@ Function EXOtestoauthcheck {
 #endregion
 #cls
 $IntraOrgCon = Get-IntraOrganizationConnector -WarningAction SilentlyContinue -ErrorAction SilentlyContinue | Select-Object Name, TargetAddressDomains, DiscoveryEndpoint, Enabled
-#if($Auth -like "DAuth" -and $IntraOrgCon.enabled -Like "True")
+#if($Auth -contains "DAuth" -and $IntraOrgCon.enabled -Like "True")
 
 ShowParameters
 
@@ -3175,133 +3203,110 @@ $EDiscoveryEndpoint = Get-IntraOrganizationConfiguration -WarningAction Silently
 $SPDomainsOnprem = Get-SharingPolicy -WarningAction SilentlyContinue -ErrorAction SilentlyContinue | Format-List Domains
 $SPOnprem = Get-SharingPolicy  -WarningAction SilentlyContinue -ErrorAction SilentlyContinue | Select-Object *
 
-if ($Org -like "EOP" -OR [string]::IsNullOrWhitespace($Organization)) {
+if ($Org -contains 'EOP' -or -not $Org) {
     #region DAutch Checks
-    if ($Auth -like "dauth" -OR [string]::IsNullOrWhitespace($Auth)) {
+    if ($Auth -contains "DAuth" -OR -not $Auth) {
         Write-Host -foregroundcolor Green " `n `n ************************************TestingDAuth configuration************************************************* `n `n "
         OrgRelCheck
         Write-Host $bar
-        if ($pause -eq "True") {
+        if ($pause) {
             $RH = Read-Host " Press Enter when ready to check the Federation Information Details."
             Write-Host $bar
-            #$pause = "True"
-            #$pause
         }
         FedInfoCheck
-        #$pause
-        if ($pause -eq "True") {
+        if ($pause) {
             $RH = Read-Host " Press Enter when ready to check the Federation Trust configuration details. "
             Write-Host $bar
-            #$pause = "True"
         }
         FedTrustCheck
         
-        if ($pause -eq "True") {
+        if ($pause) {
             $RH = Read-Host " Press Enter when ready to check the On-Prem Autodiscover Virtual Directory configuration details. "
             Write-Host $bar
-            #$pause = "True"
         }
         AutoDVirtualDCheck
         Write-Host $bar
-        if ($pause -eq "True") {
+        if ($pause) {
             $RH = Read-Host " Press Enter when ready to check the On-Prem Web Services Virtual Directory configuration details. "
             Write-Host $bar
-            #$pause = "True"
         }
         EWSVirtualDirectoryCheck
-        if ($pause -eq "True") {
+        if ($pause) {
             Write-Host $bar
             $RH = Read-Host " Press Enter when ready to  check the Availability Address Space configuration details. "
-            #Write-Host $bar
-            #$pause = "True"
         }
         AvailabilityAddressSpaceCheck
-        if ($pause -eq "True") {
+        if ($pause) {
             Write-Host $bar
             $RH = Read-Host " Press Enter when ready to test the Federation Trust. "
-            #Write-Host $bar
-            #$pause = "True"
         }
         #need to grab errors and provide alerts in error case
         TestFedTrust
-        if ($pause -eq "True") {
+        if ($pause) {
             Write-Host $bar
             $RH = Read-Host " Press Enter when ready to Test the Organization Relationship. "
-            #Write-Host $bar
-            #$pause = "True"
         }
         TestOrgRel
     }
     #endregion
     #region OAuth Check
-    if ($Auth -like "OAuth" -OR [string]::IsNullOrWhitespace($Auth)) {
-        if ($pause -eq "True") {
+    if ($Auth -like "OAuth" -or -not $Auth) {
+        if ($pause) {
             $RH = Read-Host " Press Enter when ready to check the OAuth configuration details. "
             Write-Host $bar
-            #$pause = "True"
         }
         Write-Host -foregroundcolor Green " `n `n ************************************TestingOAuth configuration************************************************* `n `n "
         Write-Host $bar
         IntraOrgConCheck
         Write-Host $bar
-        if ($pause -eq "True") {
+        if ($pause) {
             $RH = Read-Host " Press Enter when ready to check the Auth Server configuration details. "
             Write-Host $bar
-            #$pause = "True"
         }
         AuthServerCheck
         Write-Host $bar
-        if ($pause -eq "True") {
+        if ($pause) {
             $RH = Read-Host " Press Enter when ready to check the Partner Application configuration details. "
-            #Write-Host $bar
-            #$pause = "True"
         }
         PartnerApplicationCheck
         Write-Host $bar
-        if ($pause -eq "True") {
+        if ($pause) {
             $RH = Read-Host " Press Enter when ready to check the Exchange Online-ApplicationAccount configuration details. "
-            #Write-Host $bar
-            #$pause = "True"
         }
         ApplicationAccounCheck
         Write-Host $bar
-        if ($pause -eq "True") {
+        if ($pause) {
             $RH = Read-Host " Press Enter when ready to check the Management Role Assignments for the Exchange Online-ApplicationAccount. "
             Write-Host $bar
-            #$pause = "True"
         }
         ManagementRoleAssignmentCheck
         Write-Host $bar
-        if ($pause -eq "True") {
+        if ($pause) {
             $RH = Read-Host " Press Enter when ready to check Auth configuration details. "
             Write-Host $bar
-            #$pause = "True"
         }
         AuthConfigCheck
         Write-Host $bar
-        if ($pause -eq "True") {
+        if ($pause) {
             $RH = Read-Host " Press Enter when ready to check the Auth Certificate configuration details. "
             Write-Host $bar
-            #$pause = "True"
         }
         CurrentCertificateThumbprintCheck
         Write-Host $bar
-        if ($pause -eq "True") {
+        if ($pause) {
             $RH = Read-Host " Press Enter when ready to  check the On Prem Autodiscover Virtual Directory configuration details. "
             Write-Host $bar
-            #$pause = "True"
         }
         AutoDVirtualDCheckOAuth
         $AutoDiscoveryVirtualDirectoryOAuth
         Write-Host $bar
-        if ($pause -eq "True") {
+        if ($pause) {
             $RH = Read-Host " Press Enter when ready to check the On-Prem Web Services Virtual Directory configuration details. "
             Write-Host $bar
-            #$pause = "True"
         }
         EWSVirtualDirectoryCheckOAuth
         Write-Host $bar
-        if ($pause -eq "True") {
+        if ($pause) {
             $RH = Read-Host " Press Enter when ready to check the AvailabilityAddressSpace configuration details. "
             Write-Host $bar
         }
@@ -3318,7 +3323,7 @@ if ($Org -like "EOP" -OR [string]::IsNullOrWhitespace($Organization)) {
     #endregion
 }
 # EXO Part
-if ($Org -like "EOL" -OR [string]::IsNullOrWhitespace($Organization)) {
+if ($Org -contains 'ExchangeOnline' -OR -not $Org) {
     #region ConnectExo
     #$bar
     Write-Host -ForegroundColor Green " Collecting Exchange Online Availability Information"
@@ -3362,23 +3367,35 @@ if ($Org -like "EOL" -OR [string]::IsNullOrWhitespace($Organization)) {
     
     #endregion
     #region ExoDauthCheck
-    if ($Auth -like "dauth" -OR [string]::IsNullOrWhitespace($Auth)) {
+    if ($Auth -contains "DAuth" -or -not $Auth) {
         Write-Host $bar
-        Write-Host -foregroundcolor Green " `n `n ************************************Testing DAuth configuration************************************************* `n `n "
+        $StringTest = "Testing DAuth configuration"
+        $side = ($ConsoleWidth - $StringTest.Length -2)/2
+        $sideString = "*"
+        for ( $i=1; $i -lt $side; $i++){
+            $sideString += "*"
+        }
+        if ($ConsoleWidth % 2) {
+            $fullString = "`n`n$sideString$StringTest$sideString**"
+        }
+        else {
+            $fullString = "`n`n$sideString$StringTest$sideString*"
+        }
+        Write-Host -foregroundcolor Green $fullString 
         ExoOrgRelCheck
         Write-Host $bar
-        if ($pause -eq "True") {
+        if ($pause) {
             $RH = Read-Host " Press Enter when ready to check the Federation Organization Identifier configuration details. "
             Write-Host $bar
         }
         EXOFedOrgIdCheck
         Write-Host $bar
-        if ($pause -eq "True") {
+        if ($pause) {
             $RH = Read-Host " Press Enter when ready to check the Organization Relationship configuration details. "
             Write-Host $bar
         }
         EXOTestOrgRelCheck
-        if ($pause -eq "True") {
+        if ($pause) {
             Write-Host $bar
             $RH = Read-Host " Press Enter when ready to check the Sharing Policy configuration details. "
         }
@@ -3386,24 +3403,36 @@ if ($Org -like "EOL" -OR [string]::IsNullOrWhitespace($Organization)) {
     }
     #endregion
     #region ExoOauthCheck
-    if ($Auth -like "oauth" -OR [string]::IsNullOrWhitespace($Auth)) {
-        Write-Host -foregroundcolor Green " `n `n ************************************Testing OAuth configuration************************************************* `n `n "
+    if ($Auth -contains "OAuth" -or -not $Auth) {
+        $StringTest = "Testing OAuth configuration"
+        $side = ($ConsoleWidth - $StringTest.Length -2 )/2
+        $sideString = ""
+        for ( $i=1; $i -lt $side; $i++){
+            $sideString += "*"
+        }
+        if ($ConsoleWidth % 2) {
+            $fullString = "`n`n$sideString$StringTest$sideString**"
+        }
+        else {
+            $fullString = "`n`n$sideString$StringTest$sideString*"
+        }
+        Write-Host -foregroundcolor Green $fullString 
         Write-Host $bar
         ExoIntraOrgConCheck
         Write-Host $bar
-        if ($pause -eq "True") {
+        if ($pause) {
             $RH = Read-Host " Press Enter when ready to check the Organizationconfiguration details. "
             Write-Host $bar
         }
         EXOIntraOrgConfigCheck
         Write-Host $bar
-        if ($pause -eq "True") {
+        if ($pause) {
             $RH = Read-Host " Press Enter when ready to check the Authentication Server Authorization Details.  "
             Write-Host $bar
         }
         EXOauthservercheck
         Write-Host $bar
-        if ($pause -eq "True") {
+        if ($pause) {
             $RH = Read-Host " Press Enter when ready to test the OAuth Connectivity Details.  "
             Write-Host $bar
         }
