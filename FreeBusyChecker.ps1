@@ -102,7 +102,7 @@ $AvailabilityAddressSpace = $null
 $Global:WebServicesVirtualDirectory = $null
 $ConsoleWidth = $Host.UI.RawUI.WindowSize.Width
 $bar = "="
-for ( $i=1; $i -lt $ConsoleWidth; $i++){
+for ( $i = 1; $i -lt $ConsoleWidth; $i++) {
     $bar += "="
 }
 $logfile = "$PSScriptRoot\FreeBusyInfo_OP.txt"
@@ -3206,7 +3206,18 @@ $SPOnprem = Get-SharingPolicy  -WarningAction SilentlyContinue -ErrorAction Sile
 if ($Org -contains 'EOP' -or -not $Org) {
     #region DAutch Checks
     if ($Auth -contains "DAuth" -OR -not $Auth) {
-        Write-Host -foregroundcolor Green " `n `n ************************************TestingDAuth configuration************************************************* `n `n "
+        $StringTest = "Testing DAuth configuration"
+        $side = ($ConsoleWidth - $StringTest.Length - 2) / 2
+        $sideString = "*"
+        for ( $i = 1; $i -lt $side; $i++) {
+            $sideString += "*"
+        }
+        if ($ConsoleWidth % 2) {
+            $fullString = "`n`n$sideString$StringTest$sideString**"
+        }
+        else {
+            $fullString = "`n`n$sideString$StringTest$sideString*"
+        }
         OrgRelCheck
         Write-Host $bar
         if ($pause) {
@@ -3255,7 +3266,18 @@ if ($Org -contains 'EOP' -or -not $Org) {
             $RH = Read-Host " Press Enter when ready to check the OAuth configuration details. "
             Write-Host $bar
         }
-        Write-Host -foregroundcolor Green " `n `n ************************************TestingOAuth configuration************************************************* `n `n "
+        $StringTest = "Testing OAuth configuration"
+        $side = ($ConsoleWidth - $StringTest.Length - 2) / 2
+        $sideString = "*"
+        for ( $i = 1; $i -lt $side; $i++) {
+            $sideString += "*"
+        }
+        if ($ConsoleWidth % 2) {
+            $fullString = "`n`n$sideString$StringTest$sideString**"
+        }
+        else {
+            $fullString = "`n`n$sideString$StringTest$sideString*"
+        }
         Write-Host $bar
         IntraOrgConCheck
         Write-Host $bar
@@ -3370,9 +3392,9 @@ if ($Org -contains 'ExchangeOnline' -OR -not $Org) {
     if ($Auth -contains "DAuth" -or -not $Auth) {
         Write-Host $bar
         $StringTest = "Testing DAuth configuration"
-        $side = ($ConsoleWidth - $StringTest.Length -2)/2
+        $side = ($ConsoleWidth - $StringTest.Length - 2) / 2
         $sideString = "*"
-        for ( $i=1; $i -lt $side; $i++){
+        for ( $i = 1; $i -lt $side; $i++) {
             $sideString += "*"
         }
         if ($ConsoleWidth % 2) {
@@ -3405,9 +3427,9 @@ if ($Org -contains 'ExchangeOnline' -OR -not $Org) {
     #region ExoOauthCheck
     if ($Auth -contains "OAuth" -or -not $Auth) {
         $StringTest = "Testing OAuth configuration"
-        $side = ($ConsoleWidth - $StringTest.Length -2 )/2
+        $side = ($ConsoleWidth - $StringTest.Length - 2 ) / 2
         $sideString = ""
-        for ( $i=1; $i -lt $side; $i++){
+        for ( $i = 1; $i -lt $side; $i++) {
             $sideString += "*"
         }
         if ($ConsoleWidth % 2) {
