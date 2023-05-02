@@ -18,12 +18,17 @@ Example Screen Output:
 
 ![image](https://user-images.githubusercontent.com/3670637/215355627-ee99b28d-1753-4461-8cef-969340cbc7a3.png)
 
+Example TXT Output:
 
+![image](https://user-images.githubusercontent.com/98214653/235616232-b0d66185-ec5f-4ff7-a81a-f7250f9accc1.png)
+
+Example HTML Output
+
+![image](https://user-images.githubusercontent.com/98214653/235616353-b36d6dcd-e8c3-4652-b4ed-d672ebdc79d4.png)
 
 Supported Exchange Server Versions:
 
 The script can be used to validate the Availability configuration of the following Exchange Server Versions: - Exchange Server 2013 - Exchange Server 2016 - Exchange Server 2019 - Exchange Online
-
 
 
 Required Permissions:
