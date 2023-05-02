@@ -308,13 +308,13 @@ Function ShowParameters {
             <div class='Black'><h2>Hybrid Free Busy Configuration:</h2></div>
             
            "
-           (get-date -format yyyyMMdd_HHmmss)
+           #(get-date -format yyyyMMdd_HHmmss)
     $html | Out-File -FilePath $htmlfile
 }
 #}
 #endregion
 
-#regionDAuth Functions
+#region DAuth Functions
 
 Function OrgRelCheck {
     Write-Host $bar
@@ -377,7 +377,7 @@ Function OrgRelCheck {
     }
     else {
         Write-Host -foregroundcolor Red "  TargetApplicationUri should be Outlook.com"
-        $tdTargetApplicationUri = "TargetApplicationUri is Outlook.com"
+        $tdTargetApplicationUri = "TargetApplicationUri should be Outlook.com"
         $tdTargetApplicationUriColor = "red"
         $countOrgRelIssues++
     }
@@ -389,12 +389,21 @@ Function OrgRelCheck {
             $tdOrgRelTargetOwaURL = " $($OrgRel.TargetOwaURL) - TargetOwaURL is http://outlook.com/owa/$exchangeonlinedomain. This is a possible standard value. TargetOwaURL can also be configured to be Blank."
             $tdOrgRelTargetOwaURLColor = "green"
         }
+        if ($OrgRel.TargetOwaURL -like "http://outlook.office.com/mail") {
+            Write-Host -foregroundcolor Green "  TargetOwaURL is http://outlook.office.com/mail. This is a possible standard value. TargetOwaURL can also be configured to be Blank or http://outlook.com/owa/$exchangeonlinedomain."
+            $tdOrgRelTargetOwaURL = " $($OrgRel.TargetOwaURL) - TargetOwaURL is http://outlook.office.com/mail. TargetOwaURL can also be configured to be Blank or http://outlook.com/owa/$exchangeonlinedomain."
+            $tdOrgRelTargetOwaURLColor = "green"
+        }
         if ($OrgRel.TargetOwaURL -like $Null) {
             Write-Host -foregroundcolor Green "  TargetOwaURL is Blank, this is a standard value. "
-            Write-Host  "  TargetOwaURL can also be configured to be http://outlook.com/owa/$exchangeonlinedomain"
-            $tdOrgRelTargetOwaURL = "$($OrgRel.TargetOwaURL) . TargetOwaURL is Blank, this is a standard value. TargetOwaURL can also be configured to be http://outlook.com/owa/ironmailsystems.onmicrosoft.com "
+            Write-Host  "  TargetOwaURL can also be configured to be http://outlook.com/owa/$exchangeonlinedomain or http://outlook.office.com/mail"
+            $tdOrgRelTargetOwaURL = "$($OrgRel.TargetOwaURL) . TargetOwaURL is Blank, this is a standard value. TargetOwaURL can also be configured to be http://outlook.com/owa/$exchangeonlinedomain or http://outlook.office.com/mail. "
             $tdOrgRelTargetOwaURLColor = "green"
-        
+            if ($OrgRel.TargetOwaURL -like "http://outlook.com/owa/$exchangeonlinedomain") {
+                Write-Host -foregroundcolor Green "  TargetOwaURL is http://outlook.com/owa/$exchangeonlinedomain. This is a possible standard value. TargetOwaURL can also be configured to be Blank or http://outlook.office.com/mail."
+                $tdOrgRelTargetOwaURL = " $($OrgRel.TargetOwaURL) - TargetOwaURL is http://outlook.com/owa/$exchangeonlinedomain. This is a possible standard value. TargetOwaURL can also be configured to be Blank or http://outlook.office.com/mail."
+                $tdOrgRelTargetOwaURLColor = "green"
+            }
         
         }
     }
@@ -436,12 +445,21 @@ Function OrgRelCheck {
         $countOrgRelIssues++
     }
     #TargetAutodiscoverEpr:
+    $OrgRelTargetAutodiscoverEpr = $OrgRel.TargetAutodiscoverEpr
+    If ([string]::IsNullOrWhitespace($OrgRelTargetAutodiscoverEpr))
+        {
+            $OrgRelTargetAutodiscoverEpr = "Blank" 
+        }    
     Write-Host -foregroundcolor White   " TargetAutodiscoverEpr:"
     if ($OrgRel.TargetAutodiscoverEpr -like "https://autodiscover-s.outlook.com/autodiscover/autodiscover.svc/WSSecurity" ) {
         Write-Host -foregroundcolor Green "  TargetAutodiscoverEpr is correct"
+        $tdTargetAutodiscoverEPR = " TargetAutodiscoverEpr is https://autodiscover-s.outlook.com/autodiscover/autodiscover.svc/WSSecurity"
+        $tdTargetAutodiscoverEPRColor = "green"
     }
     else {
-        Write-Host -foregroundcolor Red "  TargetAutodiscoverEpr is not correct"
+        Write-Host -foregroundcolor Red "  TargetAutodiscoverEpr is not correct. Should be https://autodiscover-s.outlook.com/autodiscover/autodiscover.svc/WSSecurity"
+        $tdTargetAutodiscoverEPR = " TargetAutodiscoverEpr is $OrgRelTargetAutodiscoverEpr . Should be https://autodiscover-s.outlook.com/autodiscover/autodiscover.svc/WSSecurity"
+        $tdTargetAutodiscoverEPRColor = "Red"
         $countOrgRelIssues++
     }
     #Enabled
@@ -502,6 +520,7 @@ Function OrgRelCheck {
         <div> <b>FreeBusyAccessEnabled: </b> <span style='color:$tdFBAccessEnabledColor'>$tdFBAccessEnabled</span></div> 
         <div> <b>FreeBusyAccessLevel: </b> <span style='color:$tdFBAccessLevelColor'>$tdFBAccessLevel</span></div> 
         <div> <b>TargetApplicationUri: </b> <span style='color:$tdTargetApplicationUriColor'>$tdTargetApplicationUri</span></div> 
+        <div> <b>TargetAutodiscoverEPR: </b> <span style='color:$tdTargetAutodiscoverEPRColor'>$tdTargetAutodiscoverEPR</span></div> 
         <div> <b>TargetOwaURL: </b> <span style='color:$tdOrgRelTargetOwaURLColor'>$tdOrgRelTargetOwaURL</span></div> 
         <div> <b>TargetSharingEpr: </b> <span style='color:$tdTargetSharingEprColor'>$tdTargetSharingEpr</span></div> 
         <div> <b>FreeBusyAccessScope: </b> <span style='color:$tdFreeBusyAccessScopeColor'>$tdFreeBusyAccessScope</span></div> 
@@ -570,16 +589,16 @@ Function FedInfoCheck {
     }
     #TargetAutodiscoverEpr
     Write-Host -foregroundcolor White   "  TargetAutodiscoverEpr:"
-    if ($OrgRel.TargetAutodiscoverEpr -like "https://autodiscover-s.outlook.com/autodiscover/autodiscover.svc/WSSecurity") {
+    if ($fedinfo.TargetAutodiscoverEpr -like "https://autodiscover-s.outlook.com/autodiscover/autodiscover.svc/WSSecurity") {
         Write-Host -foregroundcolor Green "   "$fedinfo.TargetAutodiscoverEpr
         $tdTargetAutodiscoverEprColor = "green"
         $tdTargetAutodiscoverEprFL = $fedinfo.TargetAutodiscoverEpr
     }
     else {
         Write-Host -foregroundcolor Red "   "$fedinfo.TargetAutodiscoverEpr
-        Write-Host -foregroundcolor Red   "  $($fedinfo.TargetAutodiscoverEpr) . TargetAutodiscoverEpr should be https://autodiscover-s.outlook.com/autodiscover/autodiscover.svc/WSSecurity"
+        Write-Host -foregroundcolor Red   " TargetAutodiscoverEpr should be https://autodiscover-s.outlook.com/autodiscover/autodiscover.svc/WSSecurity"
         $tdTargetAutodiscoverEprColor = "red"
-        $tdTargetAutodiscoverEprFL = "  $($fedinfo.TargetAutodiscoverEpr) . TargetAutodiscoverEpr should be https://autodiscover-s.outlook.com/autodiscover/autodiscover.svc/WSSecurity"
+        $tdTargetAutodiscoverEprFL = "   TargetAutodiscoverEpr should be https://autodiscover-s.outlook.com/autodiscover/autodiscover.svc/WSSecurity"
     }
     # Federation Information TargetApplicationUri vs Organization Relationship TargetApplicationUri
     Write-Host -ForegroundColor White "  Federation Information TargetApplicationUri vs Organization Relationship TargetApplicationUri "
@@ -1182,6 +1201,13 @@ Function TestOrgRel {
     $bar
     $TestFail = 0
     $OrgRelIdentity = $OrgRel.Identity
+    
+    $OrgRelTargetApplicationUri = $OrgRel.TargetApplicationUri
+
+
+    if ( $OrgRelTargetApplicationUri -like "Oulook.com") {
+
+
     $Script:html += "<tr>
     <th colspan='2' style='color:white;'><b>Summary - Test-OrganizationRelationship</b></th>
     </tr>
@@ -1191,7 +1217,7 @@ Function TestOrgRel {
     Write-Host -foregroundcolor Green "Test-OrganizationRelationship -Identity $OrgRelIdentity  -UserIdentity $useronprem"
     #need to grab errors and provide alerts in error case
     Write-Host $bar
-    $TestOrgRel = Test-OrganizationRelationship -Identity $OrgRelIdentity  -UserIdentity $useronprem -erroraction SilentlyContinue -warningaction SilentlyContinue
+    $TestOrgRel = Test-OrganizationRelationship -Identity "$($OrgRelIdentity)"  -UserIdentity $useronprem -erroraction SilentlyContinue -warningaction SilentlyContinue
     #$TestOrgRel
     if ($TestOrgRel[16] -like "No Significant Issues to Report") {
         Write-Host -foregroundcolor Green "`n No Significant Issues to Report"
@@ -1208,36 +1234,50 @@ Function TestOrgRel {
     $i = 0
     while ($i -lt $TestOrgRel.Length) {
         $element = $TestOrgRel[$i]
-        if ($element.Contains("RESULT: Success.")) {
+        #if ($element.Contains("RESULT: Success.")) {
+        if ($element -like "*RESULT: Success.*") {
             $TestOrgRelStep = $TestOrgRel[$i - 1]
             $TestOrgRelStep
             Write-Host -ForegroundColor Green "$element"
+            if (![string]::IsNullOrWhitespace($TestOrgRelStep)) {
             $Script:html += "
-            <div> <b> $TestOrgRelStep :</b> <span style='color:green'>$element</span>"
+            <div></b> <span style='color:black'> <b> $TestOrgRelStep :</b></span> <span style='color:green'>$element</span></div>"
         }
+        }
+
         else {
-            if ($element.Contains("RESULT: Error")) {
+            if ($element -like "*RESULT: Error*") {
                 $TestOrgRelStep = $TestOrgRel[$i - 1]
                 $TestOrgRelStep
                 Write-Host -ForegroundColor Red "$element"
+                if (![string]::IsNullOrWhitespace($TestOrgRelStep)) {    
                 $Script:html += "
-                div> <b> $TestOrgRelStep : </b> <span style='color:red'>$element</span>"
+                <div></b> <span style='color:black'> <b> $TestOrgRelStep : </b></span> <span style='color:red'>$element</span></div>"
+            }
             }
         }
         $i++
     }
-    if ($TestFail -eq "0") {
-        #Write-Host -foregroundcolor Green " Organization Relationship Successfully tested `n "
-        $Script:html += "
-        $testType : $testMessage"
-    }
-    else {
-        $Script:html += "
-        Organization Relationship test with Errors"
-        #Check this an that
-    }
-    Write-host -ForegroundColor Yellow "`n  Reference: https://techcommunity.microsoft.com/t5/exchange-team-blog/how-to-address-federation-trust-issues-in-hybrid-configuration/ba-p/1144285"
+}
+else {
+    Write-Host -foregroundcolor Green " Test-OrganizationRelationship -Identity $OrgRelIdentity  -UserIdentity $useronprem"
+    #need to grab errors and provide alerts in error case
     Write-Host $bar
+    $Script:html += "<tr>
+    <th colspan='2' style='color:white;'><b>Summary - Test-OrganizationRelationship</b></th>
+    </tr>
+    <tr>
+    <td><b>Test-OrganizationRelationship</b></td>
+    <td>"
+    Write-Host -foregroundcolor Red "`n Test-OrganizationRelationship can't be run if the Organization Relationship Target Application uri is not correct. Organization Relationship Target Application Uri should be Outlook.com"
+    $Script:html += "
+    <div class='red'> <b> Test-OrganizationRelationship can't be run if the Organization Relationship Target Application uri is not correct. Organization Relationship Target Application Uri should be Outlook.com</b><div>"
+}
+
+
+    
+    Write-host -ForegroundColor Yellow "`n  Reference: https://techcommunity.microsoft.com/t5/exchange-team-blog/how-to-address-federation-trust-issues-in-hybrid-configuration/ba-p/1144285"
+    #Write-Host $bar
     $Script:html += "</td>
     </tr>"
     $html | Out-File -FilePath $htmlfile
@@ -1302,12 +1342,15 @@ Function IntraOrgConCheck {
 
     # Build HTML table row
     if ($Auth -like "OAuth"){
-    	$Script:html += "
-    	<div class='Black'><p></p></div>
-    	<div class='Black'><h2><b>`n Exchange On Premise Free Busy Configuration: `n</b></h2></div>
-   	<div class='Black'><p></p></div>"
-	}
-	
+        $Script:html += "
+        <div class='Black'><p></p></div>
+    
+        <div class='Black'><h2><b>`n Exchange On Premise Free Busy Configuration: `n</b></h2></div>
+    
+        <div class='Black'><p></p></div>"
+    }
+        $Script:html += "
+
     <table style='width:100%'>
 
    <tr>
@@ -1419,7 +1462,7 @@ Function AuthServerCheck {
 }
 
 Function PartnerApplicationCheck {
-    Write-Host $bar
+    #Write-Host $bar
     Write-Host -foregroundcolor Green " Get-PartnerApplication |  ?{$_.ApplicationIdentifier -eq '00000002-0000-0ff1-ce00-000000000000'
     -and $_.Realm -eq ''} | Select Enabled, ApplicationIdentifier, CertificateStrings, AuthMetadataUrl, Realm, UseAuthServer,
     AcceptSecurityIdentifierInformation, LinkedAccount, IssuerIdentifier, AppOnlyPermissions, ActAsPermissions, Name"
@@ -1540,10 +1583,11 @@ Function PartnerApplicationCheck {
 }
 
 Function ApplicationAccounCheck {
-    Write-Host $bar
+    #Write-Host $bar
     Write-Host -foregroundcolor Green " Get-user '$exchangeOnPremLocalDomain/Users/Exchange Online-ApplicationAccount' | Select Name, RecipientType, RecipientTypeDetails, UserAccountControl"
     Write-Host $bar
     $ApplicationAccount = Get-user "$exchangeOnPremLocalDomain/Users/Exchange Online-ApplicationAccount"  | Select-Object Name, RecipientType, RecipientTypeDetails, UserAccountControl
+    $ApplicationAccount
     $tdApplicationAccountRecipientType = $ApplicationAccount.RecipientType
     $tdApplicationAccountRecipientTypeDetails = $ApplicationAccount.RecipientTypeDetails
     $tdApplicationAccountUserAccountControl = $ApplicationAccount.UserAccountControl
@@ -2720,55 +2764,110 @@ Function EXOFedOrgIdCheck {
 
 Function EXOTestOrgRelCheck {
     $exoIdentity = $ExoOrgRel.Identity
-    Write-Host -foregroundcolor Green " Test-OrganizationRelationship -Identity $exoIdentity -UserIdentity $UserOnline"
-    Write-Host $bar
-    $exotestorgrel = Test-OrganizationRelationship -Identity $exoIdentity -UserIdentity $UserOnline
-    #$exotor = $exotestorgrel | Format-List
-    #$exotor
-
+    
+    $exoOrgRelTragetApplicationUri = $exoOrgRel.TargetApplicationUri
+    $exoOrgRelTragetOWAurl = $ExoOrgRel.TargetOwaURL
 
     $script:html += "
-    <tr>
-      <th colspan='2' style='color:white;'>Summary - Test-OrganizationRelationship</th>
-    </tr>
-    <tr>
-      <td><b>  Test-OrganizationRelationship -Identity $exoIdentity -UserIdentity $UserOnline</b></td>
-     
-      <td>
-  "
-    $exotestorgrel[0]
-    $exotestorgrel[1]
-    $i = 0
-    while ($i -lt $exotestorgrel.Length) {
-        $element = $exotestorgrel[$i]
-        if ($element -like "*RESULT: Success.*") {
-            $exotestorgrelStep = $exotestorgrel[$i - 1]
-            $exotestorgrelStep
-            Write-Host -ForegroundColor Green "$element"
-            $Script:html += "
-            <div> <b> $exotestorgrelStep :</b> <span style='color:green'> $element</span>"
-        }
-        else {
-            if ($element -like "*RESULT: Error") {
-                $exotestorgrelStep = $exotestorgrel[$i - 1]
-                $exotestorgrelStep
-                Write-Host -ForegroundColor Red "$element"
-                $Script:html += "
-                div> <b> $exotestorgrelStep : </b> <span style='color:red'> $element</span>"
+        <tr>
+            <th colspan='2' style='color:white;'>Summary - Test-OrganizationRelationship</th>
+        </tr>
+        <tr>
+            <td><b>  Test-OrganizationRelationship -Identity $exoIdentity -UserIdentity $UserOnline</b></td>
+        <td>"
+
+
+
+    Write-Host -foregroundcolor Green " Test-OrganizationRelationship -Identity $exoIdentity -UserIdentity $UserOnline"
+    Write-Host $bar
+
+    if ((![string]::IsNullOrWhitespace($exoOrgRelTragetApplicationUri)) -or (![string]::IsNullOrWhitespace($exoOrgRelTragetOWAUrl))) {
+        $exotestorgrel = Test-OrganizationRelationship -Identity $exoIdentity -UserIdentity $UserOnline -WarningAction SilentlyContinue
+    
+        $i = 2
+    
+
+        while ($i -lt $exotestorgrel.Length) {
+            $element = $exotestorgrel[$i]
+        
+            $aux = "0"
+  
+            if ($element -like "*RESULT:*" -and $aux -like "0") {   
+                $el = $element.TrimStart()
+                if ($element -like "*Success.*") {
+                    Write-Host -ForegroundColor Green "  $el"
+                    $Script:html += "
+            <div> <b> $exotestorgrelStep </b> <span style='color:green'>&emsp; $el</span>"
+                    $aux = "1"
+                }
+                elseif ($element -like "*Error*" -or $element -like "*Unable*") {
+                    $Script:html += "
+                <div> <b> $exotestorgrelStep </b> <span style='color:red'>&emsp; $el</span>"
+                    Write-Host -ForegroundColor Red "  $el"
+                    $aux = "1"
+                }
             }
+            elseif ($aux -like "0" ) {
+                if ($element -like "*STEP*" -or $element -like "*Complete*") {
+                    Write-Host -ForegroundColor White "  $element"
+                    $Script:html += "
+               <p></p>
+                <div> <b> $exotestorgrelStep </b> <span style='color:black'> $element</span></div>"
+                    $aux = "1"
+                }
+                else {
+                    $ID = $element.ID
+                    $Status = $element.Status
+                    $Description = $element.Description 
+                    if (![string]::IsNullOrWhitespace($ID)) {
+                        Write-Host -ForegroundColor White "`n  ID         : $ID"
+                        $Script:html += "<div> <b>&emsp; ID &emsp;&emsp;&emsp;&emsp;&emsp;&nbsp;:</b> <span style='color:black'> $ID</span></div>"
+                        if ($Status -like "*Success*") {
+                            Write-Host -ForegroundColor White "  Status     : $Status"
+                            $Script:html += "<div> <b>&emsp; Status &emsp;&emsp;&ensp;&ensp;:</b> <span style='color:green'> $Status</span></div>"
+                        }
+                    
+
+                        if ($status -like "*error*") {
+                            Write-Host -ForegroundColor White "  Status     : $Status"
+                            $Script:html += "<div> <b>&emsp; Status &emsp;&emsp;&ensp;&ensp;:</b> <span style='color:red'> $Status</span></div>"
+                        }
+
+                        Write-Host -ForegroundColor White "  Description: $Description"
+                        $Script:html += "<div> <b>&emsp; Description :</b> <span style='color:black'> $Description</span></div>"
+                    }
+                    #$element
+                    $aux = "1"
+                }
+        
+            }
+       
+        
+        
+    
+            $i++
         }
-        $i++
     }
-    if ($TestFail -eq "0") {
-        #Write-Host -foregroundcolor Green " Organization Relationship Successfully tested `n "
+ 
+    
+    elseif ((([string]::IsNullOrWhitespace($exoOrgRelTragetApplicationUri)) -and ([string]::IsNullOrWhitespace($exoOrgRelTragetOWAUrl)))) {
+        <# Action when all if and elseif conditions are false #>
         $Script:html += "
-        $testType : $testMessage"
+    <div> <span style='color:red'>&emsp; Exchange Online Test-OrganizationRelationship cannot be run if the Organization Relationship TragetApplicationUri and TargetOwaURL are not set</span>"
     }
-    else {
+    elseif ((([string]::IsNullOrWhitespace($exoOrgRelTragetApplicationUri)) )) {
+        <# Action when all if and elseif conditions are false #>
         $Script:html += "
-        Organization Relationship test with Errors"
-        #Check this an that
+    <div> <span style='color:red'>&emsp; Exchange Online Test-OrganizationRelationship cannot be run if the Organization Relationship TragetApplicationUri is not set</span>"
     }
+    elseif ((([string]::IsNullOrWhitespace($exoOrgRelTragetApplicationUri)) )) {
+        <# Action when all if and elseif conditions are false #>
+        $Script:html += "
+    <div> <span style='color:red'>&emsp; Exchange Online Test-OrganizationRelationship cannot be run if the Organization Relationship TragetApplicationUri is not set</span>"
+    }
+
+
+
     $Script:html += "</td>
     </tr>"
     
@@ -3159,10 +3258,10 @@ ShowParameters
 if ($IntraOrgCon.enabled -Like "True") {
     Write-Host $bar
     Write-Host -foregroundcolor yellow "  Warning: Intra Organization Connector Enabled True `n  " 
-    Write-Host -foregroundcolor White "-> Free Busy Lookup is done using OAuth when the Intra Organization Connector is Enabled"
-    Write-Host -foregroundcolor White "`n  This script can be Run using the -Auth paramenter to check for OAuth configurations only. `n  Example: ./FreeBusyChecker.ps1 -Auth OAuth"
+    Write-Host -foregroundcolor White "    -> Free Busy Lookup is done using OAuth when the Intra Organization Connector is Enabled"
+    Write-Host -foregroundcolor White "`n         This script can be Run using the -Auth paramenter to check for OAuth configurations only. `n `n         Example: ./FreeBusyChecker.ps1 -Auth OAuth"
     $Script:html += "<div><p></p></div><div>  <span style='color:orange;'><b>Warning: </b></span> Intra Organization Connector Enabled True `n <b>  -> Free Busy Lookup is done using OAuth when the Intra Organization Connector is Enabled<b></div>
-     <div><p></p></div><div>  This script can be Run using the -Auth paramenter to check for OAuth configurations only. `n  Example: ./FreeBusyChecker.ps1 -Auth OAuth </div> <div><p></p></div>
+     <div><p></p></div><div>  This script can be Run using the -Auth paramenter to check for OAuth configurations only. `n Example: ./FreeBusyChecker.ps1 -Auth OAuth </div> <div><p></p></div>
 
     "
     $html | Out-File -FilePath $htmlfile
