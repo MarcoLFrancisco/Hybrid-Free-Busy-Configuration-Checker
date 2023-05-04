@@ -2781,7 +2781,7 @@ Function EXOTestOrgRelCheck {
     Write-Host -foregroundcolor Green " Test-OrganizationRelationship -Identity $exoIdentity -UserIdentity $UserOnline"
     Write-Host $bar
 
-    if ((![string]::IsNullOrWhitespace($exoOrgRelTragetApplicationUri)) -or (![string]::IsNullOrWhitespace($exoOrgRelTragetOWAUrl))) {
+    if ((![string]::IsNullOrWhitespace($exoOrgRelTragetApplicationUri)) -and (![string]::IsNullOrWhitespace($exoOrgRelTragetOWAUrl))) {
         $exotestorgrel = Test-OrganizationRelationship -Identity $exoIdentity -UserIdentity $UserOnline -WarningAction SilentlyContinue
     
         $i = 2
@@ -2852,16 +2852,19 @@ Function EXOTestOrgRelCheck {
     
     elseif ((([string]::IsNullOrWhitespace($exoOrgRelTragetApplicationUri)) -and ([string]::IsNullOrWhitespace($exoOrgRelTragetOWAUrl)))) {
         <# Action when all if and elseif conditions are false #>
+        Write-Host -ForegroundColor Red "  Error: Exchange Online Test-OrganizationRelationship cannot be run if the Organization Relationship TragetApplicationUri and TargetOwaURL are not set"
         $Script:html += "
     <div> <span style='color:red'>&emsp; Exchange Online Test-OrganizationRelationship cannot be run if the Organization Relationship TragetApplicationUri and TargetOwaURL are not set</span>"
     }
     elseif ((([string]::IsNullOrWhitespace($exoOrgRelTragetApplicationUri)) )) {
         <# Action when all if and elseif conditions are false #>
+        Write-Host -ForegroundColor Red "  Error: Exchange Online Test-OrganizationRelationship cannot be run if the Organization Relationship TragetApplicationUri is not set"
         $Script:html += "
     <div> <span style='color:red'>&emsp; Exchange Online Test-OrganizationRelationship cannot be run if the Organization Relationship TragetApplicationUri is not set</span>"
     }
     elseif ((([string]::IsNullOrWhitespace($exoOrgRelTragetApplicationUri)) )) {
         <# Action when all if and elseif conditions are false #>
+        Write-Host -ForegroundColor Red "  Error: Exchange Online Test-OrganizationRelationship cannot be run if the Organization Relationship TargetOwaURL is not set"
         $Script:html += "
     <div> <span style='color:red'>&emsp; Exchange Online Test-OrganizationRelationship cannot be run if the Organization Relationship TragetApplicationUri is not set</span>"
     }
