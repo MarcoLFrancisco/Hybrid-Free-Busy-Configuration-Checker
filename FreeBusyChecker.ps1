@@ -3301,10 +3301,10 @@ $EDiscoveryEndpoint = Get-IntraOrganizationConfiguration -WarningAction Silently
 $SPDomainsOnprem = Get-SharingPolicy -WarningAction SilentlyContinue -ErrorAction SilentlyContinue | Format-List Domains
 $SPOnprem = Get-SharingPolicy  -WarningAction SilentlyContinue -ErrorAction SilentlyContinue | Select-Object *
 
-if ($Org -contains 'EOP' -or -not $Org) {
+if ($Org -contains 'ExchangeOnPremise' -or -not $Org) {
     #region DAutch Checks
     if ($Auth -contains "DAuth" -OR -not $Auth) {
-        $StringTest = "Testing DAuth configuration"
+        $StringTest = " Testing DAuth configuration "
         $side = ($ConsoleWidth - $StringTest.Length - 2) / 2
         $sideString = "*"
         for ( $i = 1; $i -lt $side; $i++) {
@@ -3316,10 +3316,12 @@ if ($Org -contains 'EOP' -or -not $Org) {
         else {
             $fullString = "`n`n$sideString$StringTest$sideString*"
         }
+        Write-Host -foregroundcolor Green $fullString 
+        Write-Host $bar
         OrgRelCheck
         Write-Host $bar
         if ($pause) {
-            $RH = Read-Host " Press Enter when ready to check the Federation Information Details."
+            $RH = Read- Host " Press Enter when ready to check the Federation Information Details."
             Write-Host $bar
         }
         FedInfoCheck
@@ -3364,7 +3366,7 @@ if ($Org -contains 'EOP' -or -not $Org) {
             $RH = Read-Host " Press Enter when ready to check the OAuth configuration details. "
             Write-Host $bar
         }
-        $StringTest = "Testing OAuth configuration"
+        $StringTest = " Testing OAuth configuration "
         $side = ($ConsoleWidth - $StringTest.Length - 2) / 2
         $sideString = "*"
         for ( $i = 1; $i -lt $side; $i++) {
@@ -3376,6 +3378,7 @@ if ($Org -contains 'EOP' -or -not $Org) {
         else {
             $fullString = "`n`n$sideString$StringTest$sideString*"
         }
+        Write-Host -foregroundcolor Green $fullString 
         Write-Host $bar
         IntraOrgConCheck
         Write-Host $bar
@@ -3489,7 +3492,7 @@ if ($Org -contains 'ExchangeOnline' -OR -not $Org) {
     #region ExoDauthCheck
     if ($Auth -contains "DAuth" -or -not $Auth) {
         Write-Host $bar
-        $StringTest = "Testing DAuth configuration"
+        $StringTest = " Testing DAuth configuration "
         $side = ($ConsoleWidth - $StringTest.Length - 2) / 2
         $sideString = "*"
         for ( $i = 1; $i -lt $side; $i++) {
@@ -3502,6 +3505,7 @@ if ($Org -contains 'ExchangeOnline' -OR -not $Org) {
             $fullString = "`n`n$sideString$StringTest$sideString*"
         }
         Write-Host -foregroundcolor Green $fullString 
+        Write-Host $bar
         ExoOrgRelCheck
         Write-Host $bar
         if ($pause) {
@@ -3524,9 +3528,9 @@ if ($Org -contains 'ExchangeOnline' -OR -not $Org) {
     #endregion
     #region ExoOauthCheck
     if ($Auth -contains "OAuth" -or -not $Auth) {
-        $StringTest = "Testing OAuth configuration"
+        $StringTest = " Testing OAuth configuration "
         $side = ($ConsoleWidth - $StringTest.Length - 2 ) / 2
-        $sideString = ""
+        $sideString = "*"
         for ( $i = 1; $i -lt $side; $i++) {
             $sideString += "*"
         }
