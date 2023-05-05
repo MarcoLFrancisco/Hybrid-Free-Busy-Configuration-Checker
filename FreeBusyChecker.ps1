@@ -2478,9 +2478,9 @@ Function OAuthConnectivityCheck {
 
         
     }
-    Write-Host -foregroundcolor Green " Note:"
-    Write-Host -foregroundcolor Yellow " You can ignore the warning 'The SMTP address has no mailbox associated with it'"
-    Write-Host -foregroundcolor Yellow " when the Test-OAuthConnectivity returns a Success"
+    #Write-Host -foregroundcolor Green " Note:"
+    #Write-Host -foregroundcolor Yellow " You can ignore the warning 'The SMTP address has no mailbox associated with it'"
+    #Write-Host -foregroundcolor Yellow " when the Test-OAuthConnectivity returns a Success"
     Write-Host -foregroundcolor Green " Reference: "
     Write-Host -foregroundcolor White " Configure OAuth authentication between Exchange and Exchange Online organizations"
     Write-Host -foregroundcolor Yellow " https://technet.microsoft.com/en-us/library/dn594521(v=exchg.150).aspx"
