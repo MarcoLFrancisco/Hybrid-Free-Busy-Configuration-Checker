@@ -2909,7 +2909,7 @@ Function SharingPolicyCheck {
     Write-Host -foregroundcolor White "  Action:"
     Write-Host "   " $domain2[1]
     #Write-Host $bar
-    if ((($domain1[0]) -eq ($SPOnprem.Domains.Domain[0]) -OR (($domain1[0]) -eq ($SPOnprem.Domains.Domain[1]))) -AND (($domain2[0]) -eq ($SPOnprem.Domains.Domain[0]) -OR (($domain2[0]) -eq ($SPOnprem.Domains.Domain[1]))) -AND (($domain1[1]) -eq ($SPOnprem.Domains.Actions[0]) -OR (($domain1[1]) -eq ($SPOnprem.Domains.Actions[1]))) -AND (($domain2[1]) -eq ($SPOnprem.Domains.Actions[0]) -OR (($domain1[1]) -eq ($SPOnprem.Domains.Actions[1])))  ) {
+    if ((($domain1[0]) -eq ($SPOnprem.Domains.Domain[0]) -OR (($domain1[0]) -eq ($SPOnprem.Domains.Domain[1]))) -AND (($domain2[0]) -eq ($SPOnprem.Domains.Domain[0]) -OR (($domain2[0]) -eq ($SPOnprem.Domains.Domain[1]))) -AND (($domain1[1]) -eq ($SPOnprem.Domains.Actions[0]) -OR (($domain1[1]) -eq ($SPOnprem.Domains.Actions[1]))) -AND (($domain2[1]) -eq ($SPOnprem.Domains.Actions[0]) -OR (($domain2[1]) -eq ($SPOnprem.Domains.Actions[1])))  ) {
         Write-Host -foregroundcolor Green "`n  Exchange Online Sharing Policy Domains match Exchange On Premise Sharing Policy Domains"
         $tdSharpingPolicyCheck = "`n  Exchange Online Sharing Policy matches Exchange On Premise Sharing Policy Domain"
         $tdSharpingPolicyCheckColor = "green"
