@@ -383,34 +383,34 @@ Function OrgRelCheck {
     }
     #TargetOwaURL
     Write-Host -foregroundcolor White   " TargetOwaURL:"
-    if ($OrgRel.TargetOwaURL -like "http://outlook.com/owa/$exchangeonlinedomain" -or $OrgRel.TargetOwaURL -like $Null) {
+    if ($OrgRel.TargetOwaURL -like "https://outlook.com/owa/$exchangeonlinedomain" -or $OrgRel.TargetOwaURL -like $Null) {
         if ($OrgRel.TargetOwaURL -like "http://outlook.com/owa/$exchangeonlinedomain") {
             Write-Host -foregroundcolor Green "  TargetOwaURL is http://outlook.com/owa/$exchangeonlinedomain. This is a possible standard value. TargetOwaURL can also be configured to be Blank."
             $tdOrgRelTargetOwaURL = " $($OrgRel.TargetOwaURL) - TargetOwaURL is http://outlook.com/owa/$exchangeonlinedomain. This is a possible standard value. TargetOwaURL can also be configured to be Blank."
             $tdOrgRelTargetOwaURLColor = "green"
         }
-        if ($OrgRel.TargetOwaURL -like "http://outlook.office.com/mail") {
-            Write-Host -foregroundcolor Green "  TargetOwaURL is http://outlook.office.com/mail. This is a possible standard value. TargetOwaURL can also be configured to be Blank or http://outlook.com/owa/$exchangeonlinedomain."
-            $tdOrgRelTargetOwaURL = " $($OrgRel.TargetOwaURL) - TargetOwaURL is http://outlook.office.com/mail. TargetOwaURL can also be configured to be Blank or http://outlook.com/owa/$exchangeonlinedomain."
+        if ($OrgRel.TargetOwaURL -like "https://outlook.office.com/mail") {
+            Write-Host -foregroundcolor Green "  TargetOwaURL is https://outlook.office.com/mail. This is a possible standard value. TargetOwaURL can also be configured to be Blank or http://outlook.com/owa/$exchangeonlinedomain."
+            $tdOrgRelTargetOwaURL = " $($OrgRel.TargetOwaURL) - TargetOwaURL is https://outlook.office.com/mail. TargetOwaURL can also be configured to be Blank or http://outlook.com/owa/$exchangeonlinedomain."
             $tdOrgRelTargetOwaURLColor = "green"
         }
         if ($OrgRel.TargetOwaURL -like $Null) {
             Write-Host -foregroundcolor Green "  TargetOwaURL is Blank, this is a standard value. "
-            Write-Host  "  TargetOwaURL can also be configured to be http://outlook.com/owa/$exchangeonlinedomain or http://outlook.office.com/mail"
+            Write-Host  "  TargetOwaURL can also be configured to be https://outlook.com/owa/$exchangeonlinedomain or https://outlook.office.com/mail"
             $tdOrgRelTargetOwaURL = "$($OrgRel.TargetOwaURL) . TargetOwaURL is Blank, this is a standard value. TargetOwaURL can also be configured to be http://outlook.com/owa/$exchangeonlinedomain or http://outlook.office.com/mail. "
             $tdOrgRelTargetOwaURLColor = "green"
-            if ($OrgRel.TargetOwaURL -like "http://outlook.com/owa/$exchangeonlinedomain") {
-                Write-Host -foregroundcolor Green "  TargetOwaURL is http://outlook.com/owa/$exchangeonlinedomain. This is a possible standard value. TargetOwaURL can also be configured to be Blank or http://outlook.office.com/mail."
-                $tdOrgRelTargetOwaURL = " $($OrgRel.TargetOwaURL) - TargetOwaURL is http://outlook.com/owa/$exchangeonlinedomain. This is a possible standard value. TargetOwaURL can also be configured to be Blank or http://outlook.office.com/mail."
+            if ($OrgRel.TargetOwaURL -like "https://outlook.com/owa/$exchangeonlinedomain") {
+                Write-Host -foregroundcolor Green "  TargetOwaURL is https://outlook.com/owa/$exchangeonlinedomain. This is a possible standard value. TargetOwaURL can also be configured to be Blank or http://outlook.office.com/mail."
+                $tdOrgRelTargetOwaURL = " $($OrgRel.TargetOwaURL) - TargetOwaURL is https://outlook.com/owa/$exchangeonlinedomain. This is a possible standard value. TargetOwaURL can also be configured to be Blank or http://outlook.office.com/mail."
                 $tdOrgRelTargetOwaURLColor = "green"
             }
         
         }
     }
     else {
-        Write-Host -foregroundcolor Red "  TargetOwaURL seems not to be Blank or http://outlook.com/owa/$exchangeonlinedomain. These are the standard values."
+        Write-Host -foregroundcolor Red "  TargetOwaURL seems not to be Blank or https://outlook.com/owa/$exchangeonlinedomain. These are the standard values."
         $countOrgRelIssues++
-        $tdOrgRelTargetOwaURL = "  TargetOwaURL seems not to be Blank or http://outlook.com/owa/$exchangeonlinedomain. These are the standard values."
+        $tdOrgRelTargetOwaURL = "  TargetOwaURL seems not to be Blank or https://outlook.com/owa/$exchangeonlinedomain. These are the standard values."
         $tdOrgRelTargetOwaURLColor = "red"
     
     }
@@ -2781,7 +2781,7 @@ Function EXOTestOrgRelCheck {
     Write-Host -foregroundcolor Green " Test-OrganizationRelationship -Identity $exoIdentity -UserIdentity $UserOnline"
     Write-Host $bar
 
-    if ((![string]::IsNullOrWhitespace($exoOrgRelTragetApplicationUri)) -or (![string]::IsNullOrWhitespace($exoOrgRelTragetOWAUrl))) {
+    if ((![string]::IsNullOrWhitespace($exoOrgRelTragetApplicationUri)) -and (![string]::IsNullOrWhitespace($exoOrgRelTragetOWAUrl))) {
         $exotestorgrel = Test-OrganizationRelationship -Identity $exoIdentity -UserIdentity $UserOnline -WarningAction SilentlyContinue
     
         $i = 2
@@ -2852,16 +2852,19 @@ Function EXOTestOrgRelCheck {
     
     elseif ((([string]::IsNullOrWhitespace($exoOrgRelTragetApplicationUri)) -and ([string]::IsNullOrWhitespace($exoOrgRelTragetOWAUrl)))) {
         <# Action when all if and elseif conditions are false #>
+        Write-Host -ForegroundColor Red "  Error: Exchange Online Test-OrganizationRelationship cannot be run if the Organization Relationship TragetApplicationUri and TargetOwaURL are not set"
         $Script:html += "
     <div> <span style='color:red'>&emsp; Exchange Online Test-OrganizationRelationship cannot be run if the Organization Relationship TragetApplicationUri and TargetOwaURL are not set</span>"
     }
     elseif ((([string]::IsNullOrWhitespace($exoOrgRelTragetApplicationUri)) )) {
         <# Action when all if and elseif conditions are false #>
+        Write-Host -ForegroundColor Red "  Error: Exchange Online Test-OrganizationRelationship cannot be run if the Organization Relationship TragetApplicationUri is not set"
         $Script:html += "
     <div> <span style='color:red'>&emsp; Exchange Online Test-OrganizationRelationship cannot be run if the Organization Relationship TragetApplicationUri is not set</span>"
     }
     elseif ((([string]::IsNullOrWhitespace($exoOrgRelTragetApplicationUri)) )) {
         <# Action when all if and elseif conditions are false #>
+        Write-Host -ForegroundColor Red "  Error: Exchange Online Test-OrganizationRelationship cannot be run if the Organization Relationship TargetOwaURL is not set"
         $Script:html += "
     <div> <span style='color:red'>&emsp; Exchange Online Test-OrganizationRelationship cannot be run if the Organization Relationship TragetApplicationUri is not set</span>"
     }
