@@ -2884,43 +2884,74 @@ Function SharingPolicyCheck {
     Write-Host $bar
     $Script:SPOnline = Get-SharingPolicy | Select-Object  Domains, Enabled, Name, Identity
     $SPOnline | Format-List
+    
+        #creating variables and setting uniform variable names
+    $domain1 = (($SPOnline.domains[0] -split ":") -split " ")
+    $domain2 = (($SPOnline.domains[1] -split ":") -split " ")
+    $SPOnpremDomain1 = $SPOnprem.Domains.Domain[0]
+    $SPOnpremAction1 = $SPOnprem.Domains.Actions[0]
+    $SPOnpremDomain2 = $SPOnprem.Domains.Domain[1]
+    $SPOnpremAction2 = $SPOnprem.Domains.Actions[1]
+    $SPOnlineDomain1 = $domain1[0]
+    $SPOnlineAction1 = $domain1[1]
+    $SPOnlineDomain2 = $domain2[0]
+    $SPOnlineAction2 = $domain2[1]
+
+
     Write-Host $bar
     Write-Host -foregroundcolor Green " Summary - Sharing Policy"
     Write-Host $bar
     Write-Host -foregroundcolor White " Exchange On Premises Sharing domains:`n"
-    #for
     Write-Host -foregroundcolor White "  Domain:"
-    Write-Host "   " $SPOnprem.Domains.Domain[0]
+    Write-Host "   " $SPOnpremDomain1
     Write-Host -foregroundcolor White "  Action:"
-    Write-Host "   " $SPOnprem.Domains.Actions[0]
+    Write-Host "   " $SPOnpremAction1
     Write-Host -foregroundcolor White "  Domain:"
-    Write-Host "   " $SPOnprem.Domains.Domain[1]
+    Write-Host "   " $SPOnpremDomain2
     Write-Host -foregroundcolor White "  Action:"
-    Write-Host "   " $SPOnprem.Domains.Actions[1]
+    Write-Host "   " $SPOnpremAction2
     Write-Host -ForegroundColor White "`n  Exchange Online Sharing Domains: `n"
-    $domain1 = (($SPOnline.domains[0] -split ":") -split " ")
-    $domain2 = (($SPOnline.domains[1] -split ":") -split " ")
     Write-Host -foregroundcolor White "  Domain:"
-    Write-Host "   " $domain1[0]
+    Write-Host "   " $SPOnlineDomain1
     Write-Host -foregroundcolor White "  Action:"
-    Write-Host "   " $domain1[1]
+    Write-Host "   " $SPOnlineAction1
     Write-Host -foregroundcolor White "  Domain:"
-    Write-Host "   " $domain2[0]
+    Write-Host "   " $SPOnlineDomain2
     Write-Host -foregroundcolor White "  Action:"
-    Write-Host "   " $domain2[1]
+    Write-Host "   " $SPOnlineAction2
     #Write-Host $bar
-    if ((($domain1[0]) -eq ($SPOnprem.Domains.Domain[0]) -OR (($domain1[0]) -eq ($SPOnprem.Domains.Domain[1]))) -AND (($domain2[0]) -eq ($SPOnprem.Domains.Domain[0]) -OR (($domain2[0]) -eq ($SPOnprem.Domains.Domain[1]))) -AND (($domain1[1]) -eq ($SPOnprem.Domains.Actions[0]) -OR (($domain1[1]) -eq ($SPOnprem.Domains.Actions[1]))) -AND (($domain2[1]) -eq ($SPOnprem.Domains.Actions[0]) -OR (($domain1[1]) -eq ($SPOnprem.Domains.Actions[1])))  ) {
-        Write-Host -foregroundcolor Green "`n  Exchange Online Sharing Policy Domains match Exchange On Premise Sharing Policy Domains"
+
+    if ($SPOnpremDomain1 -eq $SPOnlineDomain1 -and $SPOnpremAction1 -eq $SPOnlineAction1)
+    {
+         if ($SPOnpremDomain2 -eq $SPOnlineDomain2 -and $SPOnpremAction2 -eq $SPOnlineAction2)
+             { Write-Host -foregroundcolor Green "`n  Exchange Online Sharing Policy Domains match Exchange On Premise Sharing Policy Domains"
         $tdSharpingPolicyCheck = "`n  Exchange Online Sharing Policy matches Exchange On Premise Sharing Policy Domain"
-        $tdSharpingPolicyCheckColor = "green"
+        $tdSharpingPolicyCheckColor = "green"}
+
+        else {Write-Host -foregroundcolor Red "`n   Sharing Domains appear not to be correct."
+        Write-Host -foregroundcolor White "   Exchange Online Sharing Policy Domains appear not to match Exchange On Premise Sharing Policy Domains"
+        $tdSharpingPolicyCheck = "`n  Exchange Online Sharing Policy Domains not match Exchange On Premise Sharing Policy Domains"
+        $tdSharpingPolicyCheckColor = "red"}
+    }
+    elseif ($SPOnpremDomain1 -eq $SPOnlineDomain2 -and $SPOnpremAction1 -eq $SPOnlineAction2)
+    { 
+        if ($SPOnpremDomain2 -eq $SPOnlineDomain1 -and $SPOnpremAction2 -eq $SPOnlineAction1)
+            { Write-Host -foregroundcolor Green "`n  Exchange Online Sharing Policy Domains match Exchange On Premise Sharing Policy Domains"
+        $tdSharpingPolicyCheck = "`n  Exchange Online Sharing Policy matches Exchange On Premise Sharing Policy Domain"
+        $tdSharpingPolicyCheckColor = "green"}
+
+        else {Write-Host -foregroundcolor Red "`n   Sharing Domains appear not to be correct."
+        Write-Host -foregroundcolor White "   Exchange Online Sharing Policy Domains appear not to match Exchange On Premise Sharing Policy Domains"
+        $tdSharpingPolicyCheck = "`n  Exchange Online Sharing Policy Domains not match Exchange On Premise Sharing Policy Domains"
+        $tdSharpingPolicyCheckColor = "red"}
     }
     else {
-        Write-Host -foregroundcolor Red "`n   Sharing Domains appear not to be correct."
+    Write-Host -foregroundcolor Red "`n   Sharing Domains appear not to be correct."
         Write-Host -foregroundcolor White "   Exchange Online Sharing Policy Domains appear not to match Exchange On Premise Sharing Policy Domains"
         $tdSharpingPolicyCheck = "`n  Exchange Online Sharing Policy Domains not match Exchange On Premise Sharing Policy Domains"
         $tdSharpingPolicyCheckColor = "red"
-    
     }
+    
     $bar
 
     $script:html += "
