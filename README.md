@@ -81,7 +81,7 @@ Valid Input Option Parameters:
 
 
   Paramater          : Org
-    Options          : EOP; EOL; Null
+    Options          : ExchangeOnPremise; ExchangeOnline; Null
     
         EOP          : Use EOP parameter to collect Availability information in the Exchange On Premise Tenant
         EOL          : Use EOL parameter to collect Availability information in the Exchange Online Tenant
@@ -120,12 +120,12 @@ Examples:
 
 - This cmdlet will run the Free Busy Checker Script for Exchange Online Availability Configurations only.
 
-            PS C:\> .\FreeBusyChecker.ps1 -Org EOL
+            PS C:\> .\FreeBusyChecker.ps1 -Org ExchangeOnline
 
 - This cmdlet will run the Free Busy Checker Script for Exchange On Premises OAuth and DAuth Availability Configurations only.
 
-            PS C:\> .\FreeBusyChecker.ps1 -Org EOP
+            PS C:\> .\FreeBusyChecker.ps1 -Org ExchangeOnPremise
 
 - This cmdlet will run the Free Busy Checker Script for Exchange On Premises Availability OAuth Configurations, pausing after each test done.
 
-            PS C:\> .\FreeBusyChecker.ps1 -Org EOP -Auth OAuth -Pause $True
+            PS C:\> .\FreeBusyChecker.ps1 -Org ExchangeOnPremis -Auth OAuth -Pause $True
