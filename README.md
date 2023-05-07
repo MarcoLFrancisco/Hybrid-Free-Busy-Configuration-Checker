@@ -72,34 +72,34 @@ How To Run:
 
 Valid Input Option Parameters:
 
-  Paramater          : Auth
-    Options          : DAuth; OAUth; Null
+  Paramater               : Auth
+    Options               : DAuth; OAUth; Null
     
-        DAuth        : DAuth Authentication
-        OAuth        : OAuth Authentication
-        Default Value: Null. No swith input means the script will collect both DAuth and OAuth Availability Configuration Detail
+        DAuth             : DAuth Authentication
+        OAuth             : OAuth Authentication
+        Default Value.    : Null. No swith input means the script will collect both DAuth and OAuth Availability Configuration Detail
 
 
-  Paramater          : Org
-    Options          : ExchangeOnPremise; ExchangeOnline; Null
+  Paramater               : Org
+    Options               : ExchangeOnPremise; ExchangeOnline; Null
     
-        EOP          : Use EOP parameter to collect Availability information in the Exchange On Premise Tenant
-        EOL          : Use EOL parameter to collect Availability information in the Exchange Online Tenant
-        Default Value: Null. No swith input means the script will collect both Exchange On Premise and Exchange OnlineAvailability configuration Detail
+        ExchangeOnPremise : Use ExchangeOnPremise parameter to collect Availability information in the Exchange On Premise Tenant
+        ExchangeOnline    : Use ExchangeOnline parameter to collect Availability information in the Exchange Online Tenant
+        Default Value.    : Null. No swith input means the script will collect both Exchange On Premise and Exchange OnlineAvailability configuration Detail
 
 
-  Paramater          : Pause
-    Options          : Null; True; False
+  Paramater               : Pause
+    Options               : Null; True; False
     
-        True         : Use the True parameter to use this script pausing after each test done.
-        False        : To use this script not pausing after each test done no Pause Parameter is needed.
-        Default Value: False.
+        True              : Use the True parameter to use this script pausing after each test done.
+        False             : To use this script not pausing after each test done no Pause Parameter is needed.
+        Default Value.    : False.
 
 
-  Paramater          : Help
+  Paramater               : Help
   
-    Options          : Null; True; False
-        True         : Use the $True parameter to use display valid parameter Options.
+    Options               : Null; True; False
+        True              : Use the $True parameter to use display valid parameter Options.
 
 
 
@@ -128,4 +128,4 @@ Examples:
 
 - This cmdlet will run the Free Busy Checker Script for Exchange On Premises Availability OAuth Configurations, pausing after each test done.
 
-            PS C:\> .\FreeBusyChecker.ps1 -Org ExchangeOnPremis -Auth OAuth -Pause $True
+            PS C:\> .\FreeBusyChecker.ps1 -Org ExchangeOnPremise -Auth OAuth -Pause $True
