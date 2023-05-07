@@ -1,4 +1,4 @@
-# Hybrid-Free-Busy-Configuration-Checker
+# Exchange Hybrid-Free-Busy-Configuration-Checker
 
 To View this Project at GitHub! [GituHub Repository](https://github.com/MarcoLFrancisco/Hybrid-Free-Busy-Configuration-Checker)
 
