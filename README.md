@@ -1,6 +1,6 @@
 # Hybrid-Free-Busy-Configuration-Checker
 
-Download the latest release:[FreeBusyChecker.ps1](https://github.com/MarcoLFrancisco/Hybrid-Free-Busy-Configuration-Checker/archive/refs/heads/main.zip)
+Download the latest release: [FreeBusyChecker.ps1](https://github.com/MarcoLFrancisco/Hybrid-Free-Busy-Configuration-Checker/archive/refs/heads/main.zip)
 
 - This script is still under development. It is not a stable finished version.
 
