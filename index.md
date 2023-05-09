@@ -12,7 +12,6 @@ To Download the latest release: [FreeBusyChecker.ps1](https://github.com/MarcoLF
 
 - This is a Beta Version. Please doublecheck on any information provided by this script before procceding to address any changes to your envoironment. Be advised that there may be incorrections in the provided output.
 
-
 Use: Collects OAuth and DAuth Hybrid Availability Configuration Settings Both for Exchange On Premises and Exchange Online  
 
 
