@@ -3339,14 +3339,30 @@ if ( -not $org -or $org -eq 'ExchangeOnPremise' ) {
     $OrgRelation = Get-OrganizationRelationship -WarningAction SilentlyContinue -ErrorAction SilentlyContinue |  Where-Object { $_.Enabled -and $_.DomainNames.Contains($exchangeOnlineDomain) } | Select-Object Name, DomainNames, Enabled
     if ($IntraOrgCon){
     Write-Host -foregroundcolor White "    -> Found an Intra Organization Connector Enabled ($($IntraOrgCon.Name)) On-Premises for $exchangeOnlineDomain"
+    $Script:html += "<p> <div>  <span style='color:black;'> -> Found an Intra Organization Connector Enabled ($($IntraOrgCon.Name)) On-Premises for $exchangeOnlineDomain`n </div>
+     <div><p></p></div>
+    "
+    $html | Out-File -FilePath $htmlfile
+
 }
     else {    Write-Host -foregroundcolor White "    -> No Intra Organization Connector Enabled was found On-Premises for $exchangeOnlineDomain"
-       
+           $Script:html += "<p> <div>  <span style='color:black;'> -> No Intra Organization Connector Enabled was found On-Premises for $exchangeOnlineDomain`n </div>
+     <div><p></p></div>
+     "
+    $html | Out-File -FilePath $htmlfile
+
         if ($ORgRelation){
         Write-Host -foregroundcolor White "    -> Found an Organization Relationship Enabled ($($OrgRelation.Name)) On-Premises for $exchangeOnlineDomain"
+                       $Script:html += "<p> <div>  <span style='color:black;'> -> Found an Organization Relationship Enabled ($($OrgRelation.Name)) On-Premises for $exchangeOnlineDomain`n </div>
+     <div><p></p></div>
+     "
+    $html | Out-File -FilePath $htmlfile
             }
         else {    Write-Host -foregroundcolor White "    -> No Organization Relationship Enabled was found On-Premises for $exchangeOnlineDomain"
-
+                               $Script:html += "<p> <div>  <span style='color:black;'> -> No Organization Relationship Enabled was found On-Premises for $exchangeOnlineDomain`n </div>
+     <div><p></p></div>
+     "
+    $html | Out-File -FilePath $htmlfile
             }
     }
 }
@@ -3359,16 +3375,28 @@ if ( -not $Org -or $Org -eq 'ExchangeOnline' ) {
 
     if ($EXOIntraOrgCon){
     Write-Host -foregroundcolor White "    -> Found an Intra Organization Connector Enabled ($($EXOIntraOrgCon.Name)) in the cloud for $ExchangeOnPremDomain"
-
+                                   $Script:html += "<p> <div>  <span style='color:black;'> -> Found an Intra Organization Connector Enabled ($($EXOIntraOrgCon.Name)) in the cloud for $ExchangeOnPremDomain`n </div>
+     <div><p></p></div>
+     "
+    $html | Out-File -FilePath $htmlfile
 
     } else {
      Write-Host -foregroundcolor White "    -> No Intra Organization Connector Enabled was found in the cloud for $ExchangeOnPremDomain"
-
+                                    $Script:html += "<p> <div>  <span style='color:black;'> -> No Intra Organization Connector Enabled was found in the cloud for $ExchangeOnPremDomain`n </div>
+     <div><p></p></div>
+     "
+    $html | Out-File -FilePath $htmlfile
         if ($EXOORgRelation){
         Write-Host -foregroundcolor White "    -> Found an Organization Relationship Enabled ($($EXOOrgRelation.Name)) in the cloud for $ExchangeOnPremDomain"
-            }
+                                         $Script:html += "<p> <div>  <span style='color:black;'> -> Found an Organization Relationship Enabled ($($EXOOrgRelation.Name)) in the cloud for $ExchangeOnPremDomain`n </div>
+     <div><p></p></div>
+     "
+    $html | Out-File -FilePath $htmlfile  }
         else {    Write-Host -foregroundcolor White "    -> No Organization Relationship Enabled was found in the cloud for $ExchangeOnPremDomain"
-
+                                       $Script:html += "<p> <div>  <span style='color:black;'> -> No Organization Relationship Enabled was found in the cloud for $ExchangeOnPremDomain`n </div>
+     <div><p></p></div>
+     "
+    $html | Out-File -FilePath $htmlfile
             } 
 
     }
@@ -3380,40 +3408,76 @@ Write-Host
         if ($IntraOrgCon -or $EXOIntraOrgCon) {
             Write-Host -foregroundcolor White " As there is at least one enabled Intra Organization Connector, On-Premises or in the cloud, and the -Auth parameter was not specified, the test will collect OAuth configuration."
             $Auth = 'OAuth'
+            $Script:html += "<p> <div>  <span style='color:black;'>  As there is at least one enabled Intra Organization Connector, On-Premises or in the cloud, and the -Auth parameter was not specified, the test will collect OAuth configuration.`n </div>
+     <div><p></p></div>
+     "
+    $html | Out-File -FilePath $htmlfile
         }     
           elseif ($OrgRelation -or $EXOOrgRelation) {
             Write-Host -foregroundcolor White " As there are no enabled Intra Organization Connectors, both On-Premises and in the cloud, and the -Auth parameter was not specified, the test will collect DAuth configuration."
             $Auth = 'DAuth'
+                        $Script:html += "<p> <div>  <span style='color:black;'> As there are no enabled Intra Organization Connectors, both On-Premises and in the cloud, and the -Auth parameter was not specified, the test will collect DAuth configuration.`n </div>
+     <div><p></p></div>
+     "
+     $html | Out-File -FilePath $htmlfile
         }
         else {
         Write-Host -foregroundcolor White " As there are no enabled Intra Organization Connectors or Organization Relationships, and the -Auth parameter was not specified, the test will collect both OAuth and DAuth configuration."
             $Auth = 'All'
+                        $Script:html += "<p> <div>  <span style='color:black;'> As there are no enabled Intra Organization Connectors or Organization Relationships, and the -Auth parameter was not specified, the test will collect both OAuth and DAuth configuration.`n </div>
+     <div><p></p></div>
+     "
+     $html | Out-File -FilePath $htmlfile
         }
     }
     elseif ( $Org -eq 'ExchangeOnPremise' ) {
         if ( $IntraOrgCon ) {
             Write-Host -foregroundcolor White " As there is an enabled Intra Organization Connector On-Premises and the -Auth parameter was not specified, the test will collect OAuth configuration."
             $Auth = 'OAuth'
+                        $Script:html += "<p> <div>  <span style='color:black;'> As there is an enabled Intra Organization Connector On-Premises and the -Auth parameter was not specified, the test will collect OAuth configuration.`n </div>
+     <div><p></p></div>
+     "
+     $html | Out-File -FilePath $htmlfile
         } elseif ($OrgRelation) {
             Write-Host -foregroundcolor White " As there isn't any enabled Intra Organization Connector On-Premises and the -Auth parameter was not specified, the test will collect DAuth configuration."
             $Auth = 'DAuth'
+                        $Script:html += "<p> <div>  <span style='color:black;'> As there isn't any enabled Intra Organization Connector On-Premises and the -Auth parameter was not specified, the test will collect DAuth configuration.`n </div>
+     <div><p></p></div>
+     "
+     $html | Out-File -FilePath $htmlfile
         }
         else {
          Write-Host -foregroundcolor White " As there are no enabled Intra Organization Connectors or Organization Relationships, and the -Auth parameter was not specified, the test will collect both OAuth and DAuth configuration."
             $Auth = 'All'
+                        $Script:html += "<p> <div>  <span style='color:black;'> As there are no enabled Intra Organization Connectors or Organization Relationships, and the -Auth parameter was not specified, the test will collect both OAuth and DAuth configuration.`n </div>
+     <div><p></p></div>
+     "
+     $html | Out-File -FilePath $htmlfile
         }
     }
     elseif ( $Org -eq 'ExchangeOnline' ) {
         if ( $EXOIntraOrgCon ) {
-            Write-Host -foregroundcolor White " As there is an enabled Intra Organization Connector in the cloud and the -Auth parameter was not specified, the test will collect OAuth configuration"
+            Write-Host -foregroundcolor White " As there is an enabled Intra Organization Connector in the cloud and the -Auth parameter was not specified, the test will collect OAuth configuration."
             $Auth = 'OAuth'
+                                    $Script:html += "<p> <div>  <span style='color:black;'> As there is an enabled Intra Organization Connector in the cloud and the -Auth parameter was not specified, the test will collect OAuth configuration.`n </div>
+     <div><p></p></div>
+     "
+     $html | Out-File -FilePath $htmlfile
         } elseif ($EXOOrgRelation) {
             Write-Host -foregroundcolor White " As there isn't any enabled Intra Organization Connector in the cloud and the -Auth parameter was not specified, the test will collect DAuth configuration."
             $Auth = 'DAuth'
+                                    $Script:html += "<p> <div>  <span style='color:black;'> As there isn't any enabled Intra Organization Connector in the cloud and the -Auth parameter was not specified, the test will collect DAuth configuration.`n </div>
+     <div><p></p></div>
+     "
+     $html | Out-File -FilePath $htmlfile
         }
         else {
          Write-Host -foregroundcolor White " As there are no enabled Intra Organization Connectors or Organization Relationships, and the -Auth parameter was not specified, the test will collect both OAuth and DAuth configuration."
             $Auth = 'All'
+                                    $Script:html += "<p> <div>  <span style='color:black;'> As there are no enabled Intra Organization Connectors or Organization Relationships, and the -Auth parameter was not specified, the test will collect both OAuth and DAuth configuration.`n </div>
+     <div><p></p></div>
+     "
+     $html | Out-File -FilePath $htmlfile
         }
  
     }
@@ -3491,9 +3555,9 @@ if ($Org -contains 'ExchangeOnPremise' -or -not $Org) {
     #region OAuth Check
     if ($Auth -contains "OAuth" -or $Auth -contains "All") {
         if ($pause) {
-            $RH = Read-Host " Press Enter when ready to check the OAuth configuration details. "
-            Write-Host $bar
+            $RH = Read-Host " Press Enter when ready to check the OAuth configuration details. "  
         }
+        Write-Host $bar
         $StringTest = " Testing OAuth configuration "
         $side = ($ConsoleWidth - $StringTest.Length - 2) / 2
         $sideString = "*"
@@ -3652,6 +3716,7 @@ if ($Org -contains 'ExchangeOnline' -OR -not $Org) {
     #endregion
     #region ExoOauthCheck
     if ($Auth -contains "OAuth" -or $Auth -contains "All") {
+        Write-Host $bar
         $StringTest = " Testing OAuth configuration "
         $side = ($ConsoleWidth - $StringTest.Length - 2 ) / 2
         $sideString = "*"
