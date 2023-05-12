@@ -51,7 +51,7 @@ This cmdlet will run the Free Busy Checker Script for Exchange On Premises Avail
 
 param(
     [Parameter(Mandatory = $false, ParameterSetName = "Test")]
-    [ValidateSet('DAuth', 'OAuth')]
+    [ValidateSet('DAuth', 'OAuth', 'All')]
     [string[]]$Auth,
     [Parameter(Mandatory = $false, ParameterSetName = "Test")]
     [ValidateSet('ExchangeOnPremise', 'ExchangeOnline')]
@@ -69,7 +69,8 @@ Function ShowHelp {
     Write-Host -ForegroundColor White "   Options  : DAuth; OAUth"
     Write-Host  "    DAuth             : DAuth Authentication"
     Write-Host  "    OAuth             : OAuth Authentication"
-    Write-Host  "    Default Value     : No swith input means the script will collect both DAuth and OAuth Availability Configuration Detail"
+    Write-Host  "    All               : Both DAuth and OAuth Authentication"
+    Write-Host  "    Default Value     : No swith input means the script will detect which method is currently being used"
     Write-Host -ForegroundColor White "`n  Paramater: Org"
     Write-Host -ForegroundColor White "   Options  : ExchangeOnPremise; Exchange Online"
     Write-Host  "    ExchangeOnPremise : Use ExchangeOnPremise parameter to collect Availability information in the Exchange On Premise Tenant"
@@ -3289,6 +3290,7 @@ $IntraOrgCon = Get-IntraOrganizationConnector -WarningAction SilentlyContinue -E
 
 ShowParameters
 
+if( $Auth -eq "All" ) {
 if ($IntraOrgCon.enabled -Like "True") {
     Write-Host $bar
     Write-Host -foregroundcolor yellow "  Warning: Intra Organization Connector Enabled True `n  " 
@@ -3311,6 +3313,7 @@ if ($IntraOrgCon.enabled -Like "False") {
     "
     $html | Out-File -FilePath $htmlfile
 }
+}
 
 do {
     #do while not Y or N
@@ -3328,6 +3331,96 @@ if ($ParamOK -eq "N") {
     ExchangeOnPremEWSCheck
     ExchangeOnPremLocalDomainCheck
 }
+
+if ( -not $Auth ) {
+
+if ( -not $org -or $org -eq 'ExchangeOnPremise' ) {
+    $IntraOrgCon = Get-IntraOrganizationConnector -WarningAction SilentlyContinue -ErrorAction SilentlyContinue | Where-Object { $_.Enabled -and $_.TargetAddressDomains.Contains($exchangeOnlineDomain) } | Select-Object Name, TargetAddressDomains, DiscoveryEndpoint, Enabled
+    $OrgRelation = Get-OrganizationRelationship -WarningAction SilentlyContinue -ErrorAction SilentlyContinue |  Where-Object { $_.Enabled -and $_.DomainNames.Contains($exchangeOnlineDomain) } | Select-Object Name, DomainNames, Enabled
+    if ($IntraOrgCon){
+    Write-Host -foregroundcolor White "    -> Found an Intra Organization Connector Enabled ($($IntraOrgCon.Name)) On-Premises for $exchangeOnlineDomain"
+}
+    else {    Write-Host -foregroundcolor White "    -> No Intra Organization Connector Enabled was found On-Premises for $exchangeOnlineDomain"
+       
+        if ($ORgRelation){
+        Write-Host -foregroundcolor White "    -> Found an Organization Relationship Enabled ($($OrgRelation.Name)) On-Premises for $exchangeOnlineDomain"
+            }
+        else {    Write-Host -foregroundcolor White "    -> No Organization Relationship Enabled was found On-Premises for $exchangeOnlineDomain"
+
+            }
+    }
+}
+if ( -not $Org -or $Org -eq 'ExchangeOnline' ) {
+    Install-Module -Name ExchangeOnlineManagement -Force -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
+    Connect-ExchangeOnline -ShowBanner:$false -Prefix ExchangeOnline -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
+    
+    $EXOIntraOrgCon = Get-ExchangeOnlineIntraOrganizationConnector -WarningAction SilentlyContinue -ErrorAction SilentlyContinue | Where-Object { $_.Enabled -and $_.TargetAddressDomains.Contains($ExchangeOnPremDomain) } | Select-Object Name, TargetAddressDomains, DiscoveryEndpoint, Enabled
+    $EXOOrgRelation = Get-ExchangeOnlineOrganizationRelationship -WarningAction SilentlyContinue -ErrorAction SilentlyContinue |  Where-Object { $_.Enabled -and $_.DomainNames.Contains($exchangeOnPremDomain) } | Select-Object Name, DomainNames, Enabled
+
+    if ($EXOIntraOrgCon){
+    Write-Host -foregroundcolor White "    -> Found an Intra Organization Connector Enabled ($($EXOIntraOrgCon.Name)) in the cloud for $ExchangeOnPremDomain"
+
+
+    } else {
+     Write-Host -foregroundcolor White "    -> No Intra Organization Connector Enabled was found in the cloud for $ExchangeOnPremDomain"
+
+        if ($EXOORgRelation){
+        Write-Host -foregroundcolor White "    -> Found an Organization Relationship Enabled ($($EXOOrgRelation.Name)) in the cloud for $ExchangeOnPremDomain"
+            }
+        else {    Write-Host -foregroundcolor White "    -> No Organization Relationship Enabled was found in the cloud for $ExchangeOnPremDomain"
+
+            } 
+
+    }
+}
+
+Write-Host
+
+    if (-not $Org) {
+        if ($IntraOrgCon -or $EXOIntraOrgCon) {
+            Write-Host -foregroundcolor White " As there is at least one enabled Intra Organization Connector, On-Premises or in the cloud, and the -Auth parameter was not specified, the test will collect OAuth configuration."
+            $Auth = 'OAuth'
+        }     
+          elseif ($OrgRelation -or $EXOOrgRelation) {
+            Write-Host -foregroundcolor White " As there are no enabled Intra Organization Connectors, both On-Premises and in the cloud, and the -Auth parameter was not specified, the test will collect DAuth configuration."
+            $Auth = 'DAuth'
+        }
+        else {
+        Write-Host -foregroundcolor White " As there are no enabled Intra Organization Connectors or Organization Relationships, and the -Auth parameter was not specified, the test will collect both OAuth and DAuth configuration."
+            $Auth = 'All'
+        }
+    }
+    elseif ( $Org -eq 'ExchangeOnPremise' ) {
+        if ( $IntraOrgCon ) {
+            Write-Host -foregroundcolor White " As there is an enabled Intra Organization Connector On-Premises and the -Auth parameter was not specified, the test will collect OAuth configuration."
+            $Auth = 'OAuth'
+        } elseif ($OrgRelation) {
+            Write-Host -foregroundcolor White " As there isn't any enabled Intra Organization Connector On-Premises and the -Auth parameter was not specified, the test will collect DAuth configuration."
+            $Auth = 'DAuth'
+        }
+        else {
+         Write-Host -foregroundcolor White " As there are no enabled Intra Organization Connectors or Organization Relationships, and the -Auth parameter was not specified, the test will collect both OAuth and DAuth configuration."
+            $Auth = 'All'
+        }
+    }
+    elseif ( $Org -eq 'ExchangeOnline' ) {
+        if ( $EXOIntraOrgCon ) {
+            Write-Host -foregroundcolor White " As there is an enabled Intra Organization Connector in the cloud and the -Auth parameter was not specified, the test will collect OAuth configuration"
+            $Auth = 'OAuth'
+        } elseif ($EXOOrgRelation) {
+            Write-Host -foregroundcolor White " As there isn't any enabled Intra Organization Connector in the cloud and the -Auth parameter was not specified, the test will collect DAuth configuration."
+            $Auth = 'DAuth'
+        }
+        else {
+         Write-Host -foregroundcolor White " As there are no enabled Intra Organization Connectors or Organization Relationships, and the -Auth parameter was not specified, the test will collect both OAuth and DAuth configuration."
+            $Auth = 'All'
+        }
+ 
+    }
+}
+
+
+
 # Free busy Lookup methods
 $OrgRel = Get-OrganizationRelationship | Where-Object { ($_.DomainNames -like $ExchangeOnlineDomain) } | Select-Object Enabled, Identity, DomainNames, FreeBusy*, Target*
 
@@ -3337,7 +3430,8 @@ $SPOnprem = Get-SharingPolicy  -WarningAction SilentlyContinue -ErrorAction Sile
 
 if ($Org -contains 'ExchangeOnPremise' -or -not $Org) {
     #region DAutch Checks
-    if ($Auth -contains "DAuth" -OR -not $Auth) {
+    if ($Auth -contains "DAuth" -OR $Auth -contains "All") {
+        Write-Host $bar
         $StringTest = " Testing DAuth configuration "
         $side = ($ConsoleWidth - $StringTest.Length - 2) / 2
         $sideString = "*"
@@ -3351,7 +3445,7 @@ if ($Org -contains 'ExchangeOnPremise' -or -not $Org) {
             $fullString = "`n`n$sideString$StringTest$sideString*"
         }
         Write-Host -foregroundcolor Green $fullString 
-        Write-Host $bar
+        
         OrgRelCheck
         Write-Host $bar
         if ($pause) {
@@ -3395,7 +3489,7 @@ if ($Org -contains 'ExchangeOnPremise' -or -not $Org) {
     }
     #endregion
     #region OAuth Check
-    if ($Auth -like "OAuth" -or -not $Auth) {
+    if ($Auth -contains "OAuth" -or $Auth -contains "All") {
         if ($pause) {
             $RH = Read-Host " Press Enter when ready to check the OAuth configuration details. "
             Write-Host $bar
@@ -3495,11 +3589,7 @@ if ($Org -contains 'ExchangeOnline' -OR -not $Org) {
     #RestV3 connection
     Install-Module -Name ExchangeOnlineManagement
     Connect-ExchangeOnline -ShowBanner:$false
-    #Write-Host "========================================================="
-    #Write-Host "Get-SharingPolicy | FL"
-    #Write-Host "========================================================="
-    #Get-SharingPolicy | FL
-    # Variables
+
     $Script:ExoOrgRel = Get-OrganizationRelationship | Where-Object { ($_.DomainNames -like $ExchangeOnPremDomain ) } | Select-Object Enabled, Identity, DomainNames, FreeBusy*, Target*
     $ExoIntraOrgCon = Get-IntraOrganizationConnector | Select-Object Name, TargetAddressDomains, DiscoveryEndpoint, Enabled
     $targetadepr1 = ("https://autodiscover." + $ExchangeOnPremDomain + "/autodiscover/autodiscover.svc/WSSecurity")
@@ -3524,7 +3614,7 @@ if ($Org -contains 'ExchangeOnline' -OR -not $Org) {
     
     #endregion
     #region ExoDauthCheck
-    if ($Auth -contains "DAuth" -or -not $Auth) {
+    if ($Auth -contains "DAuth" -or $Auth -contains "All") {
         Write-Host $bar
         $StringTest = " Testing DAuth configuration "
         $side = ($ConsoleWidth - $StringTest.Length - 2) / 2
@@ -3561,7 +3651,7 @@ if ($Org -contains 'ExchangeOnline' -OR -not $Org) {
     }
     #endregion
     #region ExoOauthCheck
-    if ($Auth -contains "OAuth" -or -not $Auth) {
+    if ($Auth -contains "OAuth" -or $Auth -contains "All") {
         $StringTest = " Testing OAuth configuration "
         $side = ($ConsoleWidth - $StringTest.Length - 2 ) / 2
         $sideString = "*"
