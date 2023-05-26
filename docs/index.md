@@ -76,11 +76,12 @@ Module  : ExchangeOnlineManagement Module
 ##Valid Input Option Parameters
 
   Paramater               : Auth
-    Options               : DAuth; OAUth; Null
-    
+    Options               : All; DAuth; OAUth; Null
+        
+        All               : Collects information both for OAuth and DAuth;
         DAuth             : DAuth Authentication
         OAuth             : OAuth Authentication
-        Default Value.    : Null. No swith input means the script will collect both DAuth and OAuth Availability Configuration Detail
+        Default Value.    : Null. No swith input means the script will collect information for the current used method. If OAuth is enabled only OAuth is checked.
 
 
   Paramater               : Org
@@ -102,6 +103,7 @@ Module  : ExchangeOnlineManagement Module
   Paramater               : Help
   
     Options               : Null; True; False
+
         True              : Use the $True parameter to use display valid parameter Options.
 
 
@@ -109,9 +111,14 @@ Module  : ExchangeOnlineManagement Module
 ##Command Examples
 
 
-- This cmdlet will run Free Busy Checker script and check Availability OAuth and DAuth Configurations both for Exchange On Premises and Exchange Online.
+- This cmdlet will run Free Busy Checker script and check Availability for Exchange On Premises and Exchange Online for the currently used method, OAuth or DAuth. If OAuth is enabled OAUth is checked. If OAUth is not enabled, DAuth Configurations are collected.
 
             PS C:\> .\FreeBusyChecker.ps1
+
+
+- This cmdlet will run Free Busy Checker script and check Availability OAuth and DAuth Configurations both for Exchange On Premises and Exchange Online.
+
+            PS C:\> .\FreeBusyChecker.ps1 -Auth All
 
 - This cmdlet will run the Free Busy Checker Script against for OAuth Availability Configurations only.
 
