@@ -2442,7 +2442,8 @@ Function OAuthConnectivityCheck {
     DisConnect-ExchangeOnline -Confirm:$False
     Write-Host -foregroundcolor Green " Test-OAuthConnectivity -Service EWS -TargetUri https://outlook.office365.com/EWS/Exchange.asmx -Mailbox $useronprem"
     Write-Host $bar
-    Test-OAuthConnectivity -Service EWS -TargetUri https://outlook.office365.com/EWS/Exchange.asmx -Mailbox $useronprem | fl
+    #testing OAuth twice as often fails the first time with a cleared cache error
+    $aux = Test-OAuthConnectivity -Service EWS -TargetUri https://outlook.office365.com/EWS/Exchange.asmx -Mailbox $useronprem | fl
     #$OAuthConnectivity
     $OAuthConnectivity = Test-OAuthConnectivity -Service EWS -TargetUri https://outlook.office365.com/EWS/Exchange.asmx -Mailbox $useronprem
     if ($OAuthConnectivity.ResultType -eq 'Success' ) {
@@ -3370,7 +3371,12 @@ if ( -not $org -or $org -eq 'ExchangeOnPremise' ) {
     }
 }
 if ( -not $Org -or $Org -eq 'ExchangeOnline' ) {
+    
+    
+    
     Install-Module -Name ExchangeOnlineManagement -Force -WarningAction SilentlyContinue -ErrorAction SilentlyContinue -SkipPublisherCheck -Confirm:$False
+    
+    
     Connect-ExchangeOnline -ShowBanner:$false -Prefix ExchangeOnline -WarningAction SilentlyContinue -ErrorAction SilentlyContinue 
     
     $EXOIntraOrgCon = Get-ExchangeOnlineIntraOrganizationConnector -WarningAction SilentlyContinue -ErrorAction SilentlyContinue | Where-Object { $_.Enabled -and $_.TargetAddressDomains.Contains($ExchangeOnPremDomain) } | Select-Object Name, TargetAddressDomains, DiscoveryEndpoint, Enabled
@@ -3401,7 +3407,7 @@ if ( -not $Org -or $Org -eq 'ExchangeOnline' ) {
      "
     $html | Out-File -FilePath $htmlfile
             } 
-    Disconnect-ExchangeOnline -InformationAction SilentlyContinue -WarningAction SilentlyContinue
+    Disconnect-ExchangeOnline -InformationAction SilentlyContinue -WarningAction SilentlyContinue -Confirm:$False
 
     }
 }
