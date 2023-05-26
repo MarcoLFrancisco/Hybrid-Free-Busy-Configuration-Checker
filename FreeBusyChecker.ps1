@@ -1,4 +1,4 @@
-<#
+ <#
 .SYNOPSIS
 .\FreeBusyChecker.ps1 
 .DESCRIPTION
@@ -10,13 +10,13 @@ Required Permissions:
 Please make sure that the account used is a member of the Local Administrator group. This should be fulfilled on Exchange servers by being a member of the Organization Management group. However, if the group membership was adjusted or in case the script is executed on a non-Exchange system like a management server, you need to add your account to the Local Administrator group.
 
 How To Run:
-This script must be run as Administrator in Exchange Management Shell on an Exchange Server. You can provide no parameters and the script will just run against Exchnage On Premises and Exchange Online to query for OAuth and DAuth configuration setting. It will compare existing values with standard values and provide detail of what may not be correct.
-Please take note that though this script may output that a specific setting is not a standard sertting, it does not mean that your configurations are incorrect. For exmaple, DNS may be configured with specific mapppings that this script can not evaluate.
+This script must be run as Administrator in Exchange Management Shell on an Exchange Server. You can provide no parameters and the script will just run against Exchange On Premises and Exchange Online to query for OAuth and DAuth configuration setting. It will compare existing values with standard values and provide detail of what may not be correct.
+Please take note that though this script may output that a specific setting is not a standard setting, it does not mean that your configurations are incorrect. For example, DNS may be configured with specific mappings that this script cannot evaluate.
 
 .PARAMETER Auth
-Allow you to choosse the authentication type to validate.
+Allow you to choose the authentication type to validate.
 .PARAMETER Org
-Allow you to choosse the organizartion type to validate.
+Allow you to choose the organization type to validate.
 .PARAMETER Pause
 Pause after each test done..
 .PARAMETER Help
@@ -45,7 +45,8 @@ This cmdlet will run the Free Busy Checker Script for Exchange On Premises Avail
 
 #Exchange on Premise
 #>
-#region Properties and Parameters
+#region Properties and Parameters 
+
 [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseDeclaredVarsMoreThanAssignments', '', Justification = 'Variables are being used')]
 [CmdletBinding(DefaultParameterSetName = "FreeBusyInfo_OP", SupportsShouldProcess)]
 
@@ -2441,7 +2442,7 @@ Function OAuthConnectivityCheck {
     DisConnect-ExchangeOnline -Confirm:$False
     Write-Host -foregroundcolor Green " Test-OAuthConnectivity -Service EWS -TargetUri https://outlook.office365.com/EWS/Exchange.asmx -Mailbox $useronprem"
     Write-Host $bar
-    #$OAuthConnectivity = Test-OAuthConnectivity -Service EWS -TargetUri https://outlook.office365.com/EWS/Exchange.asmx -Mailbox $useronprem | fl
+    Test-OAuthConnectivity -Service EWS -TargetUri https://outlook.office365.com/EWS/Exchange.asmx -Mailbox $useronprem | fl
     #$OAuthConnectivity
     $OAuthConnectivity = Test-OAuthConnectivity -Service EWS -TargetUri https://outlook.office365.com/EWS/Exchange.asmx -Mailbox $useronprem
     if ($OAuthConnectivity.ResultType -eq 'Success' ) {
@@ -3756,7 +3757,7 @@ if ($Org -contains 'ExchangeOnline' -OR -not $Org) {
         Write-Host $bar
     }
     #endregion
-    disConnect-ExchangeOnline  
+    disConnect-ExchangeOnline -Confirm:$False
     Write-Host -foregroundcolor Green " That is all for the Exchange Online Side"
     #Read-Host "Ctrl+C to exit. Enter to Exit."
     $bar
