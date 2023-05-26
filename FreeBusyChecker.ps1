@@ -2438,7 +2438,7 @@ Function AvailabilityAddressSpaceCheckOAuth {
 }
 
 Function OAuthConnectivityCheck {
-disconnect-ExchangeOnline
+    DisConnect-ExchangeOnline -Confirm:$False
     Write-Host -foregroundcolor Green " Test-OAuthConnectivity -Service EWS -TargetUri https://outlook.office365.com/EWS/Exchange.asmx -Mailbox $useronprem"
     Write-Host $bar
     #$OAuthConnectivity = Test-OAuthConnectivity -Service EWS -TargetUri https://outlook.office365.com/EWS/Exchange.asmx -Mailbox $useronprem | fl
@@ -3369,8 +3369,8 @@ if ( -not $org -or $org -eq 'ExchangeOnPremise' ) {
     }
 }
 if ( -not $Org -or $Org -eq 'ExchangeOnline' ) {
-    Install-Module -Name ExchangeOnlineManagement -Force -WarningAction SilentlyContinue -ErrorAction SilentlyContinue -SkipPublisherCheck 
-    Connect-ExchangeOnline -ShowBanner:$false -Prefix ExchangeOnline -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
+    Install-Module -Name ExchangeOnlineManagement -Force -WarningAction SilentlyContinue -ErrorAction SilentlyContinue -SkipPublisherCheck -Confirm:$False
+    Connect-ExchangeOnline -ShowBanner:$false -Prefix ExchangeOnline -WarningAction SilentlyContinue -ErrorAction SilentlyContinue 
     
     $EXOIntraOrgCon = Get-ExchangeOnlineIntraOrganizationConnector -WarningAction SilentlyContinue -ErrorAction SilentlyContinue | Where-Object { $_.Enabled -and $_.TargetAddressDomains.Contains($ExchangeOnPremDomain) } | Select-Object Name, TargetAddressDomains, DiscoveryEndpoint, Enabled
     $EXOOrgRelation = Get-ExchangeOnlineOrganizationRelationship -WarningAction SilentlyContinue -ErrorAction SilentlyContinue |  Where-Object { $_.Enabled -and $_.DomainNames.Contains($exchangeOnPremDomain) } | Select-Object Name, DomainNames, Enabled
@@ -3400,7 +3400,7 @@ if ( -not $Org -or $Org -eq 'ExchangeOnline' ) {
      "
     $html | Out-File -FilePath $htmlfile
             } 
-    Disconnect-ExchangeOnline
+    Disconnect-ExchangeOnline -InformationAction SilentlyContinue -WarningAction SilentlyContinue
 
     }
 }
@@ -3648,7 +3648,7 @@ if ($Org -contains 'ExchangeOnline' -OR -not $Org) {
     #$bar
     #Exchange Online Management Shell
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-    install-module AzureAD -AllowClobber
+    install-module AzureAD -AllowClobber -Force -WarningAction SilentlyContinue 
     #$CreateEXOPSSession = (Get-ChildItem -Path $env:userprofile -Filter CreateExoPSSession.ps1 -Recurse -ErrorAction SilentlyContinue -Force | Select -Last 1).DirectoryName. "$CreateEXOPSSession\CreateExoPSSession.ps1"
     #Import-Module $((Get-ChildItem -Path $($env:LOCALAPPDATA+"\Apps\2.0\") -Filter CreateExoPSSession.ps1 -Recurse ).FullName | Select-Object -Last 1)
     #Connect-EXOPSSession
@@ -3756,7 +3756,7 @@ if ($Org -contains 'ExchangeOnline' -OR -not $Org) {
         Write-Host $bar
     }
     #endregion
-    disConnect-ExchangeOnline  -Confirm:$False
+    disConnect-ExchangeOnline  
     Write-Host -foregroundcolor Green " That is all for the Exchange Online Side"
     #Read-Host "Ctrl+C to exit. Enter to Exit."
     $bar
