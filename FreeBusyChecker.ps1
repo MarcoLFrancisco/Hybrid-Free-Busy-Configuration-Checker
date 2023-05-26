@@ -101,11 +101,12 @@ $Global:OrgRel
 $Global:SPDomainsOnprem
 $AvailabilityAddressSpace = $null
 $Global:WebServicesVirtualDirectory = $null
+$bar = " ==================================================================================================================" 
 $ConsoleWidth = $Host.UI.RawUI.WindowSize.Width
-$bar = "="
-for ( $i = 1; $i -lt $ConsoleWidth; $i++) {
-    $bar += "="
-}
+#$bar = "="
+#for ( $i = 1; $i -lt $ConsoleWidth; $i++) {
+#    $bar += "="
+#}
 $logfile = "$PSScriptRoot\FreeBusyInfo_OP.txt"
 $startingDate = (get-date -format yyyyMMdd_HHmmss)
 $Logfile = [System.IO.Path]::GetFileNameWithoutExtension($logfile) + "_" + `
@@ -2437,6 +2438,7 @@ Function AvailabilityAddressSpaceCheckOAuth {
 }
 
 Function OAuthConnectivityCheck {
+disconnect-ExchangeOnline
     Write-Host -foregroundcolor Green " Test-OAuthConnectivity -Service EWS -TargetUri https://outlook.office365.com/EWS/Exchange.asmx -Mailbox $useronprem"
     Write-Host $bar
     #$OAuthConnectivity = Test-OAuthConnectivity -Service EWS -TargetUri https://outlook.office365.com/EWS/Exchange.asmx -Mailbox $useronprem | fl
@@ -3367,7 +3369,7 @@ if ( -not $org -or $org -eq 'ExchangeOnPremise' ) {
     }
 }
 if ( -not $Org -or $Org -eq 'ExchangeOnline' ) {
-    Install-Module -Name ExchangeOnlineManagement -Force -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
+    Install-Module -Name ExchangeOnlineManagement -Force -WarningAction SilentlyContinue -ErrorAction SilentlyContinue -SkipPublisherCheck 
     Connect-ExchangeOnline -ShowBanner:$false -Prefix ExchangeOnline -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
     
     $EXOIntraOrgCon = Get-ExchangeOnlineIntraOrganizationConnector -WarningAction SilentlyContinue -ErrorAction SilentlyContinue | Where-Object { $_.Enabled -and $_.TargetAddressDomains.Contains($ExchangeOnPremDomain) } | Select-Object Name, TargetAddressDomains, DiscoveryEndpoint, Enabled
@@ -3398,6 +3400,7 @@ if ( -not $Org -or $Org -eq 'ExchangeOnline' ) {
      "
     $html | Out-File -FilePath $htmlfile
             } 
+    Disconnect-ExchangeOnline
 
     }
 }
@@ -3651,7 +3654,7 @@ if ($Org -contains 'ExchangeOnline' -OR -not $Org) {
     #Connect-EXOPSSession
     #Connect-EXOPSSession
     #RestV3 connection
-    Install-Module -Name ExchangeOnlineManagement
+    Install-Module -Name ExchangeOnlineManagement -Force -WarningAction SilentlyContinue 
     Connect-ExchangeOnline -ShowBanner:$false
 
     $Script:ExoOrgRel = Get-OrganizationRelationship | Where-Object { ($_.DomainNames -like $ExchangeOnPremDomain ) } | Select-Object Enabled, Identity, DomainNames, FreeBusy*, Target*
