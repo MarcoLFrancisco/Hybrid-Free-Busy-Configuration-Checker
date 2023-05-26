@@ -22,9 +22,11 @@ Pause after each test done..
 .PARAMETER Help
 Show help of this script.
 
-
 .EXAMPLE
 .\FreeBusyChecker.ps1 
+This cmdlet will run Free Busy Checker script and check Availability for Exchange On Premises and Exchange Online for the currently used method, OAuth or DAuth. If OAuth is enabled OAUth is checked. If OAUth is not enabled, DAuth Configurations are collected.
+.EXAMPLE
+.\FreeBusyChecker.ps1 -Auth ALL
 This cmdlet will run Free Busy Checker script and check Availability OAuth and DAuth Configurations both for Exchange On Premises and Exchange Online.
 .EXAMPLE
 .\FreeBusyChecker.ps1 -Auth OAuth
