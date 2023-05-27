@@ -75,7 +75,7 @@ Valid Input Option Parameters:
   Paramater               : Auth
     Options               : All; DAuth; OAUth; Null
     
-        All               : Collects Availability Information for both OAutg and Dauth
+        All               : Collects Availability Information for both OAuth and DAuth
         DAuth             : DAuth Authentication
         OAuth             : OAuth Authentication
         Default Value.    : Null. No swith input means the script will collect availability information for the current used method. If OAuth is enabled it will collect OAuth Availability    
@@ -108,9 +108,13 @@ Valid Input Option Parameters:
 Examples:
 
 
+- This cmdlet will run Free Busy Checker script and will collect availability information for the current used method. If OAuth is enabled it will collect OAuth Availability Configuration information. If OAuth is not enabled it will collect DAuth Availability Information.
+
+            PS C:\> .\FreeBusyChecker.ps1 
+
 - This cmdlet will run Free Busy Checker script and check Availability OAuth and DAuth Configurations both for Exchange On Premises and Exchange Online.
 
-            PS C:\> .\FreeBusyChecker.ps1
+            PS C:\> .\FreeBusyChecker.ps1 -Auth All
 
 - This cmdlet will run the Free Busy Checker Script against for OAuth Availability Configurations only.
 
