@@ -73,11 +73,13 @@ How To Run:
 Valid Input Option Parameters:
 
   Paramater               : Auth
-    Options               : DAuth; OAUth; Null
+    Options               : All; DAuth; OAUth; Null
     
+        All               : Collects Availability Information for both OAutg and Dauth
         DAuth             : DAuth Authentication
         OAuth             : OAuth Authentication
-        Default Value.    : Null. No swith input means the script will collect both DAuth and OAuth Availability Configuration Detail
+        Default Value.    : Null. No swith input means the script will collect availability information for the current used method. If OAuth is enabled it will collect OAuth Availability    
+                            Configuration information. If OAuth is not enabled it will collect DAuth Availability Information
 
 
   Paramater               : Org
