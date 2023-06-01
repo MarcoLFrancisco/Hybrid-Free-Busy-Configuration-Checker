@@ -132,7 +132,7 @@ else {
 $temp = "*" + $ExchangeOnlineDomain
 $UserOnPrem = get-mailbox -resultsize 2 -WarningAction SilentlyContinue -Filter 'EmailAddresses -like $temp -and HiddenFromAddressListsEnabled -eq $false'
 $UserOnPrem = $UserOnPrem[1].PrimarySmtpAddress.Address
-$ExchangeOnPremDomain = ($UserOnPrem -split "@")[1]
+$Global:ExchangeOnPremDomain = ($UserOnPrem -split "@")[1]
 $EWSVirtualDirectory = Get-WebServicesVirtualDirectory
 
 if ($EWSVirtualDirectory.externalURL.AbsoluteUri.Count -gt 1) {
@@ -695,6 +695,7 @@ Function FedTrustCheck {
         Write-Host -foregroundcolor Red "  Federation Trust Aplication Uri Should be "$fedtrust.ApplicationUri
         $tdfedtrustApplicationUriColor = "red"
         $tdfedtrustApplicationUriFL = "  Federation Trust Aplication Uri Should be $fedtrust.ApplicationUri"
+
     }
     #$fedtrust.TokenIssuerUri.AbsoluteUri
     Write-Host -foregroundcolor White " TokenIssuerUri:"
@@ -773,7 +774,7 @@ Function FedTrustCheck {
     }
     $fedinfoTokenIssuerUris = $fedinfo.TokenIssuerUris
     $fedinfoTargetApplicationUri = $fedinfo.TargetApplicationUri
-    $fedinfoTargetAutodiscoverEpr = $fedinfo.TargetAutodiscoverEpr
+    $script:fedinfoTargetAutodiscoverEpr = $fedinfo.TargetAutodiscoverEpr
     
     
     
@@ -1569,7 +1570,7 @@ Function PartnerApplicationCheck {
         <div><b>CertificateStrings:</b><span style='color: $tdPartnerApplicationCertificateStringsColor;'>$($tdPartnerApplicationCertificateStrings)</span></div>
         <div><b>AuthMetadataUrl:</b><span style='color: $tdPartnerApplicationAuthMetadataUrlColor;'>$($tdPartnerApplicationAuthMetadataUrl)</span></div>
         <div><b>Realm:</b><span style='color: $tdPartnerApplicationRealmColor'>$($tdPartnerApplicationRealm)</span></div>
-        <div><b>LinkedAccount:</b><span style='color: $tdPartnerApplicationAuthMetadataUrlColor;'>$($tdPartnerApplicationAuthMetadataUrl)</span></div>
+        <div><b>LinkedAccount:</b><span style='color: $tdPartnerApplicationLinkedAccountColor;'>$($tdPartnerApplicationLinkedAccount)</span></div>
         <div><b>IssuerIdentifier:</b><span style='color: $tdPartnerApplicationEnabledColor'>$($tdPartnerApplicationEnabled)</span></div>
         <div><b>AppOnlyPermissions:</b><span style='color: $tdPartnerApplicationApplicationIdentifierColor;'>$($tdPartnerApplicationApplicationIdentifier)</span></div>
         <div><b>ActAsPermissions:</b><span style='color: $tdPartnerApplicationCertificateStringsColor;'>$($tdPartnerApplicationCertificateStrings)</span></div>
@@ -2582,6 +2583,9 @@ Function ExoOrgRelCheck () {
     }
     #TargetApplicationUri
     Write-Host  " TargetApplicationUri:"
+   # Write-host $fedinfoTargetApplicationUri
+    $a= "FYDIBOHF25SPDLT." + $ExchangeOnPremDomain
+   #write-host $a 
     if ($exoOrgRel.TargetApplicationUri -like $fedtrust.ApplicationUri) {
         Write-Host -foregroundcolor Green "  TargetApplicationUri is" $fedtrust.ApplicationUri.originalstring
         $tdEXOOrgRelTargetApplicationUri = "  TargetApplicationUri is $($fedtrust.ApplicationUri.originalstring)"
@@ -2590,9 +2594,9 @@ Function ExoOrgRelCheck () {
 
     }
     else {
-        Write-Host -foregroundcolor Red "  TargetApplicationUri should be " $fedtrust.ApplicationUri.originalstring
+        Write-Host -foregroundcolor Red "  TargetApplicationUri should be " $a
         #$countOrgRelIssues++
-        $tdEXOOrgRelTargetApplicationUri = "  TargetApplicationUri should be $($fedtrust.ApplicationUri.originalstring)"
+        $tdEXOOrgRelTargetApplicationUri = "  TargetApplicationUri should be $a. Please check if Exchange On Premise Federation is correctly configured."
         $tdEXOOrgRelTargetApplicationUriColor = "red"
 
 
