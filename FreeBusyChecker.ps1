@@ -3602,6 +3602,7 @@ if ($Org -contains 'ExchangeOnline' -OR -not $Org) {
         EXOtestoauthcheck
         Write-Host $bar
     }
+    
     #endregion
     disConnect-ExchangeOnline  -Confirm:$False
     Write-Host -foregroundcolor Green " That is all for the Exchange Online Side"
