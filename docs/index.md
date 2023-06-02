@@ -4,7 +4,7 @@
 
 To View this Project at GitHub! [GitHub Repository](https://github.com/MarcoLFrancisco/Hybrid-Free-Busy-Configuration-Checker)
 
-To Download the latest release: [FreeBusyChecker.ps1](https://github.com/MarcoLFrancisco/Hybrid-Free-Busy-Configuration-Checker/releases/download/BetaRelease/FreeBusyChecker.ps1)
+To Download the latest release: [FreeBusyChecker.ps1](https://github.com/MarcoLFrancisco/Hybrid-Free-Busy-Configuration-Checker/releases/download/BetaReleaseVersion/FreeBusyChecker.ps1)
 
 - This script is still under development. It is not a stable finished version.
 
