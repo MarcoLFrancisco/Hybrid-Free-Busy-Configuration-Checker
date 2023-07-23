@@ -51,7 +51,7 @@ This cmdlet will run the Free Busy Checker Script for Exchange On Premises Avail
 
 param(
     [Parameter(Mandatory = $false, ParameterSetName = "Test")]
-    [ValidateSet('DAuth', 'OAuth')]
+    [ValidateSet('DAuth', 'OAuth', 'All', '')]
     [string[]]$Auth,
     [Parameter(Mandatory = $false, ParameterSetName = "Test")]
     [ValidateSet('ExchangeOnPremise', 'ExchangeOnline')]
@@ -101,10 +101,12 @@ $Global:SPDomainsOnprem
 $AvailabilityAddressSpace = $null
 $Global:WebServicesVirtualDirectory = $null
 $ConsoleWidth = $Host.UI.RawUI.WindowSize.Width
-$bar = "="
-for ( $i = 1; $i -lt $ConsoleWidth; $i++) {
-    $bar += "="
-}
+
+
+$bar = " ==================================================================================================================" 
+
+
+
 $logfile = "$PSScriptRoot\FreeBusyInfo_OP.txt"
 $startingDate = (get-date -format yyyyMMdd_HHmmss)
 $Logfile = [System.IO.Path]::GetFileNameWithoutExtension($logfile) + "_" + `
@@ -243,73 +245,146 @@ Function ShowParameters {
 
 
     $script:html = "<!DOCTYPE html>
-        <html>
-        <head>
-	        <title>Hybrid Free Busy Configration Checker</title>
-	        <style>
-              body {
-               font-family: Courier;
-               background-color: white;
-              }
-              table, th {
-              border: 1px solid black;
-              border-collapse: collapse;
-              padding: 5px;
-              font-family: Courier;
-              background-color: white;
-              table-layout: fixed;
-            }
-             td {
-              border: 1px solid black;
-              border-collapse: collapse;
-              padding: 5px;
-              font-family: Courier;
-              background-color: white;
-              width: 50%;
-              max-width: 50%;
-              word-wrap:break-word
-            }
-            th {
-              background-color: blue;
-              text-align: left;
-            }
-		        .green { color: green; }
-		        .red { color: red; }
-		        .yellow { color: yellow; }
-		        .white { color: white; }
-                .black { color: white; }
-                .orange { color: orange; }
-                
-	        </style>
-        </head>
-        <body>
-            <div class='Black'><h1>Hybrid Free Busy Configration Checker</h1></div>
-	        
-	        <div class='Black'><h2><b>Parameters:</b></h2></div>
-	       
-                    <div class='Black'><b>Log File Path:</b><span style='color:green;'> $PSScriptRoot\$Logfile</span></div>
-	                <div class='Black'><b>Office 365 Domain:</b><span style='color:green;'>  $exchangeOnlineDomain</span></div>
-                    <div class='Black'><b>AD root Domain: </b><span style='color:green;'>  $exchangeOnPremLocalDomain</span></div>
-	                <div class='Black'><b>Exchange On Premises Domain: </b><span style='color:green;'>   $exchangeOnPremDomain</span></div>
-	                <div class='Black'><b>Exchange On Premises External EWS url: </b><span style='color:green;'> $exchangeOnPremEWS</span></div>
-	                <div class='Black'><b>On Premises Hybrid Mailbox: </b><span style='color:green;'>  $useronprem</span></div>
-	                <div class='Black'><b>Exchange Online Mailbox: </b><span style='color:green;'>  $userOnline</span></div>
-	            
+ <!DOCTYPE html>
+<html>
+<head>
+  <title>Hybrid Free Busy Configuration Checker</title>
+  <style>
+    body {
+      font-family: Arial;
+      background-color: white;
+    }
+    table, th {
+    max-width: 95%;
+    margin-left: 2%;
+    margin-right: 2%;
+      border: 1px solid black;
+      border-collapse: collapse;
+      padding: 5px;
+      font-family: Courier;
+      background-color: white;
+      table-layout: fixed;
+       font-family: Arial;
+    }
+    td {
+      border: 1px solid black;
+      border-collapse: collapse;
+      padding: 5px;
+      font-family: Arial;
+      background-color: white;
+      width: 50%;
+      max-width: 50%;
+      word-wrap: break-word;
+    }
+    th {
+      background-color: blue;
+      text-align: left;
+       font-family: Arial;
+    }
+    .green { color: green; }
+    .red { color: red; }
+    .yellow { color: yellow; }
+    .white { color: white; }
+    .black { color: black; }
+    .orange { color: orange; }
+    .Black {
+      font-weight: 500;
+    }
+     p {
+      font-wheigt : 548;
+    }
+    h1 {
+      color: #00a2ed;
+      padding-left: 2%;
+    }
+    h2 {
+      color: #00a2ed;
+      padding-left: 2%;
+    }
+    h3 {
+      color: #00a2ed;
+      padding-left: 2%;
+    }
+    ul {
+      padding-left: 8%;
+    }
 
-            <div class='Black'><p></p></div>
-            <div class='Black'><h2><b>Color Scheme:</b></h2></div>
-	        <div class='red'><b>Look out for Red!</b></div>
-	        <div class='orange'><b>Orange - Example information or Links</b></div>
-	        <div class='green'><b>Green - Means OK</b></div>
+   .microsoft {
+    background-color: #f25022;
+    box-shadow: 
+        28px 0 0 0 #7fba00, 
+        0 28px 0 0 #00a4ef, 
+        28px 28px 0 0 #ffb900;
+    height: 25px;
+    width: 25px;
+    margin-top: 1%;
+    margin-right: 1%;
+}
+  </style>
+</head>
+<body>
+ 
+            <div class='Black' style='display: -webkit-box;margin-left: 2%;'>
+            <div class='microsoft'></div>
+            <h1 style='padding-left: 2%;'>Microsoft CSS - Exchange Hybrid Free Busy Configration Checker</h1></div>
+
+	        
+	       <div class='Black' style = 'padding-left: 0%;'>
+              <h2><b>Parameters:</b></h2>
+              <ul>
+                <li>
+                  <p>Log File Path:</p>
+                  <span style='color:green; font-weight:500; padding-left:2%;'>$PSScriptRoot\$Logfile</span>
+                </li>
+                <li>
+                  <p>Office 365 Domain:</p>
+                  <span style='color:green; font-weight:500; padding-left:2%'>$exchangeOnlineDomain</span>
+                </li>
+                <li>
+                  <p>AD root Domain:</p>
+                  <span style='color:green; font-weight:500; padding-left:2%'>$exchangeOnPremLocalDomain</span>
+                </li>
+                <li>
+                  <p>Exchange On Premises Domain:</p>
+                  <span style='color:green; font-weight:500; padding-left:2%'>$exchangeOnPremDomain</span>
+                </li>
+                <li>
+                  <p>Exchange On Premises External EWS url:</p>
+                  <span style='color:green; font-weight:500; padding-left:2%'>$exchangeOnPremEWS</span>
+                </li>
+                <li>
+                  <p>On Premises Hybrid Mailbox:</p>
+                  <span style='color:green; font-weight:500; padding-left:2%'>$useronprem</span>
+                </li>
+                <li>
+                  <p>Exchange Online Mailbox:</p>
+                  <span style='color:green; font-weight:500; padding-left:2%'>$userOnline</span>
+                </li>
+              </ul>
+            </div>
+
             
-             <div class='Black'><p></p></div>
+            <div class='Black'  style = 'padding-left: 0%;'><h2Configuration:</h2></div>
             
-            
-            <div class='Black'><h2>Hybrid Free Busy Configuration:</h2></div>
-            
-           "
-           #(get-date -format yyyyMMdd_HHmmss)
-    $html | Out-File -FilePath $htmlfile
+            <p style='margin-left:2%;'>TLS 1.2 should be Enabled in order for Hybrid Free Busy to work. To confirm TLS Settings please Run the HealthChecker Script</p>
+              <ul>
+                <li><a href='https://microsoft.github.io/CSS-Exchange/Diagnostics/HealthChecker/'>Microsoft Exchange Health Checker Script</a></li>
+              </ul>
+
+
+            <h3>Useful Links</h3>
+              <ul>
+                <li><a href='https://techcommunity.microsoft.com/t5/exchange-team-blog/demystifying-hybrid-free-busy-finding-errors-and-troubleshooting/ba-p/607727'>Demystifying Hybrid Free Busy: Finding Errors and Troubleshooting</a></li>
+                <li><a href='https://support.microsoft.com/en-us/topic/how-to-troubleshoot-free-busy-issues-in-a-hybrid-deployment-of-on-premises-exchange-server-and-exchange-online-in-office-365-ae03e199-b439-a84f-8db6-11bc0d7fbdf0'>How to Troubleshoot Free Busy Issues in a Hybrid Deployment of On-Premises Exchange Server and Exchange Online in Office 365</a></li>
+                <li><a href='https://techcommunity.microsoft.com/t5/exchange-team-blog/the-hybrid-mesh/ba-p/605910'>The Hybrid Mesh</a></li>
+                <li><a href='https://techcommunity.microsoft.com/t5/exchange-team-blog/how-to-address-federation-trust-issues-in-hybrid-configuration/ba-p/1144285'>How to Address Federation Trust Issues in Hybrid Configuration</a></li>
+                <li><a href='https://learn.microsoft.com/en-us/microsoft-365/enterprise/urls-and-ip-address-ranges?redirectSourcePath=%252farticle%252fOffice-365-URLs-and-IP-address-ranges-8548a211-3fe7-47cb-abb1-355ea5aa88a2&view=o365-worldwide'>Office 365 URLs and IP Address Ranges</a></li>
+                <li><a href='https://techcommunity.microsoft.com/legacyfs/online/media/2019/01/FB_Errors.FixesV6.pdf'>Free Busy Erros and Fixes</a></li>
+              </ul>
+
+              "
+ 
+                $html | Out-File -FilePath $htmlfile
 }
 #}
 #endregion
@@ -320,6 +395,7 @@ Function OrgRelCheck {
     Write-Host $bar
     Write-Host -foregroundcolor Green " Get-OrganizationRelationship  | Where{($_.DomainNames -like $ExchangeOnlineDomain )} | Select Identity,DomainNames,FreeBusy*,Target*,Enabled, ArchiveAccessEnabled"
     Write-Host $bar
+   
     $OrgRel
     Write-Host $bar
     Write-Host  -foregroundcolor Green " Summary - Get-OrganizationRelationship"
@@ -1151,13 +1227,13 @@ Function TestFedTrust {
         Write-Host -foregroundcolor Green " Federation Trust Successfully tested"
         $Script:html += "
         <p></p>
-        <div class=´green´> <span style='color:green'> Federation Trust Successfully tested </span></div>"
+        <div class=¥green¥> <span style='color:green'> Federation Trust Successfully tested </span></div>"
     }
     else {
         Write-Host -foregroundcolor Red " Federation Trust test with Errors"
         $Script:html += "
         <p></p>
-        <div class=´red´> <span style='color:red'> Federation Trust tested with Errors </span></div>"
+        <div class=¥red¥> <span style='color:red'> Federation Trust tested with Errors </span></div>"
     }
 
 
@@ -1206,7 +1282,7 @@ Function TestOrgRel {
     $OrgRelTargetApplicationUri = $OrgRel.TargetApplicationUri
 
 
-    if ( $OrgRelTargetApplicationUri -like "Oulook.com") {
+    if ( $OrgRelTargetApplicationUri -like "Outlook.com" -OR $OrgRelTargetApplicationUri -like "outlook.com") {
 
 
     $Script:html += "<tr>
@@ -1278,7 +1354,7 @@ else {
 
     
     Write-host -ForegroundColor Yellow "`n  Reference: https://techcommunity.microsoft.com/t5/exchange-team-blog/how-to-address-federation-trust-issues-in-hybrid-configuration/ba-p/1144285"
-    #Write-Host $bar
+    Write-Host $bar
     $Script:html += "</td>
     </tr>"
     $html | Out-File -FilePath $htmlfile
@@ -1289,7 +1365,7 @@ else {
 #region OAuth Functions
 
 Function IntraOrgConCheck {
-
+    Write-Host $bar
     Write-Host -foregroundcolor Green " Get-IntraOrganizationConnector | Select Name,TargetAddressDomains,DiscoveryEndpoint,Enabled" 
     Write-Host $bar
     $IOC = $IntraOrgCon | Format-List
@@ -1464,9 +1540,10 @@ Function AuthServerCheck {
 
 Function PartnerApplicationCheck {
     #Write-Host $bar
-    Write-Host -foregroundcolor Green " Get-PartnerApplication |  ?{$_.ApplicationIdentifier -eq '00000002-0000-0ff1-ce00-000000000000'
-    -and $_.Realm -eq ''} | Select Enabled, ApplicationIdentifier, CertificateStrings, AuthMetadataUrl, Realm, UseAuthServer,
-    AcceptSecurityIdentifierInformation, LinkedAccount, IssuerIdentifier, AppOnlyPermissions, ActAsPermissions, Name"
+   Write-Host -foregroundcolor Green " Get-PartnerApplication |  ?{`$_.ApplicationIdentifier -eq '00000002-0000-0ff1-ce00-000000000000'
+    -and `$_.Realm -eq ''} | Select Enabled, ApplicationIdentifier, CertificateStrings, AuthMetadataUrl, Realm, UseAuthServer,
+    AcceptSecurityIdentifierInformation, LinkedAccount, IssuerIdentifier, AppOnlyPermissions, ActAsPermissions, Name" 
+
     Write-Host $bar
     $PartnerApplication = Get-PartnerApplication |  Where-Object { $_.ApplicationIdentifier -eq '00000002-0000-0ff1-ce00-000000000000' -and $_.Realm -eq '' } | Select-Object Enabled, ApplicationIdentifier, CertificateStrings, AuthMetadataUrl, Realm, UseAuthServer, AcceptSecurityIdentifierInformation, LinkedAccount, IssuerIdentifier, AppOnlyPermissions, ActAsPermissions, Name
     $PartnerApplication
@@ -1561,8 +1638,8 @@ Function PartnerApplicationCheck {
       <th colspan='2' style='color:white;'>Summary - Get-PartnerApplication</th>
     </tr>
     <tr>
-      <td><b> Get-PartnerApplication |  ?{$_.ApplicationIdentifier -eq '00000002-0000-0ff1-ce00-000000000000'
-    -and $_.Realm -eq ''} | Select Enabled, ApplicationIdentifier, CertificateStrings, AuthMetadataUrl, Realm, UseAuthServer,
+      <td><b> Get-PartnerApplication |  ?{`$_.ApplicationIdentifier -eq '00000002-0000-0ff1-ce00-000000000000'
+    -and `$_.Realm -eq ''} | Select Enabled, ApplicationIdentifier, CertificateStrings, AuthMetadataUrl, Realm, UseAuthServer,
     AcceptSecurityIdentifierInformation, LinkedAccount, IssuerIdentifier, AppOnlyPermissions, ActAsPermissions, Name</b></td>
       <td>
         <div><b>Enabled:</b><span style='color: $tdPartnerApplicationEnabledColor'>$($tdPartnerApplicationEnabled)</span></div>
@@ -1857,9 +1934,9 @@ Function CurrentCertificateThumbprintCheck {
     $thumb = Get-AuthConfig | Select-Object CurrentCertificateThumbprint
     $thumbprint = $thumb.currentcertificateThumbprint
     #Write-Host $bar
-    Write-Host -ForegroundColor Green " Get-ExchangeCertificate -Thumbprint $thumbprint | Select *"
+    Write-Host -ForegroundColor Green " Get-ExchangeCertificate -Thumbprint $thumbprint | Select FriendlyName, Issuer, Services, NotAfter, Status, HasPrivateKey, Subject, Thumb*"
     Write-Host $bar
-    $CurrentCertificate = get-exchangecertificate $thumb.CurrentCertificateThumbprint | Select-Object *
+    $CurrentCertificate = get-exchangecertificate $thumb.CurrentCertificateThumbprint | Select-Object  FriendlyName, Issuer, Services, NotAfter, Status, HasPrivateKey, Subject, Thumb*
     $CC = $CurrentCertificate | Format-List
     $CC
 
@@ -2571,7 +2648,7 @@ Function ExoOrgRelCheck () {
 
 
     }
-    #fix porque este else só respeita o if anterior
+    #fix porque este else sÛ respeita o if anterior
     if ($exoOrgRel.FreeBusyAccessLevel -NE "AvailabilityOnly" -AND $exoOrgRel.FreeBusyAccessLevel -NE "LimitedDetails") {
         Write-Host -foregroundcolor Red "  FreeBusyAccessEnabled : False"
         #$countOrgRelIssues++
@@ -2994,6 +3071,7 @@ Function SharingPolicyCheck {
 #region ExoOauthFuntions
 
 Function EXOIntraOrgConCheck {
+    Write-Host $bar
     Write-Host -foregroundcolor Green " Get-IntraOrganizationConnector | Select TargetAddressDomains,DiscoveryEndpoint,Enabled"
     Write-Host $bar
     $exoIntraOrgCon = Get-IntraOrganizationConnector | Select-Object TargetAddressDomains, DiscoveryEndpoint, Enabled
@@ -3038,7 +3116,7 @@ Function EXOIntraOrgConCheck {
     Write-Host -foregroundcolor White " Enabled: "
     if ($exoIntraOrgCon.Enabled -like "True") {
         Write-Host -foregroundcolor Green "  True "
-        $tdexoIntraOrgConEnabled = "$($exoIntraOrgCon.Enabled)"
+        $tdexoIntraOrgConEnabled = "True"
         $tdexoIntraOrgConEnabledColor = "green"
     
     
@@ -3047,7 +3125,7 @@ Function EXOIntraOrgConCheck {
     else {
         Write-Host -foregroundcolor Red "  False."
         Write-Host -foregroundcolor White " Should be True"
-        $tdexoIntraOrgConEnabled = "$($exoIntraOrgCon.Enabled) . Should be True"
+        $tdexoIntraOrgConEnabled = "False . Should be True"
         $tdexoIntraOrgConEnabledColor = "red"
     
     
@@ -3092,7 +3170,7 @@ Function EXOIntraOrgConfigCheck {
     $IOConfig = $exoIntraOrgConfig | Format-List
     $IOConfig
     Write-Host $bar
-    Write-Host -foregroundcolor Green " Summary - Online Intra Organization Configuration"
+    Write-Host -foregroundcolor Green " Summary - Exchange Online Intra Organization Configuration"
     Write-Host $bar
     Write-Host -foregroundcolor White " OnPremiseTargetAddresses: "
     if ($exoIntraOrgConfig.OnPremiseTargetAddresses -like "*$ExchangeOnpremDomain*") {
@@ -3107,7 +3185,7 @@ Function EXOIntraOrgConfigCheck {
         $tdexoIntraOrgConfigOnPremiseTargetAddresses = $exoIntraOrgConfig.OnPremiseTargetAddresses
         $tdexoIntraOrgConfigOnPremiseTargetAddressesColor = "red"
     }
-
+   
 
     $script:html += "
     
@@ -3295,25 +3373,261 @@ ShowParameters
 
 if ($IntraOrgCon.enabled -Like "True") {
     Write-Host $bar
-    Write-Host -foregroundcolor yellow "  Warning: Intra Organization Connector Enabled True `n  " 
-    Write-Host -foregroundcolor White "    -> Free Busy Lookup is done using OAuth when the Intra Organization Connector is Enabled"
-    Write-Host -foregroundcolor White "`n         This script can be Run using the -Auth paramenter to check for OAuth configurations only. `n `n         Example: ./FreeBusyChecker.ps1 -Auth OAuth"
-    $Script:html += "<div><p></p></div><div>  <span style='color:orange;'><b>Warning: </b></span> Intra Organization Connector Enabled True `n <b>  -> Free Busy Lookup is done using OAuth when the Intra Organization Connector is Enabled<b></div>
-     <div><p></p></div><div>  This script can be Run using the -Auth paramenter to check for OAuth configurations only. `n Example: ./FreeBusyChecker.ps1 -Auth OAuth </div> <div><p></p></div>
 
+    if ($Auth -Like "DAuth") {
+    Write-Host -foregroundcolor yellow "  Warning: Intra Organization Connector Enabled True -> Running for DAuth only as -Auth DAuth option was selected`n  " 
+    if ($OrgRel.enabled -Like "True") {
+    Write-Host -foregroundcolor White "           Organization Relationship Enabled True `n  " 
+    
+    }
+    
+   
+    Write-Host -foregroundcolor White "      This script can be Run using the -Auth All paramenter to check for both OAuth and DAuth configuration. `n `n         Example: ./FreeBusyChecker.ps1 -Auth All"
+    $Script:html += "
+                        <div  style = 'padding-left: 0%;'>
+                          <h3>Intra Organization Connector Enabled: <b>True</b></h3>
+                          <p> <span style='color: green; font-wight: 550; padding-left:2%; '>Checking DAuth only as -Auth DAuth option was selected</span></p>
+  
+                        </div>
+
+                        <div  style = 'padding-left: 0%;'>
+  
+                          <ul>
+                            <li>
+                              This script can be run using the <b>-Auth OAuth</b> parameter to check for DAuth configurations only.
+                              <br />
+                              <span style='padding-left: 2%;'>
+                                <br />
+                                <b>Example:</b> ./FreeBusyChecker.ps1 -Auth OAuth
+      
+                              </span>
+                            </li>
+                            <br />
+                            <li>
+      
+                              This script can be run using the <b>-Auth All</b> parameter to check for both OAuth and DAuth configurations.
+                              <br />
+                              <span style='padding-left: 2%;'>
+                                <br />
+                                <b>Example:</b> ./FreeBusyChecker.ps1 -Auth All
+                              <span style='padding:2%;'>
+                            </li>
+                          </ul>
+                        </div>
     "
-    $html | Out-File -FilePath $htmlfile
+        $html | Out-File -FilePath $htmlfile
+    
+    }
+    if ($Auth -Like "") {
+    
+        $Auth = "OAuth"
+        Write-Host -foregroundcolor White "    -> Free Busy Lookup is done using OAuth when the Intra Organization Connector is Enabled"
+        Write-Host -foregroundcolor White "    -> Running for OAuth only as OAuth takes precedence over DAuth;"
+        Write-Host -foregroundcolor White "`n         This script can be Run using the -Auth All paramenter to check for both OAuth and DAuth configuration. `n `n         Example: ./FreeBusyChecker.ps1 -Auth All"
+        Write-Host -foregroundcolor White "`n         This script can be Run using the -Auth DAuth paramenter to check for DAuth configuration only. `n `n         Example: ./FreeBusyChecker.ps1 -Auth DAuth"
+        $Script:html += "
+                        <div  style = 'padding-left: 0%;'>
+                          <h3>Intra Organization Connector Enabled: <b>True</b></h3>
+                          <p> <span style='color: green; font-wight: 550; padding-left:2%; '>Checking OAuth only as Free Busy Lookup is done using OAuth when the Intra Organization Connector is Enabled</span></p>
+  
+                        </div>
+
+                        <div  style = 'padding-left: 0%;'>
+  
+                          <ul>
+                            <li>
+                              This script can be run using the <b>-Auth DAuth</b> parameter to check for DAuth configurations only.
+                              <br />
+                              <span style='padding-left: 2%;'>
+                                <br />
+                                <b>Example:</b> ./FreeBusyChecker.ps1 -Auth DAuth
+      
+                              </span>
+                            </li>
+                            <br />
+                            <li>
+      
+                              This script can be run using the <b>-Auth All</b> parameter to check for both OAuth and DAuth configurations.
+                              <br />
+                              <span style='padding-left: 2%;'>
+                                <br />
+                                <b>Example:</b> ./FreeBusyChecker.ps1 -Auth All
+                              <span style='padding:2%;'>
+                            </li>
+                          </ul>
+                        </div>
+    "
+        $html | Out-File -FilePath $htmlfile
+    
+    }
+    if ($Auth -Like "All") {
+    
+        $Auth = "";
+        Write-Host -foregroundcolor White "    -> Free Busy Lookup is done using OAuth when the Intra Organization Connector is Enabled"
+        Write-Host -foregroundcolor White "    -> Checking both OAuth and DAuth as -Auth All option was selected"
+        
+        $Script:html += "
+                        <div  style = 'padding-left: 0%;'>
+                          
+                          <h3>Intra Organization Connector Enabled: <b>True</b></h3>
+                          
+                          <p> <span style='color: green; font-wight: 550; padding-left:2%; '>Checking both OAuth and DAuth as -Auth All option was selected</span></p>
+  
+                        </div>
+
+                        <div  style = 'padding-left: 0%;'>
+  
+                          <ul>
+                            <li>
+                              This script can be run using the <b>-Auth DAuth</b> parameter to check for DAuth configurations only.
+                              <br />
+                              <span style='padding-left: 2%;'>
+                                <br />
+                                <b>Example:</b> ./FreeBusyChecker.ps1 -Auth DAuth
+      
+                              </span>
+                            </li>
+                            <br />
+                            <li>
+      
+                              This script can be run using the <b>-Auth All</b> parameter to check for both OAuth and DAuth configurations.
+                              <br />
+                              <span style='padding-left: 2%;'>
+                                <br />
+                                <b>Example:</b> ./FreeBusyChecker.ps1 -Auth All
+                              <span style='padding:2%;'>
+                            </li>
+                          </ul>
+                        </div>
+    "
+        $html | Out-File -FilePath $htmlfile
+        
+       
+    }
+    
+    
 }
 
 if ($IntraOrgCon.enabled -Like "False") {
+if ($Auth -like "" -or $Auth -like "DAuth") {
+
     Write-Host $bar
-    Write-Host -foregroundcolor yellow "  Warning: Intra Organization Connector Enabled False -> Free Busy Lookup is done using DAuth (Organization Relationship) when the Intra Organization Connector is Disabled"
-    Write-Host -foregroundcolor White "`n  This script can be Run using the -Auth paramenter to check for OAuth configurations only. `n  Example: ./FreeBusyChecker.ps1 -Auth OAuth"
-    $Script:html += "<p>/p> <div>  <span style='color:yellow;'>Warning: </span> Intra Organization Connector Enabled True `n <b>       -> Free Busy Lookup is done using OAuth when the Intra Organization Connector is Enabled<b></div>
-     <div><p></p></div>
-     <div>  This script can be Run using the -Auth paramenter to check for OAuth configurations only. Example: ./FreeBusyChecker.ps1 -Auth OAuth</div> <div><p></p></div>
+    Write-Host -foregroundcolor yellow "  Warning: Intra Organization Connector Enabled False -> Running for DAuth only as OAuth is not enabled"
+    Write-Host -foregroundcolor White "`n       This script can be Run using the '-Auth OAuth' paramenter to check for OAuth configurations only. `n"  
+    Write-Host -foregroundcolor White "             Example: ./FreeBusyChecker.ps1 -Auth OAuth"
+    Write-Host -foregroundcolor White "`n       This script can be Run using the '-Auth All' paramenter to check for both OAuth and DAuth configuration. `n"       
+    Write-Host -foregroundcolor White "             Example: ./FreeBusyChecker.ps1 -Auth All"
+
+
+    $Script:html += "
+                        <div  style = 'padding-left: 0%;'>
+                          
+                          <h3>Intra Organization Connector Enabled: <b>False</b></h3>
+                          
+                          <p> <span style='color: green; font-wight: 550; padding-left:2%; '>Checking DAuth as OAuth is not Enabled</span></p>
+  
+                        </div>
+
+                        <div  style = 'padding-left: 0%;'>
+  
+                          <ul>
+                            <li>
+                              This script can be run using the <b>-Auth OAuth</b> parameter to check for OAuth configurations only.
+                              <br />
+                              <span style='padding-left: 2%;'>
+                                <br />
+                                <b>Example:</b> ./FreeBusyChecker.ps1 -Auth OAuth
+      
+                              </span>
+                            </li>
+                            <br />
+                            <li>
+      
+                              This script can be run using the <b>-Auth All</b> parameter to check for both OAuth and DAuth configurations.
+                              <br />
+                              <span style='padding-left: 2%;'>
+                                <br />
+                                <b>Example:</b> ./FreeBusyChecker.ps1 -Auth All
+                              <span style='padding:2%;'>
+                            </li>
+                          </ul>
+                        </div>
     "
-    $html | Out-File -FilePath $htmlfile
+
+     $html | Out-File -FilePath $htmlfile
+}
+if ($Auth -like "OAuth") {
+
+    Write-Host $bar
+    Write-Host -foregroundcolor yellow "  Warning: Intra Organization Connector Enabled False -> Running for OAuth only as -Auth OAuth parameter was selected"
+    Write-Host -foregroundcolor White "`n       This script can be Run using the '-Auth All' paramenter to check for both OAuth and DAuth configuration. `n"       
+    Write-Host -foregroundcolor White "             Example: ./FreeBusyChecker.ps1 -Auth All"
+
+
+    $Script:html += "
+                        <div  style = 'padding-left: 0%;'>
+                          
+                          <h3>Intra Organization Connector Enabled: <b>False</b></h3>
+                          
+                          <p> <span style='color: green; font-wight: 550; padding-left:2%; '>Checking OAuth as -Auth OAuth parameter was selected</span></p>
+  
+                        </div>
+
+                        <div  style = 'padding-left: 0%;'>
+  
+                          <ul>
+                            <li>
+      
+                              This script can be run using the <b>-Auth All</b> parameter to check for both OAuth and DAuth configurations.
+                              <br />
+                              <span style='padding-left: 2%;'>
+                                <br />
+                                <b>Example:</b> ./FreeBusyChecker.ps1 -Auth All
+                              <span style='padding:2%;'>
+                            </li>
+                          </ul>
+                        </div>
+    "
+
+     $html | Out-File -FilePath $htmlfile
+}
+
+if ($Auth -like "All") {
+
+    Write-Host $bar
+    Write-Host -foregroundcolor yellow "  Warning: Intra Organization Connector Enabled False -> Running both for OAuth and Dauth as -Auth All parameter was selected"
+    Write-Host -foregroundcolor White "`n       This script can be Run using the '-Auth OAuth' paramenter to check for OAuth configuration only. `n"       
+    Write-Host -foregroundcolor White "             Example: ./FreeBusyChecker.ps1 -Auth OAuth"
+
+
+    $Script:html += "
+                        <div  style = 'padding-left: 0%;'>
+                          
+                          <h3>Intra Organization Connector Enabled: <b>False</b></h3>
+                          
+                          <p> <span style='color: green; font-wight: 550; padding-left:2%; '>Checking both for OAuth and DAuth as -Auth All parameter was selected</span></p>
+  
+                        </div>
+
+                        <div  style = 'padding-left: 0%;'>
+  
+                          <ul>
+                            <li>
+      
+                              This script can be run using the <b>-Auth OAuth</b> parameter to check for OAuth only.
+                              <br />
+                              <span style='padding-left: 2%;'>
+                                <br />
+                                <b>Example:</b> ./FreeBusyChecker.ps1 -Auth OAuth
+                              <span style='padding:2%;'>
+                            </li>
+                          </ul>
+                        </div>
+    "
+
+     $html | Out-File -FilePath $htmlfile
+}
+
 }
 
 do {
@@ -3341,21 +3655,9 @@ $SPOnprem = Get-SharingPolicy  -WarningAction SilentlyContinue -ErrorAction Sile
 
 if ($Org -contains 'ExchangeOnPremise' -or -not $Org) {
     #region DAutch Checks
-    if ($Auth -contains "DAuth" -OR -not $Auth) {
-        $StringTest = " Testing DAuth configuration "
-        $side = ($ConsoleWidth - $StringTest.Length - 2) / 2
-        $sideString = "*"
-        for ( $i = 1; $i -lt $side; $i++) {
-            $sideString += "*"
-        }
-        if ($ConsoleWidth % 2) {
-            $fullString = "`n`n$sideString$StringTest$sideString**"
-        }
-        else {
-            $fullString = "`n`n$sideString$StringTest$sideString*"
-        }
-        Write-Host -foregroundcolor Green $fullString 
-        Write-Host $bar
+    if ($Auth -like "DAuth" -OR -not $Auth -or $Auth -like "All") {
+        Write-host " ---------------------------------------Testing DAuth Configuration----------------------------------------------- "
+      #  Write-Host $bar
         OrgRelCheck
         Write-Host $bar
         if ($pause) {
@@ -3399,25 +3701,13 @@ if ($Org -contains 'ExchangeOnPremise' -or -not $Org) {
     }
     #endregion
     #region OAuth Check
-    if ($Auth -like "OAuth" -or -not $Auth) {
+    if ($Auth -like "OAuth" -or -not $Auth -or $Auth -like "All") {
         if ($pause) {
             $RH = Read-Host " Press Enter when ready to check the OAuth configuration details. "
             Write-Host $bar
         }
-        $StringTest = " Testing OAuth configuration "
-        $side = ($ConsoleWidth - $StringTest.Length - 2) / 2
-        $sideString = "*"
-        for ( $i = 1; $i -lt $side; $i++) {
-            $sideString += "*"
-        }
-        if ($ConsoleWidth % 2) {
-            $fullString = "`n`n$sideString$StringTest$sideString**"
-        }
-        else {
-            $fullString = "`n`n$sideString$StringTest$sideString*"
-        }
-        Write-Host -foregroundcolor Green $fullString 
-        Write-Host $bar
+        Write-host " ---------------------------------------Testing OAuth Configuration----------------------------------------------- "
+       # Write-Host $bar
         IntraOrgConCheck
         Write-Host $bar
         if ($pause) {
@@ -3482,6 +3772,7 @@ if ($Org -contains 'ExchangeOnPremise' -or -not $Org) {
     }
     #$bar
     #endregion
+   
 }
 # EXO Part
 if ($Org -contains 'ExchangeOnline' -OR -not $Org) {
@@ -3528,22 +3819,15 @@ if ($Org -contains 'ExchangeOnline' -OR -not $Org) {
     
     #endregion
     #region ExoDauthCheck
-    if ($Auth -contains "DAuth" -or -not $Auth) {
+    if ($Auth -like "DAuth" -or -not $Auth -or $Auth -like "All") {
         Write-Host $bar
-        $StringTest = " Testing DAuth configuration "
-        $side = ($ConsoleWidth - $StringTest.Length - 2) / 2
-        $sideString = "*"
-        for ( $i = 1; $i -lt $side; $i++) {
-            $sideString += "*"
-        }
-        if ($ConsoleWidth % 2) {
-            $fullString = "`n`n$sideString$StringTest$sideString**"
-        }
-        else {
-            $fullString = "`n`n$sideString$StringTest$sideString*"
-        }
-        Write-Host -foregroundcolor Green $fullString 
-        Write-Host $bar
+        Write-host " ---------------------------------------Testing DAuth Configuration----------------------------------------------- "
+            
+
+
+
+
+      #  Write-Host $bar
         ExoOrgRelCheck
         Write-Host $bar
         if ($pause) {
@@ -3566,21 +3850,12 @@ if ($Org -contains 'ExchangeOnline' -OR -not $Org) {
 
     #endregion
     #region ExoOauthCheck
-    if ($Auth -contains "OAuth" -or -not $Auth) {
-        $StringTest = " Testing OAuth configuration "
-        $side = ($ConsoleWidth - $StringTest.Length - 2 ) / 2
-        $sideString = "*"
-        for ( $i = 1; $i -lt $side; $i++) {
-            $sideString += "*"
-        }
-        if ($ConsoleWidth % 2) {
-            $fullString = "`n`n$sideString$StringTest$sideString**"
-        }
-        else {
-            $fullString = "`n`n$sideString$StringTest$sideString*"
-        }
-        Write-Host -foregroundcolor Green $fullString 
-        Write-Host $bar
+    if ($Auth -like "OAuth" -or -not $Auth -or $Auth -like "All") {
+        Write-host " ---------------------------------------Testing OAuth Configuration----------------------------------------------- "
+        
+       
+       
+       # Write-Host $bar
         ExoIntraOrgConCheck
         Write-Host $bar
         if ($pause) {
@@ -3602,12 +3877,16 @@ if ($Org -contains 'ExchangeOnline' -OR -not $Org) {
         EXOtestoauthcheck
         Write-Host $bar
     }
-    
     #endregion
     disConnect-ExchangeOnline  -Confirm:$False
     Write-Host -foregroundcolor Green " That is all for the Exchange Online Side"
     #Read-Host "Ctrl+C to exit. Enter to Exit."
     $bar
+ 
 }
+ 
+ 
+ 
+
 stop-transcript
 #Read-Host " `n `n Ctrl+C to exit. Enter to Exit."
