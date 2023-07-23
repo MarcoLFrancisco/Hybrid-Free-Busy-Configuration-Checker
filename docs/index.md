@@ -49,9 +49,11 @@ If not available, they can be installed with the following command:
 
 Imports and Intalls the following Modules (if not available):
 
-PSSnapin: microsoft.exchange.management.powershell.snapin
-Module  : ActiveDirectory Module 
-Module  : ExchangeOnlineManagement Module 
+- PSSnapin: microsoft.exchange.management.powershell.snapin
+
+- Module  : ActiveDirectory Module 
+
+- Module  : ExchangeOnlineManagement Module 
 
                 
 ##Syntax
