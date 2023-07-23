@@ -42,13 +42,12 @@ Please make sure that the account used is a member of the Local Administrator gr
 ##Other Pre Requisites
 
 AD management Tools:
-
-If not available, they can be installed with the following command:
+  
+  If not available, they can be installed with the following command:
 
   Install-windowsfeature -name AD-Domain-Services -IncludeManagementTools 
-
-  Imports and Installs the following Modules (if not available):
     
+    Imports and Installs the following Modules (if not available):
       PSSnapin: microsoft.exchange.management.powershell.snapin
       Module  : ActiveDirectory Module 
       Module  : ExchangeOnlineManagement Module 
