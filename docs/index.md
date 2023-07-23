@@ -47,13 +47,11 @@ If not available, they can be installed with the following command:
 
   Install-windowsfeature -name AD-Domain-Services -IncludeManagementTools 
 
-Imports and Intalls the following Modules (if not available):
-
-- PSSnapin: microsoft.exchange.management.powershell.snapin
-
-- Module  : ActiveDirectory Module 
-
-- Module  : ExchangeOnlineManagement Module 
+  Imports and Installs the following Modules (if not available):
+    
+      PSSnapin: microsoft.exchange.management.powershell.snapin
+      Module  : ActiveDirectory Module 
+      Module  : ExchangeOnlineManagement Module 
 
                 
 ##Syntax
