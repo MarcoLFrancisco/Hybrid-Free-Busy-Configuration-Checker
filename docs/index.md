@@ -41,7 +41,7 @@ Please make sure that the account used is a member of the Local Administrator gr
 
 ##Other Pre Requisites
 
-AD management Tools:
+- AD management Tools:
   
   If not available, they can be installed with the following command:
     
@@ -52,7 +52,7 @@ AD management Tools:
       Module  : ActiveDirectory Module 
       Module  : ExchangeOnlineManagement Module 
 
-Exchange Online Powershell Module
+- Exchange Online Powershell Module:
 
   To Download: [Exchange Online Powershell Module](https://learn.microsoft.com/en-us/powershell/exchange/exchange-online-powershell-v2?view=exchange-ps  )
                 
