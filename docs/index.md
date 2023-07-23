@@ -52,6 +52,9 @@ AD management Tools:
       Module  : ActiveDirectory Module 
       Module  : ExchangeOnlineManagement Module 
 
+Exchange Online Powershell Module
+
+  To Download: [Exchange Online Powershell Module](https://learn.microsoft.com/en-us/powershell/exchange/exchange-online-powershell-v2?view=exchange-ps  )
                 
 ##Syntax
 
