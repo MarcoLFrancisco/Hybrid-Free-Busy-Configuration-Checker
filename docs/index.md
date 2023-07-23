@@ -26,6 +26,7 @@ Collects OAuth and DAuth Hybrid Availability Configuration Settings Both for Exc
 ![image](https://user-images.githubusercontent.com/98214653/235616232-b0d66185-ec5f-4ff7-a81a-f7250f9accc1.png)
 
 ##HTML Output
+![image](https://github.com/MarcoLFrancisco/Hybrid-Free-Busy-Configuration-Checker/assets/98214653/7f4443c4-41d1-40a3-b97a-f872c850505f)
 
 ![image](https://user-images.githubusercontent.com/98214653/235616353-b36d6dcd-e8c3-4652-b4ed-d672ebdc79d4.png)
 
