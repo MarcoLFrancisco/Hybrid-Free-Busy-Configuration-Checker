@@ -28,8 +28,6 @@ Collects OAuth and DAuth Hybrid Availability Configuration Settings Both for Exc
 ##HTML Output
 ![image](https://github.com/MarcoLFrancisco/Hybrid-Free-Busy-Configuration-Checker/assets/98214653/7f4443c4-41d1-40a3-b97a-f872c850505f)
 
-![image](https://user-images.githubusercontent.com/98214653/235616353-b36d6dcd-e8c3-4652-b4ed-d672ebdc79d4.png)
-
 ##Supported Exchange Server Versions
 
 The script can be used to validate the Availability configuration of the following Exchange Server Versions: - Exchange Server 2013 - Exchange Server 2016 - Exchange Server 2019 - Exchange Online
