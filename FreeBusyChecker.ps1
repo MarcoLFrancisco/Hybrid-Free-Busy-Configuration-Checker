@@ -90,8 +90,17 @@ If ($Help) {
 
 Add-PSSnapin microsoft.exchange.management.powershell.snapin
 import-module ActiveDirectory
-Install-Module -Name ExchangeOnlineManagement
-DisConnect-ExchangeOnline -Confirm:$False
+#Install-Module -Name ExchangeOnlineManagement
+
+# Check if the ExchangeOnlineManagement module is already installed
+if (-not (Get-Module -Name ExchangeOnlineManagement -ListAvailable)) {
+    # If installed Disconnect
+    DisConnect-ExchangeOnline -Confirm:$False
+} 
+#DisConnect-ExchangeOnline -Confirm:$False
+
+
+
 Clear-Host
 $countOrgRelIssues = (0)
 $Global:FedTrust = $null
@@ -3661,7 +3670,7 @@ if ($Org -contains 'ExchangeOnPremise' -or -not $Org) {
         OrgRelCheck
         Write-Host $bar
         if ($pause) {
-            $RH = Read- Host " Press Enter when ready to check the Federation Information Details."
+            $RH = Read-Host " Press Enter when ready to check the Federation Information Details."
             Write-Host $bar
         }
         FedInfoCheck
@@ -3779,22 +3788,22 @@ if ($Org -contains 'ExchangeOnline' -OR -not $Org) {
     #region ConnectExo
     #$bar
     Write-Host -ForegroundColor Green " Collecting Exchange Online Availability Information"
-    #$bar
-    #Exchange Online Management Shell
-    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-    install-module AzureAD -AllowClobber
-    #$CreateEXOPSSession = (Get-ChildItem -Path $env:userprofile -Filter CreateExoPSSession.ps1 -Recurse -ErrorAction SilentlyContinue -Force | Select -Last 1).DirectoryName. "$CreateEXOPSSession\CreateExoPSSession.ps1"
-    #Import-Module $((Get-ChildItem -Path $($env:LOCALAPPDATA+"\Apps\2.0\") -Filter CreateExoPSSession.ps1 -Recurse ).FullName | Select-Object -Last 1)
-    #Connect-EXOPSSession
-    #Connect-EXOPSSession
-    #RestV3 connection
-    Install-Module -Name ExchangeOnlineManagement
+     # Check if the ExchangeOnlineManagement module is already installed
+    if (-not (Get-Module -Name ExchangeOnlineManagement -ListAvailable)) {
+        # If not installed, then install the module
+        Write-Host -ForegroundColor Yellow "`n Exchange Online Powershell Module is required to Check Free Busy Configuration on Exchange Online side. Installing Module"
+        Install-Module -Name ExchangeOnlineManagement -Force
+        $bar
+    } else {
+        Write-Host "`n ExchangeOnlineManagement module is available."
+        $ExoModuleVersion = Get-Module -Name ExchangeOnlineManagement -ListAvailable | fl name, Version
+        $ExoModuleVersion
+        $bar
+    }
+    
+    
     Connect-ExchangeOnline -ShowBanner:$false
-    #Write-Host "========================================================="
-    #Write-Host "Get-SharingPolicy | FL"
-    #Write-Host "========================================================="
-    #Get-SharingPolicy | FL
-    # Variables
+    
     $Script:ExoOrgRel = Get-OrganizationRelationship | Where-Object { ($_.DomainNames -like $ExchangeOnPremDomain ) } | Select-Object Enabled, Identity, DomainNames, FreeBusy*, Target*
     $ExoIntraOrgCon = Get-IntraOrganizationConnector | Select-Object Name, TargetAddressDomains, DiscoveryEndpoint, Enabled
     $targetadepr1 = ("https://autodiscover." + $ExchangeOnPremDomain + "/autodiscover/autodiscover.svc/WSSecurity")
