@@ -6,6 +6,8 @@ To Download the latest release: [FreeBusyChecker.ps1](https://github.com/MarcoLF
 
 To Provide Feedback about this tool: [Feedback Form](https://forms.office.com/pages/responsepage.aspx?id=v4j5cvGGr0GRqy180BHbR2LVru-UswhJmHot_XEUrVVURFVMRkE5VUg4QUU0MEpNRjgxUExPVlBVOS4u)
 
+
+
 - This script is still under development. It is not a stable finished version.
 
 - This script does not make changes to current settings. It collects relevant configuration information regarding Hybrid Free Busy configurations on Exchange On Premises Servers and on Exchange Online, both for OAuth and DAuth.
