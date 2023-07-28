@@ -3642,7 +3642,7 @@ if ($Auth -like "All") {
 do {
     #do while not Y or N
     Write-Host $bar
-    $ParamOK = Read-Host " Are this values correct? Pess Y for YES and N for NO"
+    $ParamOK = Read-Host " Are these values correct? Pess Y for YES and N for NO"
     $ParamOK = $ParamOK.ToUpper()
 } while ($ParamOK -ne "Y" -AND $ParamOK -ne "N")
 #cls
