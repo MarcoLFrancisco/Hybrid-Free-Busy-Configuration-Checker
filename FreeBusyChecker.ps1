@@ -393,7 +393,7 @@ Function ShowParameters {
 
               "
  
-                $html | Out-File -FilePath $htmlfile
+    $html | Out-File -FilePath $htmlfile
 }
 #}
 #endregion
@@ -531,10 +531,9 @@ Function OrgRelCheck {
     }
     #TargetAutodiscoverEpr:
     $OrgRelTargetAutodiscoverEpr = $OrgRel.TargetAutodiscoverEpr
-    If ([string]::IsNullOrWhitespace($OrgRelTargetAutodiscoverEpr))
-        {
-            $OrgRelTargetAutodiscoverEpr = "Blank" 
-        }    
+    If ([string]::IsNullOrWhitespace($OrgRelTargetAutodiscoverEpr)) {
+        $OrgRelTargetAutodiscoverEpr = "Blank" 
+    }    
     Write-Host -foregroundcolor White   " TargetAutodiscoverEpr:"
     if ($OrgRel.TargetAutodiscoverEpr -like "https://autodiscover-s.outlook.com/autodiscover/autodiscover.svc/WSSecurity" ) {
         Write-Host -foregroundcolor Green "  TargetAutodiscoverEpr is correct"
@@ -1294,71 +1293,71 @@ Function TestOrgRel {
     if ( $OrgRelTargetApplicationUri -like "Outlook.com" -OR $OrgRelTargetApplicationUri -like "outlook.com") {
 
 
-    $Script:html += "<tr>
+        $Script:html += "<tr>
     <th colspan='2' style='color:white;'><b>Summary - Test-OrganizationRelationship</b></th>
     </tr>
     <tr>
     <td><b>Test-OrganizationRelationship -Identity $OrgRelIdentity  -UserIdentity $useronprem</b></td>
     <td>"
-    Write-Host -foregroundcolor Green "Test-OrganizationRelationship -Identity $OrgRelIdentity  -UserIdentity $useronprem"
-    #need to grab errors and provide alerts in error case
-    Write-Host $bar
-    $TestOrgRel = Test-OrganizationRelationship -Identity "$($OrgRelIdentity)"  -UserIdentity $useronprem -erroraction SilentlyContinue -warningaction SilentlyContinue
-    #$TestOrgRel
-    if ($TestOrgRel[16] -like "No Significant Issues to Report") {
-        Write-Host -foregroundcolor Green "`n No Significant Issues to Report"
-        $Script:html += "
-        <div class='green'> <b>No Significant Issues to Report</b><div>"
-    }
-    else {
-        Write-Host -foregroundcolor Red "`n Test Organization Relationship Completed with errors"
-        $Script:html += "
-        <div class='red'> <b>Test Organization Relationship Completed with errors</b><div>"
-    }
-    $TestOrgRel[0]
-    $TestOrgRel[1]
-    $i = 0
-    while ($i -lt $TestOrgRel.Length) {
-        $element = $TestOrgRel[$i]
-        #if ($element.Contains("RESULT: Success.")) {
-        if ($element -like "*RESULT: Success.*") {
-            $TestOrgRelStep = $TestOrgRel[$i - 1]
-            $TestOrgRelStep
-            Write-Host -ForegroundColor Green "$element"
-            if (![string]::IsNullOrWhitespace($TestOrgRelStep)) {
+        Write-Host -foregroundcolor Green "Test-OrganizationRelationship -Identity $OrgRelIdentity  -UserIdentity $useronprem"
+        #need to grab errors and provide alerts in error case
+        Write-Host $bar
+        $TestOrgRel = Test-OrganizationRelationship -Identity "$($OrgRelIdentity)"  -UserIdentity $useronprem -erroraction SilentlyContinue -warningaction SilentlyContinue
+        #$TestOrgRel
+        if ($TestOrgRel[16] -like "No Significant Issues to Report") {
+            Write-Host -foregroundcolor Green "`n No Significant Issues to Report"
             $Script:html += "
-            <div></b> <span style='color:black'> <b> $TestOrgRelStep :</b></span> <span style='color:green'>$element</span></div>"
+        <div class='green'> <b>No Significant Issues to Report</b><div>"
         }
-        }
-
         else {
-            if ($element -like "*RESULT: Error*") {
+            Write-Host -foregroundcolor Red "`n Test Organization Relationship Completed with errors"
+            $Script:html += "
+        <div class='red'> <b>Test Organization Relationship Completed with errors</b><div>"
+        }
+        $TestOrgRel[0]
+        $TestOrgRel[1]
+        $i = 0
+        while ($i -lt $TestOrgRel.Length) {
+            $element = $TestOrgRel[$i]
+            #if ($element.Contains("RESULT: Success.")) {
+            if ($element -like "*RESULT: Success.*") {
                 $TestOrgRelStep = $TestOrgRel[$i - 1]
                 $TestOrgRelStep
-                Write-Host -ForegroundColor Red "$element"
-                if (![string]::IsNullOrWhitespace($TestOrgRelStep)) {    
-                $Script:html += "
+                Write-Host -ForegroundColor Green "$element"
+                if (![string]::IsNullOrWhitespace($TestOrgRelStep)) {
+                    $Script:html += "
+            <div></b> <span style='color:black'> <b> $TestOrgRelStep :</b></span> <span style='color:green'>$element</span></div>"
+                }
+            }
+
+            else {
+                if ($element -like "*RESULT: Error*") {
+                    $TestOrgRelStep = $TestOrgRel[$i - 1]
+                    $TestOrgRelStep
+                    Write-Host -ForegroundColor Red "$element"
+                    if (![string]::IsNullOrWhitespace($TestOrgRelStep)) {    
+                        $Script:html += "
                 <div></b> <span style='color:black'> <b> $TestOrgRelStep : </b></span> <span style='color:red'>$element</span></div>"
+                    }
+                }
             }
-            }
+            $i++
         }
-        $i++
     }
-}
-else {
-    Write-Host -foregroundcolor Green " Test-OrganizationRelationship -Identity $OrgRelIdentity  -UserIdentity $useronprem"
-    #need to grab errors and provide alerts in error case
-    Write-Host $bar
-    $Script:html += "<tr>
+    else {
+        Write-Host -foregroundcolor Green " Test-OrganizationRelationship -Identity $OrgRelIdentity  -UserIdentity $useronprem"
+        #need to grab errors and provide alerts in error case
+        Write-Host $bar
+        $Script:html += "<tr>
     <th colspan='2' style='color:white;'><b>Summary - Test-OrganizationRelationship</b></th>
     </tr>
     <tr>
     <td><b>Test-OrganizationRelationship</b></td>
     <td>"
-    Write-Host -foregroundcolor Red "`n Test-OrganizationRelationship can't be run if the Organization Relationship Target Application uri is not correct. Organization Relationship Target Application Uri should be Outlook.com"
-    $Script:html += "
+        Write-Host -foregroundcolor Red "`n Test-OrganizationRelationship can't be run if the Organization Relationship Target Application uri is not correct. Organization Relationship Target Application Uri should be Outlook.com"
+        $Script:html += "
     <div class='red'> <b> Test-OrganizationRelationship can't be run if the Organization Relationship Target Application uri is not correct. Organization Relationship Target Application Uri should be Outlook.com</b><div>"
-}
+    }
 
 
     
@@ -1427,7 +1426,7 @@ Function IntraOrgConCheck {
 
 
     # Build HTML table row
-    if ($Auth -like "OAuth"){
+    if ($Auth -like "OAuth") {
         $Script:html += "
         <div class='Black'><p></p></div>
     
@@ -1435,7 +1434,7 @@ Function IntraOrgConCheck {
     
         <div class='Black'><p></p></div>"
     }
-        $Script:html += "
+    $Script:html += "
 
     <table style='width:100%'>
 
@@ -1549,7 +1548,7 @@ Function AuthServerCheck {
 
 Function PartnerApplicationCheck {
     #Write-Host $bar
-   Write-Host -foregroundcolor Green " Get-PartnerApplication |  ?{`$_.ApplicationIdentifier -eq '00000002-0000-0ff1-ce00-000000000000'
+    Write-Host -foregroundcolor Green " Get-PartnerApplication |  ?{`$_.ApplicationIdentifier -eq '00000002-0000-0ff1-ce00-000000000000'
     -and `$_.Realm -eq ''} | Select Enabled, ApplicationIdentifier, CertificateStrings, AuthMetadataUrl, Realm, UseAuthServer,
     AcceptSecurityIdentifierInformation, LinkedAccount, IssuerIdentifier, AppOnlyPermissions, ActAsPermissions, Name" 
 
@@ -2669,9 +2668,9 @@ Function ExoOrgRelCheck () {
     }
     #TargetApplicationUri
     Write-Host  " TargetApplicationUri:"
-   # Write-host $fedinfoTargetApplicationUri
-    $a= "FYDIBOHF25SPDLT." + $ExchangeOnPremDomain
-   #write-host $a 
+    # Write-host $fedinfoTargetApplicationUri
+    $a = "FYDIBOHF25SPDLT." + $ExchangeOnPremDomain
+    #write-host $a 
     if ($exoOrgRel.TargetApplicationUri -like $fedtrust.ApplicationUri) {
         Write-Host -foregroundcolor Green "  TargetApplicationUri is" $fedtrust.ApplicationUri.originalstring
         $tdEXOOrgRelTargetApplicationUri = "  TargetApplicationUri is $($fedtrust.ApplicationUri.originalstring)"
@@ -2975,7 +2974,7 @@ Function SharingPolicyCheck {
     $Script:SPOnline = Get-SharingPolicy | Select-Object  Domains, Enabled, Name, Identity
     $SPOnline | Format-List
     
-        #creating variables and setting uniform variable names
+    #creating variables and setting uniform variable names
     $domain1 = (($SPOnline.domains[0] -split ":") -split " ")
     $domain2 = (($SPOnline.domains[1] -split ":") -split " ")
     $SPOnpremDomain1 = $SPOnprem.Domains.Domain[0]
@@ -3011,32 +3010,36 @@ Function SharingPolicyCheck {
     Write-Host "   " $SPOnlineAction2
     #Write-Host $bar
 
-    if ($SPOnpremDomain1 -eq $SPOnlineDomain1 -and $SPOnpremAction1 -eq $SPOnlineAction1)
-    {
-         if ($SPOnpremDomain2 -eq $SPOnlineDomain2 -and $SPOnpremAction2 -eq $SPOnlineAction2)
-             { Write-Host -foregroundcolor Green "`n  Exchange Online Sharing Policy Domains match Exchange On Premise Sharing Policy Domains"
-        $tdSharpingPolicyCheck = "`n  Exchange Online Sharing Policy matches Exchange On Premise Sharing Policy Domain"
-        $tdSharpingPolicyCheckColor = "green"}
+    if ($SPOnpremDomain1 -eq $SPOnlineDomain1 -and $SPOnpremAction1 -eq $SPOnlineAction1) {
+        if ($SPOnpremDomain2 -eq $SPOnlineDomain2 -and $SPOnpremAction2 -eq $SPOnlineAction2) {
+            Write-Host -foregroundcolor Green "`n  Exchange Online Sharing Policy Domains match Exchange On Premise Sharing Policy Domains"
+            $tdSharpingPolicyCheck = "`n  Exchange Online Sharing Policy matches Exchange On Premise Sharing Policy Domain"
+            $tdSharpingPolicyCheckColor = "green"
+        }
 
-        else {Write-Host -foregroundcolor Red "`n   Sharing Domains appear not to be correct."
-        Write-Host -foregroundcolor White "   Exchange Online Sharing Policy Domains appear not to match Exchange On Premise Sharing Policy Domains"
-        $tdSharpingPolicyCheck = "`n  Exchange Online Sharing Policy Domains not match Exchange On Premise Sharing Policy Domains"
-        $tdSharpingPolicyCheckColor = "red"}
+        else {
+            Write-Host -foregroundcolor Red "`n   Sharing Domains appear not to be correct."
+            Write-Host -foregroundcolor White "   Exchange Online Sharing Policy Domains appear not to match Exchange On Premise Sharing Policy Domains"
+            $tdSharpingPolicyCheck = "`n  Exchange Online Sharing Policy Domains not match Exchange On Premise Sharing Policy Domains"
+            $tdSharpingPolicyCheckColor = "red"
+        }
     }
-    elseif ($SPOnpremDomain1 -eq $SPOnlineDomain2 -and $SPOnpremAction1 -eq $SPOnlineAction2)
-    { 
-        if ($SPOnpremDomain2 -eq $SPOnlineDomain1 -and $SPOnpremAction2 -eq $SPOnlineAction1)
-            { Write-Host -foregroundcolor Green "`n  Exchange Online Sharing Policy Domains match Exchange On Premise Sharing Policy Domains"
-        $tdSharpingPolicyCheck = "`n  Exchange Online Sharing Policy matches Exchange On Premise Sharing Policy Domain"
-        $tdSharpingPolicyCheckColor = "green"}
+    elseif ($SPOnpremDomain1 -eq $SPOnlineDomain2 -and $SPOnpremAction1 -eq $SPOnlineAction2) { 
+        if ($SPOnpremDomain2 -eq $SPOnlineDomain1 -and $SPOnpremAction2 -eq $SPOnlineAction1) {
+            Write-Host -foregroundcolor Green "`n  Exchange Online Sharing Policy Domains match Exchange On Premise Sharing Policy Domains"
+            $tdSharpingPolicyCheck = "`n  Exchange Online Sharing Policy matches Exchange On Premise Sharing Policy Domain"
+            $tdSharpingPolicyCheckColor = "green"
+        }
 
-        else {Write-Host -foregroundcolor Red "`n   Sharing Domains appear not to be correct."
-        Write-Host -foregroundcolor White "   Exchange Online Sharing Policy Domains appear not to match Exchange On Premise Sharing Policy Domains"
-        $tdSharpingPolicyCheck = "`n  Exchange Online Sharing Policy Domains not match Exchange On Premise Sharing Policy Domains"
-        $tdSharpingPolicyCheckColor = "red"}
+        else {
+            Write-Host -foregroundcolor Red "`n   Sharing Domains appear not to be correct."
+            Write-Host -foregroundcolor White "   Exchange Online Sharing Policy Domains appear not to match Exchange On Premise Sharing Policy Domains"
+            $tdSharpingPolicyCheck = "`n  Exchange Online Sharing Policy Domains not match Exchange On Premise Sharing Policy Domains"
+            $tdSharpingPolicyCheckColor = "red"
+        }
     }
     else {
-    Write-Host -foregroundcolor Red "`n   Sharing Domains appear not to be correct."
+        Write-Host -foregroundcolor Red "`n   Sharing Domains appear not to be correct."
         Write-Host -foregroundcolor White "   Exchange Online Sharing Policy Domains appear not to match Exchange On Premise Sharing Policy Domains"
         $tdSharpingPolicyCheck = "`n  Exchange Online Sharing Policy Domains not match Exchange On Premise Sharing Policy Domains"
         $tdSharpingPolicyCheckColor = "red"
@@ -3384,15 +3387,15 @@ if ($IntraOrgCon.enabled -Like "True") {
     Write-Host $bar
 
     if ($Auth -Like "DAuth") {
-    Write-Host -foregroundcolor yellow "  Warning: Intra Organization Connector Enabled True -> Running for DAuth only as -Auth DAuth option was selected`n  " 
-    if ($OrgRel.enabled -Like "True") {
-    Write-Host -foregroundcolor White "           Organization Relationship Enabled True `n  " 
+        Write-Host -foregroundcolor yellow "  Warning: Intra Organization Connector Enabled True -> Running for DAuth only as -Auth DAuth option was selected`n  " 
+        if ($OrgRel.enabled -Like "True") {
+            Write-Host -foregroundcolor White "           Organization Relationship Enabled True `n  " 
     
-    }
+        }
     
    
-    Write-Host -foregroundcolor White "      This script can be Run using the -Auth All paramenter to check for both OAuth and DAuth configuration. `n `n         Example: ./FreeBusyChecker.ps1 -Auth All"
-    $Script:html += "
+        Write-Host -foregroundcolor White "      This script can be Run using the -Auth All paramenter to check for both OAuth and DAuth configuration. `n `n         Example: ./FreeBusyChecker.ps1 -Auth All"
+        $Script:html += "
                         <div  style = 'padding-left: 0%;'>
                           <h3>Intra Organization Connector Enabled: <b>True</b></h3>
                           <p> <span style='color: green; font-wight: 550; padding-left:2%; '>Checking DAuth only as -Auth DAuth option was selected</span></p>
@@ -3518,17 +3521,17 @@ if ($IntraOrgCon.enabled -Like "True") {
 }
 
 if ($IntraOrgCon.enabled -Like "False") {
-if ($Auth -like "" -or $Auth -like "DAuth") {
+    if ($Auth -like "" -or $Auth -like "DAuth") {
 
-    Write-Host $bar
-    Write-Host -foregroundcolor yellow "  Warning: Intra Organization Connector Enabled False -> Running for DAuth only as OAuth is not enabled"
-    Write-Host -foregroundcolor White "`n       This script can be Run using the '-Auth OAuth' paramenter to check for OAuth configurations only. `n"  
-    Write-Host -foregroundcolor White "             Example: ./FreeBusyChecker.ps1 -Auth OAuth"
-    Write-Host -foregroundcolor White "`n       This script can be Run using the '-Auth All' paramenter to check for both OAuth and DAuth configuration. `n"       
-    Write-Host -foregroundcolor White "             Example: ./FreeBusyChecker.ps1 -Auth All"
+        Write-Host $bar
+        Write-Host -foregroundcolor yellow "  Warning: Intra Organization Connector Enabled False -> Running for DAuth only as OAuth is not enabled"
+        Write-Host -foregroundcolor White "`n       This script can be Run using the '-Auth OAuth' paramenter to check for OAuth configurations only. `n"  
+        Write-Host -foregroundcolor White "             Example: ./FreeBusyChecker.ps1 -Auth OAuth"
+        Write-Host -foregroundcolor White "`n       This script can be Run using the '-Auth All' paramenter to check for both OAuth and DAuth configuration. `n"       
+        Write-Host -foregroundcolor White "             Example: ./FreeBusyChecker.ps1 -Auth All"
 
 
-    $Script:html += "
+        $Script:html += "
                         <div  style = 'padding-left: 0%;'>
                           
                           <h3>Intra Organization Connector Enabled: <b>False</b></h3>
@@ -3563,17 +3566,17 @@ if ($Auth -like "" -or $Auth -like "DAuth") {
                         </div>
     "
 
-     $html | Out-File -FilePath $htmlfile
-}
-if ($Auth -like "OAuth") {
+        $html | Out-File -FilePath $htmlfile
+    }
+    if ($Auth -like "OAuth") {
 
-    Write-Host $bar
-    Write-Host -foregroundcolor yellow "  Warning: Intra Organization Connector Enabled False -> Running for OAuth only as -Auth OAuth parameter was selected"
-    Write-Host -foregroundcolor White "`n       This script can be Run using the '-Auth All' paramenter to check for both OAuth and DAuth configuration. `n"       
-    Write-Host -foregroundcolor White "             Example: ./FreeBusyChecker.ps1 -Auth All"
+        Write-Host $bar
+        Write-Host -foregroundcolor yellow "  Warning: Intra Organization Connector Enabled False -> Running for OAuth only as -Auth OAuth parameter was selected"
+        Write-Host -foregroundcolor White "`n       This script can be Run using the '-Auth All' paramenter to check for both OAuth and DAuth configuration. `n"       
+        Write-Host -foregroundcolor White "             Example: ./FreeBusyChecker.ps1 -Auth All"
 
 
-    $Script:html += "
+        $Script:html += "
                         <div  style = 'padding-left: 0%;'>
                           
                           <h3>Intra Organization Connector Enabled: <b>False</b></h3>
@@ -3598,18 +3601,18 @@ if ($Auth -like "OAuth") {
                         </div>
     "
 
-     $html | Out-File -FilePath $htmlfile
-}
+        $html | Out-File -FilePath $htmlfile
+    }
 
-if ($Auth -like "All") {
+    if ($Auth -like "All") {
 
-    Write-Host $bar
-    Write-Host -foregroundcolor yellow "  Warning: Intra Organization Connector Enabled False -> Running both for OAuth and Dauth as -Auth All parameter was selected"
-    Write-Host -foregroundcolor White "`n       This script can be Run using the '-Auth OAuth' paramenter to check for OAuth configuration only. `n"       
-    Write-Host -foregroundcolor White "             Example: ./FreeBusyChecker.ps1 -Auth OAuth"
+        Write-Host $bar
+        Write-Host -foregroundcolor yellow "  Warning: Intra Organization Connector Enabled False -> Running both for OAuth and Dauth as -Auth All parameter was selected"
+        Write-Host -foregroundcolor White "`n       This script can be Run using the '-Auth OAuth' paramenter to check for OAuth configuration only. `n"       
+        Write-Host -foregroundcolor White "             Example: ./FreeBusyChecker.ps1 -Auth OAuth"
 
 
-    $Script:html += "
+        $Script:html += "
                         <div  style = 'padding-left: 0%;'>
                           
                           <h3>Intra Organization Connector Enabled: <b>False</b></h3>
@@ -3634,8 +3637,8 @@ if ($Auth -like "All") {
                         </div>
     "
 
-     $html | Out-File -FilePath $htmlfile
-}
+        $html | Out-File -FilePath $htmlfile
+    }
 
 }
 
@@ -3666,7 +3669,7 @@ if ($Org -contains 'ExchangeOnPremise' -or -not $Org) {
     #region DAutch Checks
     if ($Auth -like "DAuth" -OR -not $Auth -or $Auth -like "All") {
         Write-host " ---------------------------------------Testing DAuth Configuration----------------------------------------------- "
-      #  Write-Host $bar
+        #  Write-Host $bar
         OrgRelCheck
         Write-Host $bar
         if ($pause) {
@@ -3716,7 +3719,7 @@ if ($Org -contains 'ExchangeOnPremise' -or -not $Org) {
             Write-Host $bar
         }
         Write-host " ---------------------------------------Testing OAuth Configuration----------------------------------------------- "
-       # Write-Host $bar
+        # Write-Host $bar
         IntraOrgConCheck
         Write-Host $bar
         if ($pause) {
@@ -3788,19 +3791,19 @@ if ($Org -contains 'ExchangeOnline' -OR -not $Org) {
     #region ConnectExo
     #$bar
     Write-Host -ForegroundColor Green " Collecting Exchange Online Availability Information"
-     # Check if the ExchangeOnlineManagement module is already installed
+    # Check if the ExchangeOnlineManagement module is already installed
     if (-not (Get-Module -Name ExchangeOnlineManagement -ListAvailable)) {
         # If not installed, then install the module
         Write-Host -ForegroundColor Yellow "`n Exchange Online Powershell Module is required to Check Free Busy Configuration on Exchange Online side. Installing Module"
         Install-Module -Name ExchangeOnlineManagement -Force
         $bar
-    } else {
+    }
+    else {
         Write-Host "`n ExchangeOnlineManagement module is available."
-        $ExoModuleVersion = Get-Module -Name ExchangeOnlineManagement -ListAvailable | fl name, Version
+        $ExoModuleVersion = Get-Module -Name ExchangeOnlineManagement -ListAvailable | Format-List name, Version
         $ExoModuleVersion
         $bar
     }
-    
     
     Connect-ExchangeOnline -ShowBanner:$false
     
@@ -3836,7 +3839,7 @@ if ($Org -contains 'ExchangeOnline' -OR -not $Org) {
 
 
 
-      #  Write-Host $bar
+        #  Write-Host $bar
         ExoOrgRelCheck
         Write-Host $bar
         if ($pause) {
@@ -3864,7 +3867,7 @@ if ($Org -contains 'ExchangeOnline' -OR -not $Org) {
         
        
        
-       # Write-Host $bar
+        # Write-Host $bar
         ExoIntraOrgConCheck
         Write-Host $bar
         if ($pause) {

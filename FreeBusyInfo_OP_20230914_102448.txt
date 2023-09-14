@@ -1,0 +1,628 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20230914102448
+Username: BARROSO\padrefontes
+RunAs User: BARROSO\padrefontes
+Machine: ex16VMb (Microsoft Windows NT 10.0.14393.0)
+Host Application: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -NoProfile -ExecutionPolicy Bypass -Command Import-Module 'c:\Users\padrefontes.BARROSO\.vscode\extensions\ms-vscode.powershell-2023.6.0\modules\PowerShellEditorServices\PowerShellEditorServices.psd1'; Start-EditorServices -HostName 'Visual Studio Code Host' -HostProfileId 'Microsoft.VSCode' -HostVersion '2023.6.0' -AdditionalModules @('PowerShellEditorServices.VSCode') -BundledModulesPath 'c:\Users\padrefontes.BARROSO\.vscode\extensions\ms-vscode.powershell-2023.6.0\modules' -EnableConsoleRepl -StartupBanner "PowerShell Extension v2023.6.0
+Copyright (c) Microsoft Corporation.
+
+https://aka.ms/vscode-powershell
+Type 'help' to get help.
+" -LogLevel 'Normal' -LogPath 'c:\Users\padrefontes.BARROSO\AppData\Roaming\Code\User\globalStorage\ms-vscode.powershell\logs\1694682320-08775422-c002-4673-8017-b1d1b62963ab1694682316012\EditorServices.log' -SessionDetailsPath 'c:\Users\padrefontes.BARROSO\AppData\Roaming\Code\User\globalStorage\ms-vscode.powershell\sessions\PSES-VSCode-10300-434243.json' -FeatureFlags @() 
+Process ID: 9596
+PSVersion: 5.1.14393.5582
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.14393.5582
+BuildVersion: 10.0.14393.5582
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is FreeBusyInfo_OP_20230914_102448.txt
+ ==================================================================================================================
+ 
+  Free Busy Configuration Information Checker
+   Version -1
+  Loading Parameters.....
+Cannot index into a null array.
+At C:\Users\padrefontes.BARROSO\Documents\FBC\Hybrid-Free-Busy-Configuration-Checker\FreeBusyChecker.ps1:145 char:1
++ $UserOnPrem = $UserOnPrem[1].PrimarySmtpAddress.Address
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+Cannot index into a null array.
+At C:\Users\padrefontes.BARROSO\Documents\FBC\Hybrid-Free-Busy-Configuration-Checker\FreeBusyChecker.ps1:145 char:1
++ $UserOnPrem = $UserOnPrem[1].PrimarySmtpAddress.Address
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+
+Get-WebServicesVirtualDirectory : An IIS directory entry couldn't be created. The error message is Access is denied.
+. HResult = -2147024891
+At C:\Users\padrefontes.BARROSO\Documents\FBC\Hybrid-Free-Busy-Configuration-Checker\FreeBusyChecker.ps1:147 char:24
++ $EWSVirtualDirectory = Get-WebServicesVirtualDirectory
++                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotInstalled: (ex16VM\EWS (Default Web Site):ADObjectId) 
+[Get-WebServicesVirtualDirectory], IISGeneralCOMException
+    + FullyQualifiedErrorId : [Server=ex16VMb,RequestId=12a115dd-8306-4f20-9dae-3c297b14918e,TimeStamp=9/14/2023 
+9:24:55 AM] [FailureCategory=Cmdlet-IISGeneralCOMException] 
+1AD5BD9B,Microsoft.Exchange.Management.SystemConfigurationTasks.GetWebServicesVirtualDirectory
+Get-WebServicesVirtualDirectory : An IIS directory entry couldn't be created. The error message is Access is denied.
+. HResult = -2147024891
+At C:\Users\padrefontes.BARROSO\Documents\FBC\Hybrid-Free-Busy-Configuration-Checker\FreeBusyChecker.ps1:147 char:24
++ $EWSVirtualDirectory = Get-WebServicesVirtualDirectory
++                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotInstalled: (ex16VM\EWS (Default Web Site):ADObjectId) [Get-WebServicesVirtualDirectory], IISGeneralCOMException
+    + FullyQualifiedErrorId : [Server=ex16VMb,RequestId=12a115dd-8306-4f20-9dae-3c297b14918e,TimeStamp=9/14/2023 9:24:55 AM] [FailureCategory=Cmdlet-IISGeneralCOMException] 1AD5BD9B,Microsoft.Exchange.Management.SystemC
+   onfigurationTasks.GetWebServicesVirtualDirectory
+
+PS>TerminatingError(Get-FederationInformation): "Cannot bind argument to parameter 'DomainName' because it is null."
+Get-FederationInformation : Cannot bind argument to parameter 'DomainName' because it is null.
+At C:\Users\padrefontes.BARROSO\Documents\FBC\Hybrid-Free-Busy-Configuration-Checker\FreeBusyChecker.ps1:163 char:60
++ ... = get-federationInformation -DomainName $ExchangeOnPremDomain  -Bypas ...
++                                             ~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidData: (:) [Get-FederationInformation], ParameterBindingValidationException
+    + FullyQualifiedErrorId : ParameterArgumentValidationErrorNullNotAllowed,Microsoft.Exchange.Management.SystemConfigu
+rationTasks.GetFederationInformation
+Get-FederationInformation : Cannot bind argument to parameter 'DomainName' because it is null.
+At C:\Users\padrefontes.BARROSO\Documents\FBC\Hybrid-Free-Busy-Configuration-Checker\FreeBusyChecker.ps1:163 char:60
++ ... = get-federationInformation -DomainName $ExchangeOnPremDomain  -Bypas ...
++                                             ~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidData: (:) [Get-FederationInformation], ParameterBindingValidationException
+    + FullyQualifiedErrorId : ParameterArgumentValidationErrorNullNotAllowed,Microsoft.Exchange.Management.SystemConfigurationTasks.GetFederationInformation
+
+ ==================================================================================================================
+  Loading modules for AD, Exchange
+ ==================================================================================================================
+  Color Scheme
+ ==================================================================================================================
+  Look out for Red!
+  Yellow - Example information or Links
+  Green - In Summary Sections it means OK. Anywhere else it's just a visual aid.
+ ==================================================================================================================
+  Parameters:
+ ==================================================================================================================
+ Log File Path:
+  C:\Users\padrefontes.BARROSO\Documents\FBC\Hybrid-Free-Busy-Configuration-Checker\FreeBusyInfo_OP_20230914_102448.txt
+ Office 365 Domain:
+  123.pt
+ AD root Domain
+  barroso.com
+ Exchange On Premises Domain:
+
+ Exchange On Premises External EWS url:
+  https://mail.ironmailsystems.pt/ews/exchange.asmx
+ On Premises Hybrid Mailbox:
+
+ Exchange Online Mailbox:
+  abc@123.pt
+ ==================================================================================================================
+    -> Free Busy Lookup is done using OAuth when the Intra Organization Connector is Enabled
+    -> Running for OAuth only as OAuth takes precedence over DAuth;
+
+         This script can be Run using the -Auth All paramenter to check for both OAuth and DAuth configuration. 
+ 
+         Example: ./FreeBusyChecker.ps1 -Auth All
+
+         This script can be Run using the -Auth DAuth paramenter to check for DAuth configuration only. 
+ 
+         Example: ./FreeBusyChecker.ps1 -Auth DAuth
+ ==================================================================================================================
+ ==================================================================================================================
+ ---------------------------------------Testing OAuth Configuration-----------------------------------------------
+ ==================================================================================================================
+ Get-IntraOrganizationConnector | Select Name,TargetAddressDomains,DiscoveryEndpoint,Enabled
+ ==================================================================================================================
+
+
+Name                 : HybridIOC - 88cc2846-bc16-463d-ba4f-ea3fedfc739d
+TargetAddressDomains : {IronmailSYstems.onmicrosoft.com, IronmailSYstems.mail.onmicrosoft.com}
+DiscoveryEndpoint    : https://autodiscover-s.outlook.com/autodiscover/autodiscover.svc
+Enabled              : True
+
+
+
+ ==================================================================================================================
+ Summary - Get-IntraOrganizationConnector
+ ==================================================================================================================
+ Target Address Domains:
+ Target Address Domains appears not to be correct.
+ Should contain the 123.pt domain or the 123.mail.onmicrosoft.com domain.
+ DiscoveryEndpoint:
+  https://autodiscover-s.outlook.com/autodiscover/autodiscover.svc
+ Enabled:
+  True
+https://techcommunity.microsoft.com/t5/exchange-team-blog/demystifying-hybrid-free-busy-what-are-the-moving-parts/ba-p/607704
+ ==================================================================================================================
+ Get-AuthServer | Select Name,IssuerIdentifier,TokenIssuingEndpoint,AuthMetadataUrl,Enabled
+ ==================================================================================================================
+
+
+Name                 : ACS - 88cc2846-bc16-463d-ba4f-ea3fedfc739d
+IssuerIdentifier     : 00000001-0000-0000-c000-000000000000
+TokenIssuingEndpoint : https://accounts.accesscontrol.windows.net/e3e3afa6-cf90-4926-88b7-c4a8ba667f00/tokens/OAuth/2
+AuthMetadataUrl      : https://accounts.accesscontrol.windows.net/e3e3afa6-cf90-4926-88b7-c4a8ba667f00/metadata/json/1
+Enabled              : True
+
+ ==================================================================================================================
+ Summary - Auth Server
+ ==================================================================================================================
+ IssuerIdentifier:
+  00000001-0000-0000-c000-000000000000
+ TokenIssuingEndpoint:
+  https://accounts.accesscontrol.windows.net/e3e3afa6-cf90-4926-88b7-c4a8ba667f00/tokens/OAuth/2
+ AuthMetadataUrl:
+  https://accounts.accesscontrol.windows.net/e3e3afa6-cf90-4926-88b7-c4a8ba667f00/metadata/json/1
+ Enabled:
+  True
+ ==================================================================================================================
+ Get-PartnerApplication |  ?{$_.ApplicationIdentifier -eq '00000002-0000-0ff1-ce00-000000000000'
+    -and $_.Realm -eq ''} | Select Enabled, ApplicationIdentifier, CertificateStrings, AuthMetadataUrl, Realm, UseAuthServer,
+    AcceptSecurityIdentifierInformation, LinkedAccount, IssuerIdentifier, AppOnlyPermissions, ActAsPermissions, Name
+ ==================================================================================================================
+Enabled                             : True
+ApplicationIdentifier               : 00000002-0000-0ff1-ce00-000000000000
+CertificateStrings                  : {}
+AuthMetadataUrl                     :
+Realm                               :
+UseAuthServer                       : True
+AcceptSecurityIdentifierInformation : False
+LinkedAccount                       : barroso.com/Users/Exchange Online-ApplicationAccount
+IssuerIdentifier                    :
+AppOnlyPermissions                  :
+ActAsPermissions                    :
+Name                                : Exchange Online
+
+ ==================================================================================================================
+ Summary - Partner Application
+ ==================================================================================================================
+ Enabled:
+  True
+ ApplicationIdentifier:
+  00000002-0000-0ff1-ce00-000000000000
+ AuthMetadataUrl:
+  Blank
+ Realm:
+  Blank
+ LinkedAccount:
+  barroso.com/Users/Exchange Online-ApplicationAccount
+ ==================================================================================================================
+ Get-user 'barroso.com/Users/Exchange Online-ApplicationAccount' | Select Name, RecipientType, RecipientTypeDetails, UserAccountControl
+ ==================================================================================================================
+Name                 : Exchange Online-ApplicationAccount
+RecipientType        : User
+RecipientTypeDetails : LinkedUser
+UserAccountControl   : AccountDisabled, PasswordNotRequired, NormalAccount
+
+ ==================================================================================================================
+ Summary - Application Account
+ ==================================================================================================================
+ RecipientType:
+  User
+ RecipientTypeDetails:
+  LinkedUser
+ UserAccountControl:
+  AccountDisabled, PasswordNotRequired, NormalAccount
+ ==================================================================================================================
+ Get-ManagementRoleAssignment -RoleAssignee Exchange Online-ApplicationAccount | Select Name,Role -AutoSize
+ ==================================================================================================================
+
+Name                                               Role                   
+----                                               ----                   
+Distribution Groups-Recipient Management           Distribution Groups    
+Mail Recipient Creation-Recipient Management       Mail Recipient Creation
+Mail Recipients-Recipient Management               Mail Recipients        
+Message Tracking-Recipient Management              Message Tracking       
+Migration-Recipient Management                     Migration              
+Move Mailboxes-Recipient Management                Move Mailboxes         
+Recipient Policies-Recipient Management            Recipient Policies     
+Team Mailboxes-Recipient Management                Team Mailboxes         
+UserApplication-Exchange Online-ApplicationAccount UserApplication
+ ==================================================================================================================
+ Summary - Management Role Assignment for the Exchange Online-ApplicationAccount
+ ==================================================================================================================
+ Role:
+  UserApplication Role Assigned
+  ArchiveApplication Role not present for the Exchange Online-ApplicationAccount
+  LegalHoldApplication Role not present for the Exchange Online-ApplicationAccount
+  Mailbox Search Role not present for the Exchange Online-ApplicationAccount
+  TeamMailboxLifecycleApplication Role not present for the Exchange Online-ApplicationAccount
+  MailboxSearchApplication Role not present for the Exchange Online-ApplicationAccount
+  MeetingGraphApplication Role not present for the Exchange Online-ApplicationAccount
+ ==================================================================================================================
+ Get-AuthConfig | Select *Thumbprint, ServiceName, Realm, Name
+ ==================================================================================================================
+
+
+
+
+CurrentCertificateThumbprint  : 39E815560D0ECDF1AE3666F7D48BE4997464BBEE
+PreviousCertificateThumbprint :
+NextCertificateThumbprint     :
+ServiceName                   : 00000002-0000-0ff1-ce00-000000000000
+Realm                         :
+Name                          : Auth Configuration
+
+
+
+ ==================================================================================================================
+ Summary - Auth Config
+ ==================================================================================================================
+ Thumbprint:  39E815560D0ECDF1AE3666F7D48BE4997464BBEE
+ Certificate is Assigned
+ ServiceName:  00000002-0000-0ff1-ce00-000000000000
+ Service Name Seems correct
+ Realm:
+ Realm is Blank
+ ==================================================================================================================
+ Get-ExchangeCertificate -Thumbprint 39E815560D0ECDF1AE3666F7D48BE4997464BBEE | Select FriendlyName, Issuer, Services, NotAfter, Status, HasPrivateKey, Subject, Thumb*
+ ==================================================================================================================
+
+
+FriendlyName  : Microsoft Exchange Server Auth Certificate
+Issuer        : CN=Microsoft Exchange Server Auth Certificate
+Services      : SMTP
+NotAfter      : 3/7/2028 9:13:41 PM
+Status        : Valid
+HasPrivateKey : True
+Subject       : CN=Microsoft Exchange Server Auth Certificate
+Thumbprint    : 39E815560D0ECDF1AE3666F7D48BE4997464BBEE
+
+
+
+ ==================================================================================================================
+ Summary - Microsoft Exchange Server Auth Certificate
+ ==================================================================================================================
+ Issuer:  CN=Microsoft Exchange Server Auth Certificate
+ Issuer is CN=Microsoft Exchange Server Auth Certificate
+ Services:  SMTP
+  Certificate enabled for SMTP
+ Status:  Valid
+  Certificate is valid
+ Subject:  CN=Microsoft Exchange Server Auth Certificate
+  Subject is CN=Microsoft Exchange Server Auth Certificate
+
+ Checking Exchange Auth Certificate Distribution
+  Server:  @{Identity=ex16VM
+   Thumbprint:  39E815560D0ECDF1AE3666F7D48BE4997464BBEE
+   Subject:  CN=Microsoft Exchange Server Auth Certificate
+  Server:  @{Identity=ex16VMb
+   Thumbprint:  39E815560D0ECDF1AE3666F7D48BE4997464BBEE
+   Subject:  CN=Microsoft Exchange Server Auth Certificate
+ ==================================================================================================================
+ Get-AutodiscoverVirtualDirectory | Select Identity, Name,ExchangeVersion,*authentication*
+ ==================================================================================================================
+Get-AutodiscoverVirtualDirectory : An IIS directory entry couldn't be created. The error message is Access is denied.
+. HResult = -2147024891
+At C:\Users\padrefontes.BARROSO\Documents\FBC\Hybrid-Free-Busy-Configuration-Checker\FreeBusyChecker.ps1:2070 char:43
++ ... overyVirtualDirectoryOAuth = Get-AutodiscoverVirtualDirectory | Selec ...
++                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotInstalled: (ex16VM\Autodiscover (Default Web Site):ADObjectId) 
+[Get-AutodiscoverVirtualDirectory], IISGeneralCOMException
+    + FullyQualifiedErrorId : [Server=ex16VMb,RequestId=15a2f921-5576-45ab-b3d3-97453988d560,TimeStamp=9/14/2023 
+9:25:23 AM] [FailureCategory=Cmdlet-IISGeneralCOMException] 
+1AD5BD9B,Microsoft.Exchange.Management.SystemConfigurationTasks.GetAutodiscoverVirtualDirectory
+Get-AutodiscoverVirtualDirectory : An IIS directory entry couldn't be created. The error message is Access is denied.
+. HResult = -2147024891
+At C:\Users\padrefontes.BARROSO\Documents\FBC\Hybrid-Free-Busy-Configuration-Checker\FreeBusyChecker.ps1:2070 char:43
++ ... overyVirtualDirectoryOAuth = Get-AutodiscoverVirtualDirectory | Selec ...
++                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotInstalled: (ex16VM\Autodiscover (Default Web Site):ADObjectId) [Get-AutodiscoverVirtualDirectory], IISGeneralCOMException
+    + FullyQualifiedErrorId : [Server=ex16VMb,RequestId=15a2f921-5576-45ab-b3d3-97453988d560,TimeStamp=9/14/2023 9:25:23 AM] [FailureCategory=Cmdlet-IISGeneralCOMException] 1AD5BD9B,Microsoft.Exchange.Management.SystemC
+   onfigurationTasks.GetAutodiscoverVirtualDirectory
+
+
+
+Identity                      : ex16VMb\Autodiscover (Default Web Site)
+Name                          : Autodiscover (Default Web Site)
+ExchangeVersion               : 0.10 (14.0.100.0)
+InternalAuthenticationMethods : {Basic, Ntlm, WindowsIntegrated, WSSecurity...}
+ExternalAuthenticationMethods : {Basic, Ntlm, WindowsIntegrated, WSSecurity...}
+LiveIdNegotiateAuthentication : False
+WSSecurityAuthentication      : True
+LiveIdBasicAuthentication     : False
+BasicAuthentication           : True
+DigestAuthentication          : False
+WindowsAuthentication         : True
+OAuthAuthentication           : True
+AdfsAuthentication            : False
+
+
+
+ ==================================================================================================================
+ Summary - Get-AutodiscoverVirtualDirectory
+ ==================================================================================================================
+  InternalAuthenticationMethods
+ ex16VMb\Autodiscover (Default Web Site)
+  InternalAuthenticationMethods Include OAuth Authentication Method
+
+  ExternalAuthenticationMethods
+ ex16VMb\Autodiscover (Default Web Site)
+  ExternalAuthenticationMethods Include OAuth Authentication Method
+
+  WSSecurityAuthentication:
+ ex16VMb\Autodiscover (Default Web Site)
+  WSSecurityAuthentication: True
+
+  WindowsAuthentication:
+ ex16VMb\Autodiscover (Default Web Site)
+  WindowsAuthentication: True
+ ==================================================================================================================
+ Get-WebServicesVirtualDirectory | Select Identity,Name,ExchangeVersion,*Authentication*,*url
+ ==================================================================================================================
+Get-WebServicesVirtualDirectory : An IIS directory entry couldn't be created. The error message is Access is denied.
+. HResult = -2147024891
+At C:\Users\padrefontes.BARROSO\Documents\FBC\Hybrid-Free-Busy-Configuration-Checker\FreeBusyChecker.ps1:2237 char:41
++ ... rvicesVirtualDirectoryOAuth = Get-WebServicesVirtualDirectory | Selec ...
++                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotInstalled: (ex16VM\EWS (Default Web Site):ADObjectId) 
+[Get-WebServicesVirtualDirectory], IISGeneralCOMException
+    + FullyQualifiedErrorId : [Server=ex16VMb,RequestId=2e424c9b-388f-4698-8c20-8c9818555459,TimeStamp=9/14/2023 
+9:25:24 AM] [FailureCategory=Cmdlet-IISGeneralCOMException] 
+1AD5BD9B,Microsoft.Exchange.Management.SystemConfigurationTasks.GetWebServicesVirtualDirectory
+Get-WebServicesVirtualDirectory : An IIS directory entry couldn't be created. The error message is Access is denied.
+. HResult = -2147024891
+At C:\Users\padrefontes.BARROSO\Documents\FBC\Hybrid-Free-Busy-Configuration-Checker\FreeBusyChecker.ps1:2237 char:41
++ ... rvicesVirtualDirectoryOAuth = Get-WebServicesVirtualDirectory | Selec ...
++                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotInstalled: (ex16VM\EWS (Default Web Site):ADObjectId) [Get-WebServicesVirtualDirectory], IISGeneralCOMException
+    + FullyQualifiedErrorId : [Server=ex16VMb,RequestId=2e424c9b-388f-4698-8c20-8c9818555459,TimeStamp=9/14/2023 9:25:24 AM] [FailureCategory=Cmdlet-IISGeneralCOMException] 1AD5BD9B,Microsoft.Exchange.Management.SystemC
+   onfigurationTasks.GetWebServicesVirtualDirectory
+
+
+
+Identity                      : ex16VMb\EWS (Default Web Site)
+Name                          : EWS (Default Web Site)
+ExchangeVersion               : 0.10 (14.0.100.0)
+CertificateAuthentication     :
+InternalAuthenticationMethods : {Basic, Ntlm, WindowsIntegrated, WSSecurity...}
+ExternalAuthenticationMethods : {Basic, Ntlm, WindowsIntegrated, WSSecurity...}
+LiveIdNegotiateAuthentication :
+WSSecurityAuthentication      : True
+LiveIdBasicAuthentication     : False
+BasicAuthentication           : True
+DigestAuthentication          : False
+WindowsAuthentication         : True
+OAuthAuthentication           : True
+AdfsAuthentication            : False
+InternalNLBBypassUrl          :
+InternalUrl                   : https://mail.ironmailsystems.pt/EWS/Exchange.asmx
+ExternalUrl                   : https://mail.ironmailsystems.pt/ews/exchange.asmx
+
+
+
+ ==================================================================================================================
+ Summary - On-Prem Get-WebServicesVirtualDirectory
+ ==================================================================================================================
+  InternalAuthenticationMethods
+ ex16VMb\EWS (Default Web Site)
+  InternalAuthenticationMethods Include OAuth Authentication Method
+
+  ExternalAuthenticationMethods
+ ex16VMb\EWS (Default Web Site)
+  ExternalAuthenticationMethods Include OAuth Authentication Method
+
+  WSSecurityAuthentication:
+ ex16VMb\EWS (Default Web Site)
+  WSSecurityAuthentication: True
+
+  WindowsAuthentication:
+ ex16VMb\EWS (Default Web Site)
+  WindowsAuthentication: True
+ ==================================================================================================================
+ Get-AvailabilityAddressSpace 123.pt | Select ForestName, UserName, UseServiceAccount, AccessMethod, ProxyUrl, Name
+ ==================================================================================================================
+Get-AvailabilityAddressSpace : The operation couldn't be performed because object '123.pt' couldn't be found on 
+'Ex16adVM.barroso.com'.
+At C:\Users\padrefontes.BARROSO\Documents\FBC\Hybrid-Free-Busy-Configuration-Checker\FreeBusyChecker.ps1:2413 char:33
++ ... ressSpace = Get-AvailabilityAddressSpace $exchangeOnlineDomain | Sele ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:) [Get-AvailabilityAddressSpace], ManagementObjectNotFoundException
+    + FullyQualifiedErrorId : [Server=ex16VMb,RequestId=1228c10a-8aa4-4fa3-8165-4f707d6cee2b,TimeStamp=9/14/2023 
+9:25:26 AM] [FailureCategory=Cmdlet-ManagementObjectNotFoundException] 
+71AC635A,Microsoft.Exchange.Management.SystemConfigurationTasks.GetAvailabilityAddressSpace
+Get-AvailabilityAddressSpace : The operation couldn't be performed because object '123.pt' couldn't be found on 'Ex16adVM.barroso.com'.
+At C:\Users\padrefontes.BARROSO\Documents\FBC\Hybrid-Free-Busy-Configuration-Checker\FreeBusyChecker.ps1:2413 char:33
++ ... ressSpace = Get-AvailabilityAddressSpace $exchangeOnlineDomain | Sele ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:) [Get-AvailabilityAddressSpace], ManagementObjectNotFoundException
+    + FullyQualifiedErrorId : [Server=ex16VMb,RequestId=1228c10a-8aa4-4fa3-8165-4f707d6cee2b,TimeStamp=9/14/2023 9:25:26 AM] [FailureCategory=Cmdlet-ManagementObjectNotFoundException] 71AC635A,Microsoft.Exchange.Managem
+   ent.SystemConfigurationTasks.GetAvailabilityAddressSpace
+
+ ==================================================================================================================
+ Summary - On-Prem Availability Address Space
+ ==================================================================================================================
+ ForestName:
+ ForestName is NOT correct.
+ Should be
+ UserName:
+  Blank
+ UseServiceAccount:
+  UseServiceAccount is NOT correct.
+  Should be True
+ AccessMethod:
+  AccessMethod is NOT correct.
+  Should be InternalProxy
+ ProxyUrl:
+  ProxyUrl is NOT correct.
+  Should be https://mail.ironmailsystems.pt/ews/exchange.asmx
+ ==================================================================================================================
+ Test-OAuthConnectivity -Service EWS -TargetUri https://outlook.office365.com/EWS/Exchange.asmx -Mailbox
+ ==================================================================================================================
+PS>TerminatingError(): "The mailbox parameter can't be null when in App+User mode. Use AppOnly mode for testing with no user context."
+The mailbox parameter can't be null when in App+User mode. Use AppOnly mode for testing with no user context.
+At C:\Users\padrefontes.BARROSO\Documents\FBC\Hybrid-Free-Busy-Configuration-Checker\FreeBusyChecker.ps1:2529 char:5
++     $OAuthConnectivity = Test-OAuthConnectivity -Service EWS -TargetU ...
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (:) [], MailboxParameterMissingException
+    + FullyQualifiedErrorId : [Server=ex16VMb,RequestId=eb555256-9251-406f-a219-918bf22533bd,TimeStamp=9/14/2023 
+9:25:26 AM] [FailureCategory=Cmdlet-MailboxParameterMissingException] 4DDE28ED
+The mailbox parameter can't be null when in App+User mode. Use AppOnly mode for testing with no user context.
+At C:\Users\padrefontes.BARROSO\Documents\FBC\Hybrid-Free-Busy-Configuration-Checker\FreeBusyChecker.ps1:2529 char:5
++     $OAuthConnectivity = Test-OAuthConnectivity -Service EWS -TargetU ...
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (:) [], MailboxParameterMissingException
+    + FullyQualifiedErrorId : [Server=ex16VMb,RequestId=eb555256-9251-406f-a219-918bf22533bd,TimeStamp=9/14/2023 9:25:26 AM] [FailureCategory=Cmdlet-MailboxParameterMissingException] 4DDE28ED
+
+ Summary - Test OAuth Connectivity
+ ==================================================================================================================
+ .ResultType - OAuth Test was completed with Error.
+ Please rerun Test-OAuthConnectivity -Service EWS -TargetUri https://outlook.office365.com/EWS/Exchange.asmx -Mailbox <On Premises Mailbox> | fl to confirm the test failure
+ Reference:
+ Configure OAuth authentication between Exchange and Exchange Online organizations
+ https://technet.microsoft.com/en-us/library/dn594521(v=exchg.150).aspx
+ ==================================================================================================================
+ Collecting Exchange Online Availability Information
+
+ ExchangeOnlineManagement module is available.
+
+
+Name    : ExchangeOnlineManagement
+Version : 3.2.0
+
+
+
+ ==================================================================================================================
+PS>TerminatingError(Get-FederationInformation): "Cannot bind argument to parameter 'DomainName' because it is null."
+Get-FederationInformation : Cannot bind argument to parameter 'DomainName' because it is null.
+At C:\Users\padrefontes.BARROSO\Documents\FBC\Hybrid-Free-Busy-Configuration-Checker\FreeBusyChecker.ps1:3815 char:57
++ ... = get-federationInformation -DomainName $exchangeOnpremDomain  -Bypas ...
++                                             ~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidData: (:) [Get-FederationInformation], ParameterBindingValidationException
+    + FullyQualifiedErrorId : ParameterArgumentValidationErrorNullNotAllowed,Get-FederationInformation
+Get-FederationInformation : Cannot bind argument to parameter 'DomainName' because it is null.
+At C:\Users\padrefontes.BARROSO\Documents\FBC\Hybrid-Free-Busy-Configuration-Checker\FreeBusyChecker.ps1:3815 char:57
++ ... = get-federationInformation -DomainName $exchangeOnpremDomain  -Bypas ...
++                                             ~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidData: (:) [Get-FederationInformation], ParameterBindingValidationException
+    + FullyQualifiedErrorId : ParameterArgumentValidationErrorNullNotAllowed,Get-FederationInformation
+
+ ---------------------------------------Testing OAuth Configuration-----------------------------------------------
+ ==================================================================================================================
+ Get-IntraOrganizationConnector | Select TargetAddressDomains,DiscoveryEndpoint,Enabled
+ ==================================================================================================================
+
+
+TargetAddressDomains : {IronMail.pt}
+DiscoveryEndpoint    : https://mail.ironmail.pt/autodiscover/autodiscover.svc
+Enabled              : False
+
+TargetAddressDomains : {mail.ironmailsystems.pt, IronmailSystems.pt}
+DiscoveryEndpoint    : https://9d8f1a00-20b0-4ffa-8e87-4528924326a9.resource.mailboxmigration.his.msappproxy.net/autodiscover/autodiscover.svc
+Enabled              : True
+
+
+
+ ==================================================================================================================
+ Summary - Online Intra Organization Connector
+ ==================================================================================================================
+ Target Address Domains:
+  IronMail.pt mail.ironmailsystems.pt IronmailSystems.pt
+ DiscoveryEndpoint:
+ DiscoveryEndpoint is NOT correct.
+  Should be  https://mail.ironmailsystems.pt/autodiscover/autodiscover.svc
+ Enabled:
+  True
+ ==================================================================================================================
+ Get-IntraOrganizationConfiguration | Select OnPremiseTargetAddresses
+ ==================================================================================================================
+
+
+OnPremiseDiscoveryEndpoint                  :
+OnPremiseWebServiceEndpoint                 :
+DeploymentIsCompleteIOCReady                :
+HasNonIOCReadyExchangeCASServerVersions     :
+HasNonIOCReadyExchangeMailboxServerVersions :
+OnlineDiscoveryEndpoint                     : https://autodiscover-s.outlook.com/autodiscover/autodiscover.svc
+OnlineTargetAddress                         : IronmailSYstems.mail.onmicrosoft.com
+OnPremiseTargetAddresses                    : {mail.ironmailsystems.pt, IronmailSystems.pt}
+Identity                                    :
+IsValid                                     : True
+ObjectState                                 : New
+
+OnPremiseDiscoveryEndpoint                  :
+OnPremiseWebServiceEndpoint                 :
+DeploymentIsCompleteIOCReady                :
+HasNonIOCReadyExchangeCASServerVersions     :
+HasNonIOCReadyExchangeMailboxServerVersions :
+OnlineDiscoveryEndpoint                     : https://autodiscover-s.outlook.com/autodiscover/autodiscover.svc
+OnlineTargetAddress                         : IronmailSYstems.mail.onmicrosoft.com
+OnPremiseTargetAddresses                    : {Ironmailsystems.com}
+Identity                                    :
+IsValid                                     : True
+ObjectState                                 : New
+
+OnPremiseDiscoveryEndpoint                  :
+OnPremiseWebServiceEndpoint                 :
+DeploymentIsCompleteIOCReady                :
+HasNonIOCReadyExchangeCASServerVersions     :
+HasNonIOCReadyExchangeMailboxServerVersions :
+OnlineDiscoveryEndpoint                     : https://autodiscover-s.outlook.com/autodiscover/autodiscover.svc
+OnlineTargetAddress                         : IronmailSYstems.mail.onmicrosoft.com
+OnPremiseTargetAddresses                    : {IronMail.pt}
+Identity                                    :
+IsValid                                     : True
+ObjectState                                 : New
+
+
+
+ ==================================================================================================================
+ Summary - Exchange Online Intra Organization Configuration
+ ==================================================================================================================
+ OnPremiseTargetAddresses:
+  mail.ironmailsystems.pt IronmailSystems.pt Ironmailsystems.com IronMail.pt
+ ==================================================================================================================
+ Get-AuthServer -Identity 00000001-0000-0000-c000-000000000000 | select name,issueridentifier,enabled
+ ==================================================================================================================
+
+
+Name             : MicrosoftSts
+IssuerIdentifier : 00000001-0000-0000-c000-000000000000
+Enabled          : True
+
+
+
+ ==================================================================================================================
+ Summary - Exchange Online Authorization Server
+ ==================================================================================================================
+ IssuerIdentifier:
+  00000001-0000-0000-c000-000000000000
+  True
+ ==================================================================================================================
+ Test-OAuthConnectivity -Service EWS -TargetUri https://mail.ironmailsystems.pt/ews/exchange.asmx -Mailbox abc@123.pt
+ ==================================================================================================================
+PS>TerminatingError(Invoke-WebRequest): "{"error":{"code":"NotFound","message":"Error executing cmdlet","details":[{"code":"Context","target":"","message":"{\"ClassName\":\"Microsoft.Exchange.Configuration.Tasks.ManagementObjectNotFoundException\",\"Message\":\"The operation couldn't be performed because object 'abc@123.pt' couldn't be found on 'VI1P194A04DC005.EURP194A004.PROD.OUTLOOK.COM'.\",\"Data\":{},\"InnerException\":null,\"HelpURL\":null,\"StackTraceString\":\"\",\"RemoteStackTraceString\":null,\"RemoteStackIndex\":0,\"ExceptionMethod\":\"8\\nGetDataObject\\nMicrosoft.Exchange.Configuration.ObjectModel, Version=15.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35\\nMicrosoft.Exchange.Configuration.Tasks.DataAccessTask`1\\nMicrosoft.Exchange.Data.IConfigurable GetDataObject[TObject](Microsoft.Exchange.Configuration.Tasks.IIdentityParameter, Microsoft.Exchange.Data.IConfigDataProvider, Microsoft.Exchange.Data.ObjectId, Microsoft.Exchange.Configuration.Tasks.OptionalIdentityData, System.Func`2[System.String,Microsoft.Exchange.Data.Common.LocalizedString], System.Func`2[System.String,Microsoft.Exchange.Data.Common.LocalizedString], Microsoft.Exchange.Data.ExchangeErrorCategory)\",\"HResult\":-2146233088,\"Source\":\"Microsoft.Exchange.Configuration.ObjectModel\",\"WatsonBuckets\":null,\"localizedString\":{\"inserts\":[\"abc@123.pt\",\"VI1P194A04DC005.EURP194A004.PROD.OUTLOOK.COM\"],\"baseName\":\"Microsoft.Exchange.Configuration.Common.LocStrings.Strings\",\"assemblyName\":\"Microsoft.Exchange.Configuration.ObjectModel, Version=15.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35\",\"id\":\"ErrorManagementObjectNotFoundWithSource\",\"stringId\":\"Ex6F9304\",\"showStringIdInUIIfError\":false,\"showAssistanceInfoInUIIfError\":true,\"fallback\":\"The operation couldn't be performed because object '{0}' couldn't be found on '{1}'.\"}}"}],"innererror":{"message":"Error executing cmdlet","type":"Microsoft.Exchange.Admin.OData.Core.ODataServiceException","stacktrace":"   at Microsoft.Exchange.AdminApi.CommandInvocation.CommandInvocation.InvokeCommand(QueryContext queryContext, CmdletInvokeInputType cmdletInvokeInputType)\r\n   at Microsoft.Exchange.Admin.OData.Core.PathSegmentToExpressionTranslator.Translate(OperationImportSegment segment)\r\n   at Microsoft.Exchange.Admin.OData.Core.QueryContext.ResolveQuery(ODataContext context, Int32 level)\r\n   at Microsoft.Exchange.Admin.OData.Core.Handlers.OperationHandler.Process(IODataRequestMessage requestMessage, IODataResponseMessage responseMessage)\r\n   at Microsoft.Exchange.Admin.OData.Core.Handlers.RequestHandler.Process(Stream requestStream)","internalexception":{"message":"Exception of type 'Microsoft.Exchange.Management.PSDirectInvoke.DirectInvokeCmdletExecutionException' was thrown.","type":"Microsoft.Exchange.Management.PSDirectInvoke.DirectInvokeCmdletExecutionException","stacktrace":"   at Microsoft.Exchange.Management.PSDirectInvoke.PSDirectInvokeCmdletFactory.InvokeCmdletInternal[TCmdlet,TResult](Func`1 createCmdlet, Action`1 setParameterDelegate, List`1 captureAdditionalIO, List`1 directInvokeExceptions, Boolean shouldAllowProactiveProxyToReturnRoutingHint)"}},"adminapi.warnings@odata.type":"#Collection(String)","@adminapi.warnings":[]}}"
+Write-ErrorMessage : Ex6F9304|Microsoft.Exchange.Configuration.Tasks.ManagementObjectNotFoundException|The operation 
+couldn't be performed because object 'abc@123.pt' couldn't be found on 'VI1P194A04DC005.EURP194A004.PROD.OUTLOOK.COM'.
+At C:\Users\padrefontes.BARROSO\AppData\Local\Temp\2\tmpEXO_dnexbcwc.bea\tmpEXO_dnexbcwc.bea.psm1:1184 char:13
++             Write-ErrorMessage $ErrorObject
++             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:) [Test-OAuthConnectivity], ManagementObjectNotFoundException
+    + FullyQualifiedErrorId : [Server=GV1P194MB1834,RequestId=a39926f0-395f-aa33-64b8-86127baa7fa1,TimeStamp=Thu, 14 
+Sep 2023 09:26:20 GMT],Write-ErrorMessage
+Write-ErrorMessage : Ex6F9304|Microsoft.Exchange.Configuration.Tasks.ManagementObjectNotFoundException|The operation couldn't be performed because object 'abc@123.pt' couldn't be found on
+'VI1P194A04DC005.EURP194A004.PROD.OUTLOOK.COM'.
+At C:\Users\padrefontes.BARROSO\AppData\Local\Temp\2\tmpEXO_dnexbcwc.bea\tmpEXO_dnexbcwc.bea.psm1:1184 char:13
++             Write-ErrorMessage $ErrorObject
++             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:) [Test-OAuthConnectivity], ManagementObjectNotFoundException
+    + FullyQualifiedErrorId : [Server=GV1P194MB1834,RequestId=a39926f0-395f-aa33-64b8-86127baa7fa1,TimeStamp=Thu, 14 Sep 2023 09:26:20 GMT],Write-ErrorMessage
+
+ Summary - Test-OAuthConnectivity
+ ==================================================================================================================
+ OAuth Test was completed with Error.
+ Please rerun Test-OAuthConnectivity -Service EWS -TargetUri <EWS target URI> -Mailbox <On Premises Mailbox> | fl to confirm the test failure
+
+ References:
+ Configure OAuth authentication between Exchange and Exchange Online organizations
+ https://technet.microsoft.com/en-us/library/dn594521(v=exchg.150).aspx
+ ==================================================================================================================
+INFO: Disconnected successfully !
+ That is all for the Exchange Online Side
+ ==================================================================================================================
+**********************
+Windows PowerShell transcript end
+End time: 20230914102621
+**********************
