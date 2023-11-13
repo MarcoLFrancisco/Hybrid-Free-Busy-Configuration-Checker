@@ -96,7 +96,7 @@ if ($Help) {
 }
 
 Add-PSSnapin microsoft.exchange.management.powershell.Snapin
-Import-ModuleActiveDirectory
+Import-Module ActiveDirectory
 
 #Install-Module -Name ExchangeOnlineManagement
 
@@ -128,7 +128,7 @@ Write-Host " `n`n "
 Start-Transcript -Path $LogFileName -Append
 Write-Host $bar
 Write-Host -ForegroundColor Green " `n  Free Busy Configuration Information Checker `n "
-Write-Host -ForegroundColor White "   Version -1 `n "
+Write-Host -ForegroundColor White "   Version 1 `n "
 Write-Host -ForegroundColor Green "  Loading Parameters..... `n "
 #Parameter input
 $UserOnline = Get-RemoteMailbox -ResultSize 1 -WarningAction SilentlyContinue
@@ -144,6 +144,8 @@ else {
 }
 # $UserOnPrem = Get-mailbox -ResultSize 1 -WarningAction SilentlyContinue | Where-Object { ($_.EmailAddresses -like "*" + $ExchangeOnlineDomain ) }
 $temp = "*" + $ExchangeOnlineDomain
+$UserOnPrem = ""
+
 $UserOnPrem = Get-mailbox -ResultSize 2 -WarningAction SilentlyContinue -Filter 'EmailAddresses -like $temp -and HiddenFromAddressListsEnabled -eq $false'
 $UserOnPrem = $UserOnPrem[1].PrimarySmtpAddress.Address
 $Script:ExchangeOnPremDomain = ($UserOnPrem -split "@")[1]
@@ -217,17 +219,13 @@ function ExchangeOnPremEWSCheck {
 
 function ExchangeOnPremLocalDomainCheck {
     Write-Host -ForegroundColor Green " On Premises Root Domain: $exchangeOnPremLocalDomain  "
+    Write-Host " Press Enter if OK or type in the Exchange On Premises Root Domain."
     $exchangeOnPremLocalDomain = [System.Console]::ReadLine()
+    if ([string]::IsNullOrWhitespace($ADDomain)) {
+        $exchangeOnPremLocalDomain = $exchangeOnPremDomain
+    }
     if ([string]::IsNullOrWhitespace($exchangeOnPremLocalDomain)) {
-        Write-Host "Please type in the Active directory Root domain.
-        Press Enter to use $exchangeOnPremDomain"
-        $exchangeOnPremLocalDomainCheck = [System.Console]::ReadLine()
-        if ([string]::IsNullOrWhitespace($ADDomain)) {
-            $exchangeOnPremLocalDomain = $exchangeOnPremDomain
-        }
-        if ([string]::IsNullOrWhitespace($exchangeOnPremLocalDomain)) {
-            $exchangeOnPremLocalDomain = $exchangeOnPremLocalDomainCheck
-        }
+        $exchangeOnPremLocalDomain = $exchangeOnPremLocalDomainCheck
     }
 }
 
@@ -504,9 +502,9 @@ function OrgRelCheck {
     #TarGetSharingEpr
     Write-Host -ForegroundColor White   " TarGetSharingEpr:"
     if ([string]::IsNullOrWhitespace($OrgRel.TarGetSharingEpr) -or $OrgRel.TarGetSharingEpr -eq "https://outlook.office365.com/EWS/Exchange.asmx ") {
-        Write-Host -ForegroundColor Green "  TarGetSharingEpr is ideally blank. this is the standard Value. "
+        Write-Host -ForegroundColor Green "  TarGetSharingEpr is ideally blank. This is the standard Value. "
         Write-Host  "  If it is set, it should be Office 365 EWS endpoint. Example: https://outlook.office365.com/EWS/Exchange.asmx "
-        $tdTarGetSharingEpr = "  TarGetSharingEpr is ideally blank. this is the standard Value.
+        $tdTarGetSharingEpr = "  TarGetSharingEpr is ideally blank. This is the standard Value.
         If it is set, it should be Office 365 EWS endpoint. Example: https://outlook.office365.com/EWS/Exchange.asmx "
         $tdTarGetSharingEprColor = "green"
     } else {
@@ -2377,45 +2375,102 @@ function ExoOrgRelCheck () {
     Write-Host  " TarGetApplicationUri:"
     # Write-Host $FedInfoTarGetApplicationUri
     $a = "FYDIBOHF25SPDLT." + $ExchangeOnPremDomain
+    $HybridAgentTargetSharingEpr = "http://outlook.office.com/"
+    $HATargetAutodiscoverEpr = "https://autodiscover-s.outlook.com/autodiscover/autodiscover.svc/"
     #Write-Host $a
-    if ($exoOrgRel.TarGetApplicationUri -like $FedTrust.ApplicationUri) {
-        Write-Host -ForegroundColor Green "  TarGetApplicationUri is" $FedTrust.ApplicationUri.OriginalString
-        $tdEXOOrgRelTarGetApplicationUri = "  TarGetApplicationUri is $($FedTrust.ApplicationUri.OriginalString)"
-        $tdEXOOrgRelTarGetApplicationUriColor = "green"
+
+
+    if ($exoOrgRel.TarGetSharingEpr -like "*resource.mailboxMigration.his.MSAppProxy.net/EWS/Exchange.asmx") {
+        if ($exoOrgRel.TarGetApplicationUri -like $HybridAgentTargetSharingEpr) {
+            Write-Host -ForegroundColor Green "  TarGetApplicationUri is $($exoOrgRel.TarGetSharingEpr) . This is correct when Hybrid Agent is in use"
+            $tdEXOOrgRelTarGetApplicationUri = "  TarGetApplicationUri is $($exoOrgRel.TarGetSharingEpr) . This is correct when Hybrid Agent is in use"
+            $tdEXOOrgRelTarGetApplicationUriColor = "green"
+        } else {
+            Write-Host -ForegroundColor Red "  TarGetApplicationUri should be  $HybridAgentTargetSharingEpr when Hybrid Agent is used"
+            #$countOrgRelIssues++
+            $tdEXOOrgRelTarGetApplicationUri = "  TarGetApplicationUri should be $HybridAgentTargetSharingEpr when Hybrid Agent is used. Please Check if Exchange On Premise Federation is correctly configured."
+            $tdEXOOrgRelTarGetApplicationUriColor = "red"
+        }
+
+
     } else {
-        Write-Host -ForegroundColor Red "  TarGetApplicationUri should be " $a
-        #$countOrgRelIssues++
-        $tdEXOOrgRelTarGetApplicationUri = "  TarGetApplicationUri should be $a. Please Check if Exchange On Premise Federation is correctly configured."
-        $tdEXOOrgRelTarGetApplicationUriColor = "red"
+        if ($exoOrgRel.TarGetApplicationUri -like $FedTrust.ApplicationUri) {
+            Write-Host -ForegroundColor Green "  TarGetApplicationUri is" $FedTrust.ApplicationUri.OriginalString
+            $tdEXOOrgRelTarGetApplicationUri = "  TarGetApplicationUri is $($FedTrust.ApplicationUri.OriginalString)"
+            $tdEXOOrgRelTarGetApplicationUriColor = "green"
+        } else {
+            Write-Host -ForegroundColor Red "  TarGetApplicationUri should be " $a
+            #$countOrgRelIssues++
+            $tdEXOOrgRelTarGetApplicationUri = "  TarGetApplicationUri should be $a. Please Check if Exchange On Premise Federation is correctly configured."
+            $tdEXOOrgRelTarGetApplicationUriColor = "red"
+        }
     }
+
+
+
+
+
     #TarGetSharingEpr
     Write-Host  " TarGetSharingEpr:"
-    if ([string]::IsNullOrWhitespace($exoOrgRel.TarGetSharingEpr)) {
-        Write-Host -ForegroundColor Green "  TarGetSharingEpr is blank. This is the standard Value."
-        $tdEXOOrgRelTarGetSharingEpr = "TarGetSharingEpr is blank. This is the standard Value."
+
+    if ($exoOrgRel.TarGetSharingEpr -like "*resource.mailboxMigration.his.MsAppProxy.net/EWS/Exchange.asmx") {
+        Write-Host -ForegroundColor Green "  TarGetSharingEpr is points to resource.mailboxMigration.his.MsAppProxy.net/EWS/Exchange.asmx. This means Hybrid Agent is in use."
+        $tdEXOOrgRelTarGetSharingEpr = "TarGetSharingEpr is points to resource.mailboxMigration.his.MsAppProxy.net/EWS/Exchange.asmx. This means Hybrid Agent is in use."
         $tdEXOOrgRelTarGetSharingEprColor = "green"
+
+
     } else {
-        Write-Host -ForegroundColor Red "  TarGetSharingEpr should be blank. If it is set, it should be the On-Premises Exchange Servers EWS ExternalUrl endpoint."
-        #$countOrgRelIssues++
-        $tdEXOOrgRelTarGetSharingEpr = "  TarGetSharingEpr should be blank. If it is set, it should be the On-Premises Exchange Servers EWS ExternalUrl endpoint."
-        $tdEXOOrgRelTarGetSharingEprColor = "red"
+        if ([string]::IsNullOrWhitespace($exoOrgRel.TarGetSharingEpr)) {
+            Write-Host -ForegroundColor Green "  TarGetSharingEpr is blank. This is the standard Value."
+            $tdEXOOrgRelTarGetSharingEpr = "TarGetSharingEpr is blank. This is the standard Value."
+            $tdEXOOrgRelTarGetSharingEprColor = "green"
+        } else {
+            Write-Host -ForegroundColor Red "  TarGetSharingEpr should be blank. If it is set, it should be the On-Premises Exchange Servers EWS ExternalUrl endpoint."
+            #$countOrgRelIssues++
+            $tdEXOOrgRelTarGetSharingEpr = "  TarGetSharingEpr should be blank. If it is set, it should be the On-Premises Exchange Servers EWS ExternalUrl endpoint."
+            $tdEXOOrgRelTarGetSharingEprColor = "red"
+        }
     }
     #TarGetAutoDiscoverEpr:
     Write-Host  " TarGetAutoDiscoverEpr:"
     #Write-Host  "  OrgRel: " $exoOrgRel.TarGetAutoDiscoverEpr
     #Write-Host  "  FedInfo: " $FedInfoEOP
     #Write-Host  "  FedInfoEPR: " $FedInfoEOP.TarGetAutoDiscoverEpr
-    if ($exoOrgRel.TarGetAutoDiscoverEpr -like $FedInfoEOP.TarGetAutoDiscoverEpr) {
-        Write-Host -ForegroundColor Green "  TarGetAutoDiscoverEpr is" $exoOrgRel.TarGetAutoDiscoverEpr
 
-        $tdEXOOrgRelTarGetAutoDiscoverEpr = $exoOrgRel.TarGetAutoDiscoverEpr
-        $tdEXOOrgRelTarGetAutoDiscoverEprColor = "green"
-    } else {
-        Write-Host -ForegroundColor Red "  TarGetAutoDiscoverEpr is not" $FedInfoEOP.TarGetAutoDiscoverEpr
-        #$countOrgRelIssues++
-        $tdEXOOrgRelTarGetAutoDiscoverEpr = "  TarGetAutoDiscoverEpr is not $($FedInfoEOP.TarGetAutoDiscoverEpr)"
-        $tdEXOOrgRelTarGetAutoDiscoverEprColor = "red"
+
+    if ($exoOrgRel.TarGetSharingEpr -like "*resource.mailboxMigration.his.MSAppProxy.net/EWS/Exchange.asmx") {
+
+        if ($exoOrgRel.TarGetAutoDiscoverEpr -like $HATargetAutodiscoverEpr) {
+            Write-Host -ForegroundColor Green "  TarGetAutoDiscoverEpr is $($exoOrgRel.TarGetAutoDiscoverEpr) . This is correct when Hybrid Agent is in use"
+
+            $tdEXOOrgRelTarGetAutoDiscoverEpr = "TarGetAutoDiscoverEpr is $($exoOrgRel.TarGetAutoDiscoverEpr) . This is correct when Hybrid Agent is in use"
+            $tdEXOOrgRelTarGetAutoDiscoverEprColor = "green"
+        } else {
+            Write-Host -ForegroundColor Red "  TarGetAutoDiscoverEpr is not $HATargetAutodiscoverEpr . This is the correct  value when Hybrid Agent is in use."
+            #$countOrgRelIssues++
+            $tdEXOOrgRelTarGetAutoDiscoverEpr = "  TarGetAutoDiscoverEpr is not $HATargetAutodiscoverEpr. This is the correct  value when Hybrid Agent is in use."
+            $tdEXOOrgRelTarGetAutoDiscoverEprColor = "red"
+        }
+
+
     }
+
+
+    else {
+
+        if ($exoOrgRel.TarGetAutoDiscoverEpr -like $FedInfoEOP.TarGetAutoDiscoverEpr) {
+            Write-Host -ForegroundColor Green "  TarGetAutoDiscoverEpr is" $exoOrgRel.TarGetAutoDiscoverEpr
+
+            $tdEXOOrgRelTarGetAutoDiscoverEpr = $exoOrgRel.TarGetAutoDiscoverEpr
+            $tdEXOOrgRelTarGetAutoDiscoverEprColor = "green"
+        } else {
+            Write-Host -ForegroundColor Red "  TarGetAutoDiscoverEpr is not" $FedInfoEOP.TarGetAutoDiscoverEpr
+            #$countOrgRelIssues++
+            $tdEXOOrgRelTarGetAutoDiscoverEpr = "  TarGetAutoDiscoverEpr is not $($FedInfoEOP.TarGetAutoDiscoverEpr)"
+            $tdEXOOrgRelTarGetAutoDiscoverEprColor = "red"
+        }
+    }
+
     #Enabled
     Write-Host  " Enabled:"
     if ($exoOrgRel.enabled -like "True" ) {
@@ -2576,7 +2631,9 @@ function ExoTestOrgRelCheck {
                         }
 
                         Write-Host -ForegroundColor White "  Description: $Description"
-                        $Script:html += "<div> <b>&EmSp;; Description :</b> <span style='color:black'> $Description</span></div>"
+                        Write-Host -ForegroundColor yellow "  Note: Test-Organization Relationship fails on Step 3 with error MismatchedFederation if Hybrid Agent is in use"
+                        $Script:html += "<div> <b>&EmSp;; Description :</b> <span style='color:black'> $Description</span></div>
+                        <div><span style='color:yellow'>Note: Test-Organization Relationship fails on Step 3 with error MismatchedFederation if Hybrid Agent is in use</span></div>"
                     }
                     #$element
                     $aux = "1"
@@ -2748,10 +2805,17 @@ function EXOIntraOrgConCheck {
         $tdEXOIntraOrgConDiscoveryEndpoints = $exoIntraOrgCon.DiscoveryEndpoint
         $tdEXOIntraOrgConDiscoveryEndpointsColor = "green"
     } else {
-        Write-Host -ForegroundColor Red " DiscoveryEndpoint is NOT correct. "
-        Write-Host -ForegroundColor White "  Should be " $EDiscoveryEndpoint.OnPremiseDiscoveryEndpoint
-        $tdEXOIntraOrgConDiscoveryEndpoints = "$($exoIntraOrgCon.DiscoveryEndpoint) . Should be $($EDiscoveryEndpoint.OnPremiseDiscoveryEndpoint)"
-        $tdEXOIntraOrgConDiscoveryEndpointsColor = "red"
+        if ($exoIntraOrgCon.DiscoveryEndpoint -like "*resource.mailboxMigration.his.MSAppProxy.net*") {
+            Write-Host -ForegroundColor Green " " $exoIntraOrgCon.DiscoveryEndpoint
+            Write-Host -ForegroundColor Yellow " Discovery Endpoint includes resource.mailboxMigration.his.MSAppProxy.net. Hybrid configuration is implemented using Hybrid Agent "
+            $tdEXOIntraOrgConDiscoveryEndpoints = $exoIntraOrgCon.DiscoveryEndpoint
+            $tdEXOIntraOrgConDiscoveryEndpointsColor = "green"
+        } else {
+            Write-Host -ForegroundColor Red " DiscoveryEndpoint is NOT correct. "
+            Write-Host -ForegroundColor White "  Should be " $EDiscoveryEndpoint.OnPremiseDiscoveryEndpoint
+            $tdEXOIntraOrgConDiscoveryEndpoints = "$($exoIntraOrgCon.DiscoveryEndpoint) . Should be $($EDiscoveryEndpoint.OnPremiseDiscoveryEndpoint)"
+            $tdEXOIntraOrgConDiscoveryEndpointsColor = "red"
+        }
     }
     Write-Host -ForegroundColor White " Enabled: "
     if ($exoIntraOrgCon.Enabled -like "True") {
@@ -3212,7 +3276,7 @@ if ($IntraOrgCon.enabled -Like "False") {
 do {
     #do while not Y or N
     Write-Host $bar
-    Write-Host " Are this values correct? Press Y for YES and N for NO"
+    Write-Host " Are these values correct? Press Y for YES and N for NO"
     $ParamOK = [System.Console]::ReadLine()
     $ParamOK = $ParamOK.ToUpper()
 } while ($ParamOK -ne "Y" -AND $ParamOK -ne "N")
@@ -3483,4 +3547,3 @@ if ($Org -contains 'ExchangeOnline' -OR -not $Org) {
 }
 
 Stop-Transcript
-
