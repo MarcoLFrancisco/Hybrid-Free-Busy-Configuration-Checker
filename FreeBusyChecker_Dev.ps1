@@ -1,58 +1,64 @@
- <#
+ # Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
+<#
 .SYNOPSIS
-.\FreeBusyChecker.ps1 
+.\FreeBusyChecker.ps1
 .DESCRIPTION
-The script can be used to validate the Availability configuration of the following Exchange Server Versions: - Exchange Server 2013 - Exchange Server 2016 - Exchange Server 2019 - Exchange Online
+This script can be used to validate the Availability configuration of the following Exchange Server Versions:
+- Exchange Server 2013
+- Exchange Server 2016
+- Exchange Server 2019
+- Exchange Online
 
 Required Permissions:
-    Organization Management
-    Domain Admins (only necessary for the DCCoreRatio parameter)
-Please make sure that the account used is a member of the Local Administrator group. This should be fulfilled on Exchange servers by being a member of the Organization Management group. However, if the group membership was adjusted or in case the script is executed on a non-Exchange system like a management server, you need to add your account to the Local Administrator group.
+    - Organization Management
+    - Domain Admin
+Please make sure that the account used is a member of the Local Administrator group. This should be fulfilled on Exchange Servers by being a member of the Organization Management group. However, if the group membership was adjusted, or in case the script is executed on a non-Exchange system like a management Server, you need to add your account to the Local Administrator group.
 
 How To Run:
-This script must be run as Administrator in Exchange Management Shell on an Exchange Server. You can provide no parameters and the script will just run against Exchange On Premises and Exchange Online to query for OAuth and DAuth configuration setting. It will compare existing values with standard values and provide detail of what may not be correct.
+This script must be run as Administrator in Exchange Management Shell on an Exchange Server. You can provide no parameters, and the script will just run against Exchange On-Premises and Exchange Online to query for OAuth and DAuth configuration settings. It will compare existing values with standard values and provide details of what may not be correct.
 Please take note that though this script may output that a specific setting is not a standard setting, it does not mean that your configurations are incorrect. For example, DNS may be configured with specific mappings that this script cannot evaluate.
 
 .PARAMETER Auth
-Allow you to choose the authentication type to validate.
+Allows you to choose the authentication type to validate.
 .PARAMETER Org
-Allow you to choose the organization type to validate.
+Allows you to choose the organization type to validate.
 .PARAMETER Pause
-Pause after each test done..
+Pause after each test is done.
 .PARAMETER Help
-Show help of this script.
-
+Show help for this script.
 
 .EXAMPLE
-.\FreeBusyChecker.ps1 
-This cmdlet will run Free Busy Checker script and check Availability OAuth and DAuth Configurations both for Exchange On Premises and Exchange Online.
+.\FreeBusyChecker.ps1
+This cmdlet will run the Free Busy Checker script and Check Availability OAuth and DAuth Configurations both for Exchange On-Premises and Exchange Online.
 .EXAMPLE
 .\FreeBusyChecker.ps1 -Auth OAuth
-This cmdlet will run the Free Busy Checker Script against for OAuth Availability Configurations only.
+This cmdlet will run the Free Busy Checker Script against OAuth Availability Configurations only.
 .EXAMPLE
 .\FreeBusyChecker.ps1 -Auth DAuth
-This cmdlet will run the Free Busy Checker Script against for DAuth Availability Configurations only.
+This cmdlet will run the Free Busy Checker Script against DAuth Availability Configurations only.
 .EXAMPLE
 .\FreeBusyChecker.ps1 -Org ExchangeOnline
 This cmdlet will run the Free Busy Checker Script for Exchange Online Availability Configurations only.
 .EXAMPLE
 .\FreeBusyChecker.ps1 -Org ExchangeOnPremise
-This cmdlet will run the Free Busy Checker Script for Exchange On Premises OAuth and DAuth Availability Configurations only.
+This cmdlet will run the Free Busy Checker Script for Exchange On-Premises OAuth and DAuth Availability Configurations only.
 .EXAMPLE
 .\FreeBusyChecker.ps1 -Org ExchangeOnPremise -Auth OAuth -Pause
-This cmdlet will run the Free Busy Checker Script for Exchange On Premises Availability OAuth Configurations, pausing after each test done.
+This cmdlet will run the Free Busy Checker Script for Exchange On-Premises Availability OAuth Configurations, pausing after each test is done.
 #>
 
-#Exchange on Premise
+# Exchange On-Premises
 #>
-#region Properties and Parameters 
+#region Properties and Parameters
 
 [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseDeclaredVarsMoreThanAssignments', '', Justification = 'Variables are being used')]
 [CmdletBinding(DefaultParameterSetName = "FreeBusyInfo_OP", SupportsShouldProcess)]
 
 param(
     [Parameter(Mandatory = $false, ParameterSetName = "Test")]
-    [ValidateSet('DAuth', 'OAuth', 'All')]
+    [ValidateSet('DAuth', 'OAuth', 'All', '')]
     [string[]]$Auth,
     [Parameter(Mandatory = $false, ParameterSetName = "Test")]
     [ValidateSet('ExchangeOnPremise', 'ExchangeOnline')]
@@ -63,65 +69,80 @@ param(
     [switch]$Help
 )
 
-Function ShowHelp {
-    $bar
-    Write-host -ForegroundColor Yellow "`n  Valid Input Option Parameters!"
-    Write-Host -ForegroundColor White "`n  Paramater: Auth"
+function ShowHelp {
+    Print-DynamicWidthLine
+    Write-Host -ForegroundColor Yellow "`n  Valid Input Option Parameters!"
+    Write-Host -ForegroundColor White "`n  Parameter: Auth"
     Write-Host -ForegroundColor White "   Options  : DAuth; OAUth"
     Write-Host  "    DAuth             : DAuth Authentication"
     Write-Host  "    OAuth             : OAuth Authentication"
-    Write-Host  "    All               : Both DAuth and OAuth Authentication"
-    Write-Host  "    Default Value     : No swith input means the script will detect which method is currently being used"
-    Write-Host -ForegroundColor White "`n  Paramater: Org"
+    Write-Host  "    Default Value     : No switch input means the script will collect both DAuth and OAuth Availability Configuration Detail"
+    Write-Host -ForegroundColor White "`n  Parameter: Org"
     Write-Host -ForegroundColor White "   Options  : ExchangeOnPremise; Exchange Online"
     Write-Host  "    ExchangeOnPremise : Use ExchangeOnPremise parameter to collect Availability information in the Exchange On Premise Tenant"
     Write-Host  "    ExchangeOnline    : Use Exchange Online parameter to collect Availability information in the Exchange Online Tenant"
-    Write-Host  "    Default Value     : No swith input means the script will collect both Exchange On Premise and Exchange OnlineAvailability configuration Detail"
-    Write-Host -ForegroundColor White "`n  Paramater: Pause"
+    Write-Host  "    Default Value     : No switch input means the script will collect both Exchange On Premise and Exchange OnlineAvailability configuration Detail"
+    Write-Host -ForegroundColor White "`n  Parameter: Pause"
     Write-Host  "                 : Use the Pause parameter to use this script pausing after each test done."
-    Write-Host -ForegroundColor White "`n  Paramater: Help"
+    Write-Host -ForegroundColor White "`n  Parameter: Help"
     Write-Host  "                 : Use the Help parameter to use display valid parameter Options. `n`n"
 }
 
-If ($Help) {
-    Write-Host $bar
-    ShowHelp;
-    $bar
-    exit
+
+
+#Add-PSSnapin microsoft.exchange.management.powershell.Snapin
+Import-Module ActiveDirectory
+
+#Install-Module -Name ExchangeOnlineManagement
+
+# Check if the ExchangeOnlineManagement module is already installed
+if (-not (Get-Module -Name ExchangeOnlineManagement -ListAvailable)) {
+    # If installed Disconnect
+    Disconnect-ExchangeOnline -Confirm:$False
 }
 
-Add-PSSnapin microsoft.exchange.management.powershell.snapin
-import-module ActiveDirectory
-Install-Module -Name ExchangeOnlineManagement
-DisConnect-ExchangeOnline -Confirm:$False
-Clear-Host
+#[System.Console]::Clear()
 $countOrgRelIssues = (0)
-$Global:FedTrust = $null
-$Global:AutoDiscoveryVirtualDirectory = $null
-$Global:OrgRel
-$Global:SPDomainsOnprem
+$Script:FedTrust = $null
+$Script:AutoDiscoveryVirtualDirectory = $null
+$Script:OrgRel
+$Script:SPDomainsOnprem
 $AvailabilityAddressSpace = $null
-$Global:WebServicesVirtualDirectory = $null
-$bar = " ==================================================================================================================" 
+$Script:WebServicesVirtualDirectory = $null
 $ConsoleWidth = $Host.UI.RawUI.WindowSize.Width
-#$bar = "="
-#for ( $i = 1; $i -lt $ConsoleWidth; $i++) {
-#    $bar += "="
-#}
-$logfile = "$PSScriptRoot\FreeBusyInfo_OP.txt"
-$startingDate = (get-date -format yyyyMMdd_HHmmss)
-$Logfile = [System.IO.Path]::GetFileNameWithoutExtension($logfile) + "_" + `
-    $startingDate + ([System.IO.Path]::GetExtension($logfile))
-$htmlfile = "$PSScriptRoot\FBCheckerOutput_$($startingDate).html"
+$BuildVersion = ""
+$Server = hostname
+$bar = " =================================================================================================================="
+
+function Print-DynamicWidthLine {
+    $screenWidth = $host.UI.RawUI.WindowSize.Width
+
+    if ($screenWidth -gt 180) {
+        $length = [math]::floor($screenWidth / 1.65)
+        
+    } else {
+        $length = [math]::floor($screenWidth - 5)  
+        
+    }
+
+    $line = "=" * $length
+    Write-Host $line
+}
+
+$LogFile = "$PSScriptRoot\FreeBusyChecker.txt"
+$startingDate = (Get-Date -Format yyyyMMdd_HHmmss)
+$LogFileName = [System.IO.Path]::GetFileNameWithoutExtension($LogFile) + "_" + `
+$startingDate + ([System.IO.Path]::GetExtension($LogFile))
+$htmlFile = "$PSScriptRoot\FBCheckerOutput_$($startingDate).html"
 Write-Host " `n`n "
-Start-Transcript -path $LogFile -append
-Write-Host $bar
-Write-Host -foregroundcolor Green " `n  Free Busy Configuration Information Checker `n "
-Write-Host -foregroundcolor White "   Version -1 `n "
-Write-Host -foregroundcolor Green "  Loading Parameters..... `n "
+Start-Transcript -Path $LogFileName -Append
+Print-DynamicWidthLine
+Write-Host -ForegroundColor Green " `n  Free Busy Configuration Information Checker `n "
+Write-Host -ForegroundColor White $BuildVersion
+Write-Host -ForegroundColor Green "  Loading Parameters..... `n "
 #Parameter input
-$UserOnline = get-remotemailbox -resultsize 1 -WarningAction SilentlyContinue
-$UserOnline = $UserOnline.RemoteroutingAddress.smtpaddress
+$UserOnline = Get-RemoteMailbox -ResultSize 1 -WarningAction SilentlyContinue
+$UserOnline = $UserOnline.RemoteRoutingAddress.SmtpAddress
 $ExchangeOnlineDomain = ($UserOnline -split "@")[1]
 
 if ($ExchangeOnlineDomain -like "*.mail.onmicrosoft.com") {
@@ -131,19 +152,19 @@ if ($ExchangeOnlineDomain -like "*.mail.onmicrosoft.com") {
 else {
     $ExchangeOnlineAltDomain = (($ExchangeOnlineDomain.Split(".")))[0] + ".mail.onmicrosoft.com"
 }
-# $UserOnPrem = get-mailbox -resultsize 1 -WarningAction SilentlyContinue | Where-Object { ($_.EmailAddresses -like "*" + $ExchangeOnlineDomain ) }
 $temp = "*" + $ExchangeOnlineDomain
-$UserOnPrem = get-mailbox -resultsize 2 -WarningAction SilentlyContinue -Filter 'EmailAddresses -like $temp -and HiddenFromAddressListsEnabled -eq $false'
-$UserOnPrem = $UserOnPrem[1].PrimarySmtpAddress.Address
-$ExchangeOnPremDomain = ($UserOnPrem -split "@")[1]
-$EWSVirtualDirectory = Get-WebServicesVirtualDirectory
+$UserOnPrem = ""
 
+$UserOnPrem = Get-mailbox -ResultSize 2 -WarningAction SilentlyContinue -Filter 'EmailAddresses -like $temp -and HiddenFromAddressListsEnabled -eq $false'
+$UserOnPrem = $UserOnPrem[1].PrimarySmtpAddress.Address
+$Script:ExchangeOnPremDomain = ($UserOnPrem -split "@")[1]
+$EWSVirtualDirectory = Get-WebServicesVirtualDirectory -server $Server -ErrorAction SilentlyContinue
 if ($EWSVirtualDirectory.externalURL.AbsoluteUri.Count -gt 1) {
-    $Global:ExchangeOnPremEWS = ($EWSVirtualDirectory.externalURL.AbsoluteUri)[0]
+    $Script:ExchangeOnPremEWS = ($EWSVirtualDirectory.externalURL.AbsoluteUri)[0]
 }
 
 else {
-    $Global:ExchangeOnPremEWS = ($EWSVirtualDirectory.externalURL.AbsoluteUri)
+    $Script:ExchangeOnPremEWS = ($EWSVirtualDirectory.externalURL.AbsoluteUri)
 }
 
 $ADDomain = Get-ADDomain
@@ -152,493 +173,514 @@ $ExchangeOnPremLocalDomain = $ADDomain.forest
 if ([string]::IsNullOrWhitespace($ADDomain)) {
     $ExchangeOnPremLocalDomain = $exchangeOnPremDomain
 }
-$Script:fedinfoEOP = get-federationInformation -DomainName $ExchangeOnPremDomain  -BypassAdditionalDomainValidation -ErrorAction SilentlyContinue | Select-Object *
+$Script:FedInfoEOP = Get-federationInformation -DomainName $ExchangeOnPremDomain  -BypassAdditionalDomainValidation -ErrorAction SilentlyContinue | Select-Object *
+#endregion
+
+
+
+#region Help
+
+if ($Help) {
+    Print-DynamicWidthLine
+    ShowHelp
+    Print-DynamicWidthLine
+    exit
+}
+
 #endregion
 
 #region Edit Parameters
 
-Function UserOnlineCheck {
-    Write-Host -foregroundcolor Green " Online Mailbox: $UserOnline"
-    $UserOnlineCheck = Read-Host " Press the Enter key if OK or type an Exchange Online Email address and press the Enter key"
+function UserOnlineCheck {
+    Write-Host -ForegroundColor Green "Online Mailbox: $UserOnline"
+    Write-Host "Press the Enter key if OK or type an Exchange Online Email address and press the Enter key"
+    $UserOnlineCheck = [System.Console]::ReadLine()
     if (![string]::IsNullOrWhitespace($UserOnlineCheck)) {
         $script:UserOnline = $UserOnlineCheck
     }
 }
 
-Function ExchangeOnlineDomainCheck {
+function ExchangeOnlineDomainCheck {
     #$ExchangeOnlineDomain
-    Write-Host -foregroundcolor Green " Exchange Online Domain: $ExchangeOnlineDomain"
-    $ExchangeOnlineDomaincheck = $RH = Read-Host " Press Enter if OK or type in the Exchange Online Domain and press the Enter key."
-    if (![string]::IsNullOrWhitespace($ExchangeOnlineDomaincheck)) {
+    Write-Host -ForegroundColor Green " Exchange Online Domain: $ExchangeOnlineDomain"
+    Write-Host " Press Enter if OK or type in the Exchange Online Domain and press the Enter key."
+    $ExchangeOnlineDomainCheck = [System.Console]::ReadLine()
+    if (![string]::IsNullOrWhitespace($ExchangeOnlineDomainCheck)) {
         $script:ExchangeOnlineDomain = $ExchangeOnlineDomainCheck
     }
 }
 
-Function UseronpremCheck {
-    Write-Host -foregroundcolor Green " On Premises Hybrid Mailbox: $Useronprem"
-    $Useronpremcheck = $RH = Read-Host " Press Enter if OK or type in an Exchange OnPremises Hybrid email address and press the Enter key."
-    if (![string]::IsNullOrWhitespace($Useronpremcheck)) {
-        $script:Useronprem = $Useronpremcheck
+function UserOnPremCheck {
+    Write-Host -ForegroundColor Green " On Premises Hybrid Mailbox: $UserOnPrem"
+    Write-Host " Press Enter if OK or type in an Exchange OnPremises Hybrid email address and press the Enter key."
+    $UserOnPremCheck = [System.Console]::ReadLine()
+    if (![string]::IsNullOrWhitespace($UserOnPremCheck)) {
+        $script:UserOnPrem = $UserOnPremCheck
     }
 }
 
-Function ExchangeOnPremDomainCheck {
+function ExchangeOnPremDomainCheck {
     #$exchangeOnPremDomain
-    Write-Host -foregroundcolor Green " On Premises Mail Domain: $exchangeOnPremDomain"
-    $exchangeOnPremDomaincheck = $RH = Read-Host " Press Enter if OK or type in the Exchange On Premises Mail Domain and press the Enter key."
-    if (![string]::IsNullOrWhitespace($exchangeOnPremDomaincheck)) {
-        $script:exchangeOnPremDomain = $exchangeOnPremDomaincheck
+    Write-Host -ForegroundColor Green " On Premises Mail Domain: $exchangeOnPremDomain"
+    Write-Host " Press Enter if OK or type in the Exchange On Premises Mail Domain and press the Enter key."
+    $exchangeOnPremDomainCheck = [System.Console]::ReadLine()
+    if (![string]::IsNullOrWhitespace($exchangeOnPremDomainCheck)) {
+        $script:exchangeOnPremDomain = $exchangeOnPremDomainCheck
     }
 }
 
-Function ExchangeOnPremEWSCheck {
-    Write-Host -foregroundcolor Green " On Premises EWS External URL: $exchangeOnPremEWS"
-    $exchangeOnPremEWScheck = $RH = Read-Host " Press Enter if OK or type in the Exchange On Premises EWS URL and press the Enter key."
-    if (![string]::IsNullOrWhitespace($exchangeOnPremEWScheck)) {
-        $exchangeOnPremEWS = $exchangeOnPremEWScheck
+function ExchangeOnPremEWSCheck {
+    Write-Host -ForegroundColor Green " On Premises EWS External URL: $exchangeOnPremEWS"
+    Write-Host " Press Enter if OK or type in the Exchange On Premises EWS URL and press the Enter key."
+    $exchangeOnPremEWSCheck = [System.Console]::ReadLine()
+    if (![string]::IsNullOrWhitespace($exchangeOnPremEWSCheck)) {
+        $exchangeOnPremEWS = $exchangeOnPremEWSCheck
     }
 }
 
-Function ExchangeOnPremLocalDomainCheck {
-    Write-Host -foregroundcolor Green " On Premises Root Domain: $exchangeOnPremLocalDomain  "
+function ExchangeOnPremLocalDomainCheck {
+    Write-Host -ForegroundColor Green " On Premises Root Domain: $exchangeOnPremLocalDomain  "
+    Write-Host " Press Enter if OK or type in the Exchange On Premises Root Domain."
+    $exchangeOnPremLocalDomain = [System.Console]::ReadLine()
+    if ([string]::IsNullOrWhitespace($ADDomain)) {
+        $exchangeOnPremLocalDomain = $exchangeOnPremDomain
+    }
     if ([string]::IsNullOrWhitespace($exchangeOnPremLocalDomain)) {
-        $exchangeOnPremLocalDomaincheck = Read-Host "Please type in the Active directory Root domain.
-        Press Enter to use $exchangeOnPremDomain"
-        if ([string]::IsNullOrWhitespace($ADDomain)) {
-            $exchangeOnPremLocalDomain = $exchangeOnPremDomain
-        }
-        if ([string]::IsNullOrWhitespace($exchangeOnPremLocalDomain)) {
-            $exchangeOnPremLocalDomain = $exchangeOnPremLocalDomaincheck
-        }
+        $exchangeOnPremLocalDomain = $exchangeOnPremLocalDomainCheck
     }
 }
 
 #endregion
 
 #region Show Parameters
-Function ShowParameters {
-    #if (($exchangeOnlineDomain -ne $null) -And  ($exchangeOnPremDomain -ne $null) -And  ($exchangeOnlineDomain -ne $null) -And  ($exchangeOnPremEWS -ne $null) -And  ($useronline -ne $null) -And  ($useronprem -ne $null) ){
-    Write-Host $bar
-    write-host -foregroundcolor Green "  Loading modules for AD, Exchange"
-    Write-Host $bar
+function ShowParameters {
+    Print-DynamicWidthLine
+    Write-Host -ForegroundColor Green "  Loading modules for AD, Exchange"
+    Print-DynamicWidthLine
     Write-Host   "  Color Scheme"
-    Write-Host $bar
+    Print-DynamicWidthLine
     Write-Host -ForegroundColor Red "  Look out for Red!"
     Write-Host -ForegroundColor Yellow "  Yellow - Example information or Links"
     Write-Host -ForegroundColor Green "  Green - In Summary Sections it means OK. Anywhere else it's just a visual aid."
-    Write-Host $bar
+    Print-DynamicWidthLine
     Write-Host   "  Parameters:"
-    Write-Host $bar
+    Print-DynamicWidthLine
     Write-Host  -ForegroundColor White " Log File Path:"
-    Write-Host -foregroundcolor Green "  $PSScriptRoot\$Logfile"
+    Write-Host -ForegroundColor Green "  $PSScriptRoot\$LogFile"
     Write-Host  -ForegroundColor White " Office 365 Domain:"
-    Write-Host -foregroundcolor Green "  $exchangeOnlineDomain"
+    Write-Host -ForegroundColor Green "  $ExchangeOnlineDomain"
     Write-Host  -ForegroundColor White " AD root Domain"
-    Write-Host -foregroundcolor Green "  $exchangeOnPremLocalDomain"
-    Write-Host -foregroundcolor White " Exchange On Premises Domain:  "
-    Write-Host -foregroundcolor Green "  $exchangeOnPremDomain"
+    Write-Host -ForegroundColor Green "  $exchangeOnPremLocalDomain"
+    Write-Host -ForegroundColor White " Exchange On Premises Domain:  "
+    Write-Host -ForegroundColor Green "  $exchangeOnPremDomain"
     Write-Host -ForegroundColor White " Exchange On Premises External EWS url:"
-    Write-Host -foregroundcolor Green "  $exchangeOnPremEWS"
+    Write-Host -ForegroundColor Green "  $exchangeOnPremEWS"
     Write-Host -ForegroundColor White " On Premises Hybrid Mailbox:"
-    Write-Host -foregroundcolor Green "  $useronprem"
+    Write-Host -ForegroundColor Green "  $UserOnPrem"
     Write-Host -ForegroundColor White " Exchange Online Mailbox:"
-    Write-Host -foregroundcolor Green "  $userOnline"
-
+    Write-Host -ForegroundColor Green "  $UserOnline"
 
     $script:html = "<!DOCTYPE html>
-        <html>
-        <head>
-	        <title>Hybrid Free Busy Configration Checker</title>
-	        <style>
-              body {
-               font-family: Courier;
-               background-color: white;
-              }
-              table, th {
-              border: 1px solid black;
-              border-collapse: collapse;
-              padding: 5px;
-              font-family: Courier;
-              background-color: white;
-              table-layout: fixed;
-            }
-             td {
-              border: 1px solid black;
-              border-collapse: collapse;
-              padding: 5px;
-              font-family: Courier;
-              background-color: white;
-              width: 50%;
-              max-width: 50%;
-              word-wrap:break-word
-            }
-            th {
-              background-color: blue;
-              text-align: left;
-            }
-		        .green { color: green; }
-		        .red { color: red; }
-		        .yellow { color: yellow; }
-		        .white { color: white; }
-                .black { color: white; }
-                .orange { color: orange; }
-                
-	        </style>
-        </head>
-        <body>
-            <div class='Black'><h1>Hybrid Free Busy Configration Checker</h1></div>
-	        
-	        <div class='Black'><h2><b>Parameters:</b></h2></div>
-	       
-                    <div class='Black'><b>Log File Path:</b><span style='color:green;'> $PSScriptRoot\$Logfile</span></div>
-	                <div class='Black'><b>Office 365 Domain:</b><span style='color:green;'>  $exchangeOnlineDomain</span></div>
-                    <div class='Black'><b>AD root Domain: </b><span style='color:green;'>  $exchangeOnPremLocalDomain</span></div>
-	                <div class='Black'><b>Exchange On Premises Domain: </b><span style='color:green;'>   $exchangeOnPremDomain</span></div>
-	                <div class='Black'><b>Exchange On Premises External EWS url: </b><span style='color:green;'> $exchangeOnPremEWS</span></div>
-	                <div class='Black'><b>On Premises Hybrid Mailbox: </b><span style='color:green;'>  $useronprem</span></div>
-	                <div class='Black'><b>Exchange Online Mailbox: </b><span style='color:green;'>  $userOnline</span></div>
-	            
+ <!DOCTYPE html>
+<html>
+<head>
+  <title>Hybrid Free Busy Configuration Checker</title>
+  <style>
+    body {
+      font-family: Arial;
+      background-color: white;
+    }
+    table, th {
+    max-width: 95%;
+    margin-left: 2%;
+    margin-right: 2%;
+      border: 1px solid black;
+      border-collapse: collapse;
+      padding: 5px;
+      font-family: Courier;
+      background-color: white;
+      table-layout: fixed;
+       font-family: Arial;
+    }
+    td {
+      border: 1px solid black;
+      border-collapse: collapse;
+      padding: 5px;
+      font-family: Arial;
+      background-color: white;
+      width: 50%;
+      max-width: 50%;
+      word-wrap: break-word;
+    }
+    th {
+      background-color: blue;
+      text-align: left;
+       font-family: Arial;
+    }
+    .green { color: green; }
+    .red { color: red; }
+    .yellow { color: yellow; }
+    .white { color: white; }
+    .black { color: black; }
+    .orange { color: orange; }
+    .Black {
+      font-weight: 500;
+    }
+     p {
+      font-weight : 548;
+    }
+    h1 {
+      color: #00a2ed;
+      padding-left: 2%;
+    }
+    h2 {
+      color: #00a2ed;
+      padding-left: 2%;
+    }
+    h3 {
+      color: #00a2ed;
+      padding-left: 2%;
+    }
+    ul {
+      padding-left: 8%;
+    }
 
-            <div class='Black'><p></p></div>
-            <div class='Black'><h2><b>Color Scheme:</b></h2></div>
-	        <div class='red'><b>Look out for Red!</b></div>
-	        <div class='orange'><b>Orange - Example information or Links</b></div>
-	        <div class='green'><b>Green - Means OK</b></div>
-            
-             <div class='Black'><p></p></div>
-            
-            
-            <div class='Black'><h2>Hybrid Free Busy Configuration:</h2></div>
-            
-           "
-           #(get-date -format yyyyMMdd_HHmmss)
-    $html | Out-File -FilePath $htmlfile
+   .microsoft {
+    background-color: #f25022;
+    box-shadow:
+        28px 0 0 0 #7fba00,
+        0 28px 0 0 #00a4ef,
+        28px 28px 0 0 #ffb900;
+    height: 25px;
+    width: 25px;
+    margin-top: 1%;
+    margin-right: 1%;
+}
+  </style>
+</head>
+<body>
+
+            <div class='Black' style='display: -webkit-box;margin-left: 2%;'>
+            <div class='microsoft'></div>
+            <h1 style='padding-left: 2%;'>Microsoft CSS - Exchange Hybrid Free Busy Configuration Checker</h1></div>
+
+
+	       <div class='Black' style = 'padding-left: 0%;'>
+              <h2><b>Parameters:</b></h2>
+              <ul>
+                <li>
+                  <p>Log File Path:</p>
+                  <span style='color:green; font-weight:500; padding-left:2%;'>$PSScriptRoot\$LogFile</span>
+                </li>
+                <li>
+                  <p>Office 365 Domain:</p>
+                  <span style='color:green; font-weight:500; padding-left:2%'>$ExchangeOnlineDomain</span>
+                </li>
+                <li>
+                  <p>AD root Domain:</p>
+                  <span style='color:green; font-weight:500; padding-left:2%'>$exchangeOnPremLocalDomain</span>
+                </li>
+                <li>
+                  <p>Exchange On Premises Domain:</p>
+                  <span style='color:green; font-weight:500; padding-left:2%'>$exchangeOnPremDomain</span>
+                </li>
+                <li>
+                  <p>Exchange On Premises External EWS url:</p>
+                  <span style='color:green; font-weight:500; padding-left:2%'>$exchangeOnPremEWS</span>
+                </li>
+                <li>
+                  <p>On Premises Hybrid Mailbox:</p>
+                  <span style='color:green; font-weight:500; padding-left:2%'>$UserOnPrem</span>
+                </li>
+                <li>
+                  <p>Exchange Online Mailbox:</p>
+                  <span style='color:green; font-weight:500; padding-left:2%'>$UserOnline</span>
+                </li>
+              </ul>
+            </div>
+
+
+            <div class='Black'  style = 'padding-left: 0%;'><h2Configuration:</h2></div>
+
+            <p style='margin-left:2%;'>TLS 1.2 should be Enabled in order for Hybrid Free Busy to work. To confirm TLS Settings please Run the HealthChecker Script</p>
+              <ul>
+                <li><a href='https://microsoft.github.io/CSS-Exchange/Diagnostics/HealthChecker/'>Microsoft Exchange Health Checker Script</a></li>
+              </ul>
+
+
+            <h3>Useful Links</h3>
+              <ul>
+                <li><a href='https://techcommunity.microsoft.com/t5/exchange-team-blog/demystifying-hybrid-free-busy-finding-errors-and-troubleshooting/ba-p/607727'>Demystifying Hybrid Free Busy: Finding Errors and Troubleshooting</a></li>
+                <li><a href='https://support.microsoft.com/en-us/topic/how-to-troubleshoot-free-busy-issues-in-a-hybrid-deployment-of-on-premises-exchange-Server-and-exchange-online-in-office-365-ae03e199-b439-a84f-8db6-11bc0d7fbdf0'>How to Troubleshoot Free Busy Issues in a Hybrid Deployment of On-Premises Exchange Server and Exchange Online in Office 365</a></li>
+                <li><a href='https://techcommunity.microsoft.com/t5/exchange-team-blog/the-hybrid-mesh/ba-p/605910'>The Hybrid Mesh</a></li>
+                <li><a href='https://techcommunity.microsoft.com/t5/exchange-team-blog/how-to-address-federation-trust-issues-in-hybrid-configuration/ba-p/1144285'>How to Address Federation Trust Issues in Hybrid Configuration</a></li>
+                <li><a href='https://learn.microsoft.com/en-us/microsoft-365/enterprise/urls-and-ip-address-ranges?redirectSourcePath=%252farticle%252fOffice-365-URLs-and-IP-address-ranges-8548a211-3fe7-47cb-abb1-355ea5aa88a2&view=o365-worldwide'>Office 365 URLs and IP Address Ranges</a></li>
+                <li><a href='https://techcommunity.microsoft.com/legacyfs/online/media/2019/01/FB_Errors.FixesV6.pdf'>Free Busy Errors and Fixes</a></li>
+              </ul>
+
+              "
+
+    $html | Out-File -FilePath $htmlFile
 }
 #}
 #endregion
 
 #region DAuth Functions
 
-Function OrgRelCheck {
-    Write-Host $bar
-    Write-Host -foregroundcolor Green " Get-OrganizationRelationship  | Where{($_.DomainNames -like $ExchangeOnlineDomain )} | Select Identity,DomainNames,FreeBusy*,Target*,Enabled, ArchiveAccessEnabled"
-    Write-Host $bar
-    $OrgRel
-    Write-Host $bar
-    Write-Host  -foregroundcolor Green " Summary - Get-OrganizationRelationship"
-    Write-Host $bar
-    #$exchangeonlinedomain
-    Write-Host  -foregroundcolor White   " Domain Names:"
-    if ($orgrel.DomainNames -like $exchangeonlinedomain) {
-        Write-Host -foregroundcolor Green "  Domain Names Include the $exchangeOnlineDomain Domain"
-        $tdDomainNames = "Domain Names Include the $exchangeOnlineDomain Domain"
-        $tdDomainNamesColor = "green"
-        $tdDomainNamesfl = $tdDomainNames | Format-List
+
+
+function OrgRelCheck($OrgRelParameter) {
+    Print-DynamicWidthLine
+    Write-Host -ForegroundColor Green " Get-OrganizationRelationship  | Where{($_.DomainNames -like $ExchangeOnlineDomain )} | Select Identity,DomainNames,FreeBusy*,TarGet*,Enabled, ArchiveAccessEnabled"
+    Print-DynamicWidthLine
+
+    $OrgRelParameter
+    Print-DynamicWidthLine
+    Write-Host  -ForegroundColor Green " Summary - Get-OrganizationRelationship"
+    Print-DynamicWidthLine
+
+    $settingsList = New-Object System.Collections.ArrayList
+
+    function AddSettingToList ($list, $name, $value, $color) {
+        $list.Add([PSCustomObject]@{
+            Name  = $name
+            Value = $value
+            Color = $color
+        }) | Out-Null
     }
-    else {
-        Write-Host -foregroundcolor Red "  Domain Names do Not Include the $exchangeOnlineDomain Domain"
-        $tdDomainNames = "Domain Names do Not Include the $exchangeOnlineDomain Domain"
-        $tdDomainNamesColor = "Red"
+
+# Domain Names
+
+    if ($OrgRelParameter.DomainNames -like $ExchangeOnlineDomain) {
+        AddSettingToList $settingsList " Domain Names" "  Domain Names include the $ExchangeOnlineDomain Domain" "green"
+    } else {
+        AddSettingToList $settingsList " Domain Names" "  Domain Names do Not Include the $ExchangeOnlineDomain Domain" "red"
     }
-    #FreeBusyAccessEnabled
-    Write-Host -foregroundcolor White   " FreeBusyAccessEnabled:"
-    if ($OrgRel.FreeBusyAccessEnabled -like "True" ) {
-        Write-Host -foregroundcolor Green "  FreeBusyAccessEnabled is set to True"
-        $tdFBAccessEnabled = "FreeBusyAccessEnabled is set to True"
-        $tdFBAccessEnabledColor = "green"
-    }
-    else {
-        Write-Host -foregroundcolor Red "  FreeBusyAccessEnabled : False"
-        $tdFBAccessEnabled = "FreeBusyAccessEnabled is set to False"
-        $tdFBAccessEnabledColor = "red"
+
+# FreeBusyAccessEnabled
+
+    if ($OrgRelParameter.FreeBusyAccessEnabled -like "True") {
+        AddSettingToList $settingsList " FreeBusyAccessEnabled" "  FreeBusyAccessEnabled is set to True" "green"
+    } else {
+        AddSettingToList $settingsList " FreeBusyAccessEnabled" "  FreeBusyAccessEnabled is set to False" "red"
         $countOrgRelIssues++
     }
-    #FreeBusyAccessLevel
-    Write-Host -foregroundcolor White   " FreeBusyAccessLevel:"
-    if ($OrgRel.FreeBusyAccessLevel -like "AvailabilityOnly" ) {
-        Write-Host -foregroundcolor Green "  FreeBusyAccessLevel is set to AvailabilityOnly"
-        $tdFBAccessLevel = "FreeBusyAccessLevel is set to AvailabilityOnly"
-        $tdFBAccessLevelColor = "green"
-    }
-    if ($OrgRel.FreeBusyAccessLevel -like "LimitedDetails" ) {
-        Write-Host -foregroundcolor Green "  FreeBusyAccessLevel is set to LimitedDetails"
-        $tdFBAccessLevel = "FreeBusyAccessLevel is set to  LimitedDetails"
-        $tdFBAccessLevelColor = "green"
-    }
-    if ($OrgRel.FreeBusyAccessLevel -ne "LimitedDetails" -AND $OrgRel.FreeBusyAccessLevel -ne "AvailabilityOnly" ) {
-        Write-Host -foregroundcolor Red "  FreeBusyAccessEnabled : False"
-        $tdFBAccessLevel = "FreeBusyAccessEnabled : False"
-        $tdFBAccessLevelColor = "Red"
-        $countOrgRelIssues++
-    }
-    #TargetApplicationUri
-    Write-Host -foregroundcolor White   " TargetApplicationUri:"
-    if ($OrgRel.TargetApplicationUri -like "Outlook.com" ) {
-        Write-Host -foregroundcolor Green "  TargetApplicationUri is Outlook.com"
-        $tdTargetApplicationUri = "TargetApplicationUri is Outlook.com"
-        $tdTargetApplicationUriColor = "green"
-    }
-    else {
-        Write-Host -foregroundcolor Red "  TargetApplicationUri should be Outlook.com"
-        $tdTargetApplicationUri = "TargetApplicationUri should be Outlook.com"
-        $tdTargetApplicationUriColor = "red"
-        $countOrgRelIssues++
-    }
-    #TargetOwaURL
-    Write-Host -foregroundcolor White   " TargetOwaURL:"
-    if ($OrgRel.TargetOwaURL -like "https://outlook.com/owa/$exchangeonlinedomain" -or $OrgRel.TargetOwaURL -like $Null) {
-        if ($OrgRel.TargetOwaURL -like "http://outlook.com/owa/$exchangeonlinedomain") {
-            Write-Host -foregroundcolor Green "  TargetOwaURL is http://outlook.com/owa/$exchangeonlinedomain. This is a possible standard value. TargetOwaURL can also be configured to be Blank."
-            $tdOrgRelTargetOwaURL = " $($OrgRel.TargetOwaURL) - TargetOwaURL is http://outlook.com/owa/$exchangeonlinedomain. This is a possible standard value. TargetOwaURL can also be configured to be Blank."
-            $tdOrgRelTargetOwaURLColor = "green"
-        }
-        if ($OrgRel.TargetOwaURL -like "https://outlook.office.com/mail") {
-            Write-Host -foregroundcolor Green "  TargetOwaURL is https://outlook.office.com/mail. This is a possible standard value. TargetOwaURL can also be configured to be Blank or http://outlook.com/owa/$exchangeonlinedomain."
-            $tdOrgRelTargetOwaURL = " $($OrgRel.TargetOwaURL) - TargetOwaURL is https://outlook.office.com/mail. TargetOwaURL can also be configured to be Blank or http://outlook.com/owa/$exchangeonlinedomain."
-            $tdOrgRelTargetOwaURLColor = "green"
-        }
-        if ($OrgRel.TargetOwaURL -like $Null) {
-            Write-Host -foregroundcolor Green "  TargetOwaURL is Blank, this is a standard value. "
-            Write-Host  "  TargetOwaURL can also be configured to be https://outlook.com/owa/$exchangeonlinedomain or https://outlook.office.com/mail"
-            $tdOrgRelTargetOwaURL = "$($OrgRel.TargetOwaURL) . TargetOwaURL is Blank, this is a standard value. TargetOwaURL can also be configured to be http://outlook.com/owa/$exchangeonlinedomain or http://outlook.office.com/mail. "
-            $tdOrgRelTargetOwaURLColor = "green"
-            if ($OrgRel.TargetOwaURL -like "https://outlook.com/owa/$exchangeonlinedomain") {
-                Write-Host -foregroundcolor Green "  TargetOwaURL is https://outlook.com/owa/$exchangeonlinedomain. This is a possible standard value. TargetOwaURL can also be configured to be Blank or http://outlook.office.com/mail."
-                $tdOrgRelTargetOwaURL = " $($OrgRel.TargetOwaURL) - TargetOwaURL is https://outlook.com/owa/$exchangeonlinedomain. This is a possible standard value. TargetOwaURL can also be configured to be Blank or http://outlook.office.com/mail."
-                $tdOrgRelTargetOwaURLColor = "green"
-            }
-        
-        }
-    }
-    else {
-        Write-Host -foregroundcolor Red "  TargetOwaURL seems not to be Blank or https://outlook.com/owa/$exchangeonlinedomain. These are the standard values."
-        $countOrgRelIssues++
-        $tdOrgRelTargetOwaURL = "  TargetOwaURL seems not to be Blank or https://outlook.com/owa/$exchangeonlinedomain. These are the standard values."
-        $tdOrgRelTargetOwaURLColor = "red"
     
-    }
-    #TargetSharingEpr
-    Write-Host -foregroundcolor White   " TargetSharingEpr:"
-    if ([string]::IsNullOrWhitespace($OrgRel.TargetSharingEpr) -or $OrgRel.TargetSharingEpr -eq "https://outlook.office365.com/EWS/Exchange.asmx ") {
-        Write-Host -foregroundcolor Green "  TargetSharingEpr is ideally blank. this is the standard Value. "
-        Write-Host  "  If it is set, it should be Office 365 EWS endpoint. Example: https://outlook.office365.com/EWS/Exchange.asmx "
-        $tdTargetSharingEpr = "  TargetSharingEpr is ideally blank. this is the standard Value.
-        If it is set, it should be Office 365 EWS endpoint. Example: https://outlook.office365.com/EWS/Exchange.asmx "
-        $tdTargetSharingEprColor = "green"
-    }
-    else {
-        Write-Host -foregroundcolor Red "  TargetSharingEpr should be blank or  https://outlook.office365.com/EWS/Exchange.asmx"
-        Write-Host  "  If it is set, it should be Office 365 EWS endpoint.  Example: https://outlook.office365.com/EWS/Exchange.asmx "
-        $tdTargetSharingEpr = "  TargetSharingEpr should be blank or  https://outlook.office365.com/EWS/Exchange.asmx
-        If it is set, it should be Office 365 EWS endpoint.  Example: https://outlook.office365.com/EWS/Exchange.asmx "
-        $tdTargetSharingEprColor = "red"
+# TarGetOwAUrl
+
+    # List of possible standard values
+    $standardValues = @(
+        ("http://outlook.com/owa/$($ExchangeOnlineDomain)."),
+        ("https://outlook.office.com/mail.")
+    )
+
+    if ([string]::IsNullOrWhiteSpace($OrgRelParameter.TarGetOwAUrl)) {
+         AddSettingToList $settingsList " TarGetOwAUrl" "  TarGetOwAUrl Is Blank. Can also be configured to be $($standardValues[0]) or $($standardValues[1])" "green"
+    } elseif ($OrgRelParameter.TarGetOwAUrl -in $standardValues) {
+         AddSettingToList $settingsList " TarGetOwAUrl" "  TarGetOwAUrl Is $($OrgRelParameter.TarGetOwAUrl). This is a possible standard value." "green"
+    } else {
         $countOrgRelIssues++
     }
-    #FreeBusyAccessScope
-    Write-Host -ForegroundColor White  " FreeBusyAccessScope:"
-    if ([string]::IsNullOrWhitespace($OrgRel.FreeBusyAccessScope)) {
-        Write-Host -foregroundcolor Green "  FreeBusyAccessScope is blank, this is the standard Value. "
-        $tdFreeBusyAccessScope = " FreeBusyAccessScope is blank, this is the standard Value."
-        $tdFreeBusyAccessScopeColor = "green"
-    }
-    else {
-        Write-Host -foregroundcolor Red "  FreeBusyAccessScope is should be Blank, that is the standard Value."
-        $tdFreeBusyAccessScope = " FreeBusyAccessScope is should be Blank, that is the standard Value."
-        $tdFreeBusyAccessScopeColor = "red"
+   
+# TarGetSharingEpr
+
+    if ([string]::IsNullOrWhitespace($OrgRelParameter.TarGetSharingEpr) -or $OrgRelParameter.TarGetSharingEpr -eq "https://outlook.office365.com/EWS/Exchange.asmx ") {
+         AddSettingToList $settingsList "TarGetSharingEpr" "  TarGetSharingEpr Is ideally blank. If set, should be Office 365 EWS endpoint. Example: https://outlook.office365.com/EWS/Exchange.asmx" "green"
+    } else {
+        AddSettingToList $settingsList " TarGetSharingEpr" "  TarGetSharingEpr Should be blank or https://outlook.office365.com/EWS/Exchange.asmx. If set, should be Office 365 EWS endpoint." "red"
         $countOrgRelIssues++
     }
-    #TargetAutodiscoverEpr:
-    $OrgRelTargetAutodiscoverEpr = $OrgRel.TargetAutodiscoverEpr
-    If ([string]::IsNullOrWhitespace($OrgRelTargetAutodiscoverEpr))
-        {
-            $OrgRelTargetAutodiscoverEpr = "Blank" 
-        }    
-    Write-Host -foregroundcolor White   " TargetAutodiscoverEpr:"
-    if ($OrgRel.TargetAutodiscoverEpr -like "https://autodiscover-s.outlook.com/autodiscover/autodiscover.svc/WSSecurity" ) {
-        Write-Host -foregroundcolor Green "  TargetAutodiscoverEpr is correct"
-        $tdTargetAutodiscoverEPR = " TargetAutodiscoverEpr is https://autodiscover-s.outlook.com/autodiscover/autodiscover.svc/WSSecurity"
-        $tdTargetAutodiscoverEPRColor = "green"
-    }
-    else {
-        Write-Host -foregroundcolor Red "  TargetAutodiscoverEpr is not correct. Should be https://autodiscover-s.outlook.com/autodiscover/autodiscover.svc/WSSecurity"
-        $tdTargetAutodiscoverEPR = " TargetAutodiscoverEpr is $OrgRelTargetAutodiscoverEpr . Should be https://autodiscover-s.outlook.com/autodiscover/autodiscover.svc/WSSecurity"
-        $tdTargetAutodiscoverEPRColor = "Red"
+
+# FreeBusyAccessScope
+
+    if ([string]::IsNullOrWhitespace($OrgRelParameter.FreeBusyAccessScope)) {
+        AddSettingToList $settingsList " FreeBusyAccessScope" "  FreeBusyAccessScope Is blank, this is the standard Value." "green"
+    } else {
+        AddSettingToList $settingsList " FreeBusyAccessScope" "  FreeBusyAccessScope Should be Blank, that is the standard Value." "red"
         $countOrgRelIssues++
     }
-    #Enabled
-    Write-Host -foregroundcolor White   " Enabled:"
-    if ($OrgRel.enabled -like "True" ) {
-        Write-Host -foregroundcolor Green "  Enabled is set to True"
 
-        $tdFreeBusyEnabled = "$($OrgRel.enabled)"
-        $tdFreeBusyEnabledColor = "green"
+# TarGetAutoDiscoverEpr
 
-
+    $OrgRelTarGetAutoDiscoverEpr = $OrgRelParameter.TarGetAutoDiscoverEpr
+    if ([string]::IsNullOrWhitespace($OrgRelTarGetAutoDiscoverEpr)) {
+        $OrgRelTarGetAutoDiscoverEpr = "Blank"
     }
-    else {
-        Write-Host -foregroundcolor Red "  Enabled is set to False."
+    if ($OrgRelParameter.TarGetAutoDiscoverEpr -like "https://AutoDiscover-s.outlook.com/AutoDiscover/AutoDiscover.svc/WSSecurity" ) {
+        AddSettingToList $settingsList " TarGetAutoDiscoverEpr" "  TarGetAutoDiscoverEp Is correct" "green"
+    } else {
+        AddSettingToList $settingsList " TarGetAutoDiscoverEpr" "  TarGetAutoDiscoverEpr Is not correct. Should be https://AutoDiscover-s.outlook.com/AutoDiscover/AutoDiscover.svc/WSSecurity" "red"
         $countOrgRelIssues++
-
-        $tdFreeBusyEnabled = "$($OrgRel.enabled) - Should be True."
-        $tdFreeBusyEnabledColor = "red"
     }
-    #if ($countOrgRelIssues -eq '0'){
-    #Write-Host -foregroundcolor Green " Configurations Seem Correct"
-    #}
-    #else
-    #{
-    #Write-Host -foregroundcolor Red "  Configurations DO NOT Seem Correct"
-    #}
+
+# Enabled
+
+    if ($OrgRelParameter.enabled -like "True") {
+         AddSettingToList $settingsList " Enabled" "  Enabled is set to True" "green"
+    } else {
+        AddSettingToList $settingsList " Enabled" "  Enabled is set to False. This may be intentional if Hybrid Free Busy lookups are done with OAuth and Intra Organization Connector." "yellow"
+        $countOrgRelIssues++
+    }
+    
+ # Display the settings list
+
+    if ($countOrgRelIssues -eq '0'){
+    Write-Host -ForegroundColor Green " Configurations Seem Correct"
+    }
+    else
+    {
+    Write-Host -ForegroundColor Red "  Configurations may not be Correct"
+    }
+    foreach ($setting in $settingsList) {
+        Write-Host -ForegroundColor White " $($setting.Name):"
+        Write-Host -ForegroundColor $setting.Color " $($setting.Value)"
+    }
+
+   
     $OrgRelDomainNames = ""
     $OrgRelDomainNames = ""
-    foreach ($domain in $OrgRel.DomainNames.Domain) {
+    foreach ($domain in $OrgRelParameter.DomainNames.Domain) {
         if ($OrgRelDomainNames -ne "") {
             $OrgRelDomainNames += "; "
         }
         $OrgRelDomainNames += $domain
     }
-    $FreeBusyAccessEnabled = $OrgRel.FreeBusyAccessEnabled
-    $FreeBusyAccessLevel = $OrgRel.FreeBusyAccessLevel
-    $tdTargetOwaUrl = $OrgRel.TargetOwaURL
-    $tdEnabled = $OrgRel.Enabled
-    $script:html += "
-
+    $FreeBusyAccessEnabled = $OrgRelParameter.FreeBusyAccessEnabled
+    $FreeBusyAccessLevel = $OrgRelParameter.FreeBusyAccessLevel
+    $tdTarGetOwAUrl = $OrgRelParameter.TarGetOwAUrl
+    $tdEnabled = $OrgRelParameter.Enabled
+    $script:html += @"
      <div class='Black'><p></p></div>
-
-             <div class='Black'><h2><b>`n Exchange On Premise Free Busy Configuration: `n</b></h2></div>
-
-             <div class='Black'><p></p></div>
-
-         <table style='width:100%'>
+     <div class='Black'><h2><b>`n Exchange On Premise Free Busy Configuration: `n</b></h2></div>
+     <div class='Black'><p></p></div>
+    <table style='width:100%'>
     <tr>
-    <th colspan='2' style='text-align:center; color:white;'><b>Exchange On Premise DAuth Configuration</b></th>
-    </tr>   
+    <th ColSpan='2' style='text-align:center; color:white;'><b>Exchange On Premise DAuth Configuration</b></th>
+    </tr>
     <tr>
-    <th colspan='2' style='color:white;'>Summary - Get-OrganizationRelationship</th>
+    <th ColSpan='2' style='color:white;'>Summary - Get-OrganizationRelationship</th>
     </tr>
     <tr>
     <td><b>Get-OrganizationRelationship</b></td>
     <td>
-        <div> <b>Domain Names: </b> <span style='color:$tdDomainNamesColor'>$tdDomainNames</span></div> 
-        <div> <b>FreeBusyAccessEnabled: </b> <span style='color:$tdFBAccessEnabledColor'>$tdFBAccessEnabled</span></div> 
-        <div> <b>FreeBusyAccessLevel: </b> <span style='color:$tdFBAccessLevelColor'>$tdFBAccessLevel</span></div> 
-        <div> <b>TargetApplicationUri: </b> <span style='color:$tdTargetApplicationUriColor'>$tdTargetApplicationUri</span></div> 
-        <div> <b>TargetAutodiscoverEPR: </b> <span style='color:$tdTargetAutodiscoverEPRColor'>$tdTargetAutodiscoverEPR</span></div> 
-        <div> <b>TargetOwaURL: </b> <span style='color:$tdOrgRelTargetOwaURLColor'>$tdOrgRelTargetOwaURL</span></div> 
-        <div> <b>TargetSharingEpr: </b> <span style='color:$tdTargetSharingEprColor'>$tdTargetSharingEpr</span></div> 
-        <div> <b>FreeBusyAccessScope: </b> <span style='color:$tdFreeBusyAccessScopeColor'>$tdFreeBusyAccessScope</span></div> 
-        <div> <b>Enabled:</b> <span style='color:$tdFreeBusyEnabledColor'>$tdFreeBusyEnabled</span></div> 
-    </td>
+"@
 
-   
- </tr>
-  "
-    $html | Out-File -FilePath $htmlfile
-    Write-Host -foregroundcolor Yellow "`n  Reference: https://learn.microsoft.com/en-us/exchange/create-an-organization-relationship-exchange-2013-help"
+    # Loop through settings list to add HTML
+    foreach ($setting in $settingsList) {
+        $color = $setting.Color
+        if ($color -eq 'yellow') {
+            $color = 'red'
+        }
+    
+        $script:html += @"
+        <div> <b>$($setting.Name): </b> <span style='color: $($color)'>$($setting.Value)</span></div>
+"@
+    }
+
+    # Finish HTML
+    $script:html += @"
+    </td>
+    </tr>
+"@
+    $script:html | Out-File -FilePath $htmlFile
+    Write-Host -ForegroundColor Yellow "`n  Reference: https://learn.microsoft.com/en-us/exchange/create-an-organization-relationship-exchange-2013-help"
 }
 
-Function FedInfoCheck {
-    Write-Host -foregroundcolor Green " Get-FederationInformation -DomainName $exchangeOnlineDomain  -BypassAdditionalDomainValidation | fl"
-    Write-Host $bar
-    $fedinfo = get-federationInformation -DomainName $exchangeOnlineDomain  -BypassAdditionalDomainValidation -ErrorAction SilentlyContinue | Select-Object *
-    if (!$fedinfo) {
-        $fedinfo = get-federationInformation -DomainName $exchangeOnlineDomain  -BypassAdditionalDomainValidation -ErrorAction SilentlyContinue | Select-Object *
+function FedInfoCheck {
+    Write-Host -ForegroundColor Green " Get-FederationInformation -DomainName $ExchangeOnlineDomain  -BypassAdditionalDomainValidation | fl"
+    Print-DynamicWidthLine
+    $FedInfo = Get-federationInformation -DomainName $ExchangeOnlineDomain  -BypassAdditionalDomainValidation -ErrorAction SilentlyContinue | Select-Object *
+    if (!$FedInfo) {
+        $FedInfo = Get-federationInformation -DomainName $ExchangeOnlineDomain  -BypassAdditionalDomainValidation -ErrorAction SilentlyContinue | Select-Object *
     }
-    
-    $fedinfo
-    
-   
-    Write-Host $bar
-    Write-Host -foregroundcolor Green " Summary - Federation Information"
-    Write-Host $bar
+
+    $FedInfo
+
+    Print-DynamicWidthLine
+    Write-Host -ForegroundColor Green " Summary - Federation Information"
+    Print-DynamicWidthLine
     #DomainNames
-    Write-Host -foregroundcolor White   "  Domain Names: "
-    if ($fedinfo.DomainNames -like "*$ExchangeOnlineDomain*") {
-        Write-Host -foregroundcolor Green "   Domain Names include the Exchange Online Domain "$ExchangeOnlineDomain
+    Write-Host -ForegroundColor White   "  Domain Names: "
+    if ($FedInfo.DomainNames -like "*$ExchangeOnlineDomain*") {
+        Write-Host -ForegroundColor Green "   Domain Names include the Exchange Online Domain "$ExchangeOnlineDomain
         $tdDomainNamesColor = "green"
-        $tdDomainNamesfl = "Domain Names include the Exchange Online Domain $ExchangeOnlineDomain"
-    }
-    else {
-        Write-Host -foregroundcolor Red "   Domain Names seem not to include the Exchange Online Domain "$ExchangeOnlineDomain
-        Write-Host  "   Domain Names: "$fedinfo.DomainNames
+        $tdDomainNamesFL = "Domain Names include the Exchange Online Domain $ExchangeOnlineDomain"
+    } else {
+        Write-Host -ForegroundColor Red "   Domain Names seem not to include the Exchange Online Domain "$ExchangeOnlineDomain
+        Write-Host  "   Domain Names: "$FedInfo.DomainNames
         $tdDomainNamesColor = "Red"
-        $tdDomainNamesfl = "Domain Names seem not to include the Exchange Online Domain: $ExchangeOnlineDomain"
+        $tdDomainNamesFL = "Domain Names seem not to include the Exchange Online Domain: $ExchangeOnlineDomain"
     }
     #TokenIssuerUris
-    Write-Host  -foregroundcolor White  "  TokenIssuerUris: "
-    if ($fedinfo.TokenIssuerUris -like "*urn:federation:MicrosoftOnline*") {
-        Write-Host -foregroundcolor Green "  "  $fedinfo.TokenIssuerUris
+    Write-Host  -ForegroundColor White  "  TokenIssuerUris: "
+    if ($FedInfo.TokenIssuerUris -like "*urn:federation:MicrosoftOnline*") {
+        Write-Host -ForegroundColor Green "  "  $FedInfo.TokenIssuerUris
         $tdTokenIssuerUrisColor = "green"
-        $tdTokenIssuerUrisFL = $fedinfo.TokenIssuerUris
-    }
-    else {
-        Write-Host "   " $fedinfo.TokenIssuerUris
-        Write-Host  -foregroundcolor Red "   TokenIssuerUris should be urn:federation:MicrosoftOnline"
+        $tdTokenIssuerUrisFL = $FedInfo.TokenIssuerUris
+    } else {
+        Write-Host "   " $FedInfo.TokenIssuerUris
+        Write-Host  -ForegroundColor Red "   TokenIssuerUris should be urn:federation:MicrosoftOnline"
         $tdTokenIssuerUrisColor = "red"
         $tdTokenIssuerUrisFL = "   TokenIssuerUris should be urn:federation:MicrosoftOnline"
     }
-    #TargetApplicationUri
-    Write-Host -foregroundcolor White   "  TargetApplicationUri:"
-    if ($fedinfo.TargetApplicationUri -like "Outlook.com") {
-        Write-Host -foregroundcolor Green "  "$fedinfo.TargetApplicationUri
-        $tdTargetApplicationUriColor = "green"
-        $tdTargetApplicationUriFL = $fedinfo.TargetApplicationUri
+    #TarGetApplicationUri
+    Write-Host -ForegroundColor White   "  TarGetApplicationUri:"
+    if ($FedInfo.TarGetApplicationUri -like "Outlook.com") {
+        Write-Host -ForegroundColor Green "  "$FedInfo.TarGetApplicationUri
+        $tdTarGetApplicationUriColor = "green"
+        $tdTarGetApplicationUriFL = $FedInfo.TarGetApplicationUri
+    } else {
+        Write-Host -ForegroundColor Red "   "$FedInfo.TarGetApplicationUri
+        Write-Host -ForegroundColor Red   "   TarGetApplicationUri should be Outlook.com"
+        $tdTarGetApplicationUriColor = "red"
+        $tdTarGetApplicationUriFL = "   TarGetApplicationUri should be Outlook.com"
     }
-    else {
-        Write-Host -foregroundcolor Red "   "$fedinfo.TargetApplicationUri
-        Write-Host -foregroundcolor Red   "   TargetApplicationUri should be Outlook.com"
-        $tdTargetApplicationUriColor = "red"
-        $tdTargetApplicationUriFL = "   TargetApplicationUri should be Outlook.com"
+    #TarGetAutoDiscoverEpr
+    Write-Host -ForegroundColor White   "  TarGetAutoDiscoverEpr:"
+    if ($FedInfo.TarGetAutoDiscoverEpr -like "https://AutoDiscover-s.outlook.com/AutoDiscover/AutoDiscover.svc/WSSecurity") {
+        Write-Host -ForegroundColor Green "   "$FedInfo.TarGetAutoDiscoverEpr
+        $tdTarGetAutoDiscoverEprColor = "green"
+        $tdTarGetAutoDiscoverEprFL = $FedInfo.TarGetAutoDiscoverEpr
+    } else {
+        Write-Host -ForegroundColor Red "   "$FedInfo.TarGetAutoDiscoverEpr
+        Write-Host -ForegroundColor Red   " TarGetAutoDiscoverEpr should be https://AutoDiscover-s.outlook.com/AutoDiscover/AutoDiscover.svc/WSSecurity"
+        $tdTarGetAutoDiscoverEprColor = "red"
+        $tdTarGetAutoDiscoverEprFL = "   TarGetAutoDiscoverEpr should be https://AutoDiscover-s.outlook.com/AutoDiscover/AutoDiscover.svc/WSSecurity"
     }
-    #TargetAutodiscoverEpr
-    Write-Host -foregroundcolor White   "  TargetAutodiscoverEpr:"
-    if ($fedinfo.TargetAutodiscoverEpr -like "https://autodiscover-s.outlook.com/autodiscover/autodiscover.svc/WSSecurity") {
-        Write-Host -foregroundcolor Green "   "$fedinfo.TargetAutodiscoverEpr
-        $tdTargetAutodiscoverEprColor = "green"
-        $tdTargetAutodiscoverEprFL = $fedinfo.TargetAutodiscoverEpr
-    }
-    else {
-        Write-Host -foregroundcolor Red "   "$fedinfo.TargetAutodiscoverEpr
-        Write-Host -foregroundcolor Red   " TargetAutodiscoverEpr should be https://autodiscover-s.outlook.com/autodiscover/autodiscover.svc/WSSecurity"
-        $tdTargetAutodiscoverEprColor = "red"
-        $tdTargetAutodiscoverEprFL = "   TargetAutodiscoverEpr should be https://autodiscover-s.outlook.com/autodiscover/autodiscover.svc/WSSecurity"
-    }
-    # Federation Information TargetApplicationUri vs Organization Relationship TargetApplicationUri
-    Write-Host -ForegroundColor White "  Federation Information TargetApplicationUri vs Organization Relationship TargetApplicationUri "
-    if ($fedinfo.TargetApplicationUri -like "Outlook.com") {
-        if ($OrgRel.TargetApplicationUri -like $fedinfo.TargetApplicationUri) {
-            Write-Host -foregroundcolor Green "   => Federation Information TargetApplicationUri matches the Organization Relationship TargetApplicationUri "
-            Write-Host  "       Organization Relationship TargetApplicationUri:"  $OrgRel.TargetApplicationUri
-            Write-Host  "       Federation Information TargetApplicationUri:   "  $fedinfo.TargetApplicationUri
+    # Federation Information TarGetApplicationUri vs Organization Relationship TarGetApplicationUri
+    Write-Host -ForegroundColor White "  Federation Information TarGetApplicationUri vs Organization Relationship TarGetApplicationUri "
+    if ($FedInfo.TarGetApplicationUri -like "Outlook.com") {
+        if ($OrgRel.TarGetApplicationUri -like $FedInfo.TarGetApplicationUri) {
+            Write-Host -ForegroundColor Green "   => Federation Information TarGetApplicationUri matches the Organization Relationship TarGetApplicationUri "
+            Write-Host  "       Organization Relationship TarGetApplicationUri:"  $OrgRel.TarGetApplicationUri
+            Write-Host  "       Federation Information TarGetApplicationUri:   "  $FedInfo.TarGetApplicationUri
             $tdFederationInformationTAColor = "green"
-            $tdFederationInformationTAFL = " => Federation Information TargetApplicationUri matches the Organization Relationship TargetApplicationUri"
-        }
-        else {
-            Write-Host -foregroundcolor Red "   => Federation Information TargetApplicationUri should be Outlook.com and match the Organization Relationship TargetApplicationUri "
-            Write-Host  "       Organization Relationship TargetApplicationUri:"  $OrgRel.TargetApplicationUri
-            Write-Host  "       Federation Information TargetApplicationUri:   "  $fedinfo.TargetApplicationUri
+            $tdFederationInformationTA_FL = " => Federation Information TarGetApplicationUri matches the Organization Relationship TarGetApplicationUri"
+        } else {
+            Write-Host -ForegroundColor Red "   => Federation Information TarGetApplicationUri should be Outlook.com and match the Organization Relationship TarGetApplicationUri "
+            Write-Host  "       Organization Relationship TarGetApplicationUri:"  $OrgRel.TarGetApplicationUri
+            Write-Host  "       Federation Information TarGetApplicationUri:   "  $FedInfo.TarGetApplicationUri
             $tdFederationInformationTAColor = "red"
-            $tdFederationInformationTAFL = " => Federation Information TargetApplicationUri should be Outlook.com and match the Organization Relationship TargetApplicationUri"
+            $tdFederationInformationTA_FL = " => Federation Information TarGetApplicationUri should be Outlook.com and match the Organization Relationship TarGetApplicationUri"
         }
     }
-    #TargetAutodiscoverEpr vs Organization Relationship TargetAutodiscoverEpr
-    Write-Host -ForegroundColor White  "  Federation Information TargetAutodiscoverEpr vs Organization Relationship TargetAutodiscoverEpr "
-    if ($OrgRel.TargetAutodiscoverEpr -like $fedinfo.TargetAutodiscoverEpr) {
-        Write-Host -foregroundcolor Green "   => Federation Information TargetAutodiscoverEpr matches the Organization Relationship TargetAutodiscoverEpr "
-        Write-Host  "       Organization Relationship TargetAutodiscoverEpr:"  $OrgRel.TargetAutodiscoverEpr
-        Write-Host  "       Federation Information TargetAutodiscoverEpr:   "  $fedinfo.TargetAutodiscoverEpr
-        $tdTargetAutodiscoverEprVSColor = "green"
-        $tdTargetAutodiscoverEprVSFL = "=> Federation Information TargetAutodiscoverEpr matches the Organization Relationship TargetAutodiscoverEpr"
+    #TarGetAutoDiscoverEpr vs Organization Relationship TarGetAutoDiscoverEpr
+    Write-Host -ForegroundColor White  "  Federation Information TarGetAutoDiscoverEpr vs Organization Relationship TarGetAutoDiscoverEpr "
+    if ($OrgRel.TarGetAutoDiscoverEpr -like $FedInfo.TarGetAutoDiscoverEpr) {
+        Write-Host -ForegroundColor Green "   => Federation Information TarGetAutoDiscoverEpr matches the Organization Relationship TarGetAutoDiscoverEpr "
+        Write-Host  "       Organization Relationship TarGetAutoDiscoverEpr:"  $OrgRel.TarGetAutoDiscoverEpr
+        Write-Host  "       Federation Information TarGetAutoDiscoverEpr:   "  $FedInfo.TarGetAutoDiscoverEpr
+        $tdTarGetAutoDiscoverEprVSColor = "green"
+        $tdTarGetAutoDiscoverEprVS_FL = "=> Federation Information TarGetAutoDiscoverEpr matches the Organization Relationship TarGetAutoDiscoverEpr"
+    } else {
+        Write-Host -ForegroundColor Red "   => Federation Information TarGetAutoDiscoverEpr should match the Organization Relationship TarGetAutoDiscoverEpr"
+        Write-Host  "       Organization Relationship TarGetAutoDiscoverEpr:"  $OrgRel.TarGetAutoDiscoverEpr
+        Write-Host  "       Federation Information TarGetAutoDiscoverEpr:   "  $FedInfo.TarGetAutoDiscoverEpr
+        $tdTarGetAutoDiscoverEprVSColor = "red"
+        $tdTarGetAutoDiscoverEprVS_FL = "=> Federation Information TarGetAutoDiscoverEpr should match the Organization Relationship TarGetAutoDiscoverEpr"
     }
-    else {
-        Write-Host -foregroundcolor Red "   => Federation Information TargetAutodiscoverEpr should match the Organization Relationship TargetAutodiscoverEpr"
-        Write-Host  "       Organization Relationship TargetAutodiscoverEpr:"  $OrgRel.TargetAutodiscoverEpr
-        Write-Host  "       Federation Information TargetAutodiscoverEpr:   "  $fedinfo.TargetAutodiscoverEpr
-        $tdTargetAutodiscoverEprVSColor = "red"
-        $tdTargetAutodiscoverEprVSFL = "=> Federation Information TargetAutodiscoverEpr should match the Organization Relationship TargetAutodiscoverEpr"
-    }
-    Write-Host -foregroundcolor Yellow "`n  Reference: https://learn.microsoft.com/en-us/exchange/configure-a-federation-trust-exchange-2013-help#what-do-you-need-to-know-before-you-begin"
-    Write-Host $bar
+    Write-Host -ForegroundColor Yellow "`n  Reference: https://learn.microsoft.com/en-us/exchange/configure-a-federation-trust-exchange-2013-help#what-do-you-need-to-know-before-you-begin"
+    Print-DynamicWidthLine
     $FedInfoDomainNames = ""
     $FedInfoDomainNames = ""
     foreach ($domain in $FedInfo.DomainNames.Domain) {
@@ -648,455 +690,432 @@ Function FedInfoCheck {
         $FedInfoDomainNames += $domain
     }
     $aux = $FedInfo.DomainNames
-    $fedinfoTokenIssuerUris = $fedinfo.TokenIssuerUris
-    $fedinfoTargetAutodiscoverEpr = $fedinfo.TargetAutodiscoverEpr
-    $fedinfoTargetApplicationUri = $fedinfo.TargetApplicationUri
-
-
+    $FedInfoTokenIssuerUris = $FedInfo.TokenIssuerUris
+    $FedInfoTarGetAutoDiscoverEpr = $FedInfo.TarGetAutoDiscoverEpr
+    $FedInfoTarGetApplicationUri = $FedInfo.TarGetApplicationUri
 
     $script:html += "
-       
+
     <tr>
-    <th colspan='2' style='color:white;'>Summary - Get-FederationInformation</th>
+    <th ColSpan='2' style='color:white;'>Summary - Get-FederationInformation</th>
     </tr>
     <tr>
     <td><b>Get-FederationInformation -Domain $ExchangeOnPremDomain</b></td>
     <td>
-        <div> <b>Domain Names: </b> <span style='color:$tdDomainNamesColor'>$tdDomainNamesFL</span></div> 
-        <div> <b>TokenIssuerUris: </b> <span style='color:$tdTokenIssuerUrisColor'>$tdTokenIssuerUrisFL</span></div> 
-        <div> <b>TargetApplicationUri: </b> <span style='color:$tdTargetApplicationUriColor'>$tdTargetApplicationUriFL</span></div> 
-        <div> <b>TargetAutodiscoverEpr: </b> <span style='color:$tdTargetAutodiscoverEprColor'>$tdTargetAutodiscoverEprFL</span></div> 
-        <div> <b>TargetApplicationUri - Federation Information vs Organization Relationship: </b> <span style='color:$tdTargetAutodiscoverEprVSColor'>$tdFederationInformationTAFL</span></div> 
-        <div> <b>TargetAutodiscoverEpr - Federation Information vs Organization Relationship:</b> <span style='color:$tdTargetAutodiscoverEprVSColor'>$tdTargetAutodiscoverEprVSFL</span></div> 
-         
+        <div> <b>Domain Names: </b> <span style='color:$tdDomainNamesColor'>$tdDomainNamesFL</span></div>
+        <div> <b>TokenIssuerUris: </b> <span style='color:$tdTokenIssuerUrisColor'>$tdTokenIssuerUrisFL</span></div>
+        <div> <b>TarGetApplicationUri: </b> <span style='color:$tdTarGetApplicationUriColor'>$tdTarGetApplicationUriFL</span></div>
+        <div> <b>TarGetAutoDiscoverEpr: </b> <span style='color:$tdTarGetAutoDiscoverEprColor'>$tdTarGetAutoDiscoverEprFL</span></div>
+        <div> <b>TarGetApplicationUri - Federation Information vs Organization Relationship: </b> <span style='color:$tdTarGetAutoDiscoverEprVSColor'>$tdFederationInformationTA_FL</span></div>
+        <div> <b>TarGetAutoDiscoverEpr - Federation Information vs Organization Relationship:</b> <span style='color:$tdTarGetAutoDiscoverEprVSColor'>$tdTarGetAutoDiscoverEprVS_FL</span></div>
+
     </td>
 
-   
+
  </tr>
   "
 
-    $html | Out-File -FilePath $htmlfile
+    $html | Out-File -FilePath $htmlFile
 }
 
-Function FedTrustCheck {
-    Write-Host -foregroundcolor Green " Get-FederationTrust | fl ApplicationUri,TokenIssuerUri,OrgCertificate,TokenIssuerCertificate,
+function FedTrustCheck {
+    Write-Host -ForegroundColor Green " Get-FederationTrust | fl ApplicationUri,TokenIssuerUri,OrgCertificate,TokenIssuerCertificate,
     TokenIssuerPrevCertificate, TokenIssuerMetadataEpr,TokenIssuerEpr"
-    Write-Host $bar
-    $Global:fedtrust = Get-FederationTrust | Select-Object ApplicationUri, TokenIssuerUri, OrgCertificate, TokenIssuerCertificate, TokenIssuerPrevCertificate, TokenIssuerMetadataEpr, TokenIssuerEpr
-    $fedtrust
-    Write-Host $bar
-    Write-Host -foregroundcolor Green " Summary - Federation Trust"
-    Write-Host $bar
-    $CurrentTime = get-date
-    Write-Host -foregroundcolor White " Federation Trust Aplication Uri:"
-    if ($fedtrust.ApplicationUri -like "FYDIBOHF25SPDLT.$ExchangeOnpremDomain") {
-        Write-Host -foregroundcolor Green " " $fedtrust.ApplicationUri
-        $tdfedtrustApplicationUriColor = "green"
-        $tdfedtrustApplicationUriFL = $fedtrust.ApplicationUri
+    Print-DynamicWidthLine
+    $Script:FedTrust = Get-FederationTrust | Select-Object ApplicationUri, TokenIssuerUri, OrgCertificate, TokenIssuerCertificate, TokenIssuerPrevCertificate, TokenIssuerMetadataEpr, TokenIssuerEpr
+    $FedTrust
+    Print-DynamicWidthLine
+    Write-Host -ForegroundColor Green " Summary - Federation Trust"
+    Print-DynamicWidthLine
+    $CurrentTime = Get-Date
+    Write-Host -ForegroundColor White " Federation Trust Application Uri:"
+    if ($FedTrust.ApplicationUri -like "FYDIBOHF25SPDLT.$ExchangeOnpremDomain") {
+        Write-Host -ForegroundColor Green " " $FedTrust.ApplicationUri
+        $tdFedTrustApplicationUriColor = "green"
+        $tdFedTrustApplicationUriFL = $FedTrust.ApplicationUri
+    } else {
+        Write-Host -ForegroundColor Red "  Federation Trust Application Uri Should be "$FedTrust.ApplicationUri
+        $tdFedTrustApplicationUriColor = "red"
+        $tdFedTrustApplicationUriFL = "  Federation Trust Application Uri Should be $FedTrust.ApplicationUri"
     }
-    else {
-        Write-Host -foregroundcolor Red "  Federation Trust Aplication Uri Should be "$fedtrust.ApplicationUri
-        $tdfedtrustApplicationUriColor = "red"
-        $tdfedtrustApplicationUriFL = "  Federation Trust Aplication Uri Should be $fedtrust.ApplicationUri"
+    #$FedTrust.TokenIssuerUri.AbsoluteUri
+    Write-Host -ForegroundColor White " TokenIssuerUri:"
+    if ($FedTrust.TokenIssuerUri.AbsoluteUri -like "urn:federation:MicrosoftOnline") {
+        #Write-Host -ForegroundColor White "  TokenIssuerUri:"
+        Write-Host -ForegroundColor Green " "$FedTrust.TokenIssuerUri.AbsoluteUri
+        $tdFedTrustTokenIssuerUriColor = "green"
+        $tdFedTrustTokenIssuerUriFL = $FedTrust.TokenIssuerUri.AbsoluteUri
+    } else {
+        Write-Host -ForegroundColor Red " Federation Trust TokenIssuerUri should be urn:federation:MicrosoftOnline"
+        $tdFedTrustTokenIssuerUriColor = "red"
+        $tdFedTrustTokenIssuerFL = " Federation Trust TokenIssuerUri is currently $FedTrust.TokenIssuerUri.AbsoluteUri but should be urn:federation:MicrosoftOnline"
     }
-    #$fedtrust.TokenIssuerUri.AbsoluteUri
-    Write-Host -foregroundcolor White " TokenIssuerUri:"
-    if ($fedtrust.TokenIssuerUri.AbsoluteUri -like "urn:federation:MicrosoftOnline") {
-        #Write-Host -foregroundcolor White "  TokenIssuerUri:"
-        Write-Host -foregroundcolor Green " "$fedtrust.TokenIssuerUri.AbsoluteUri
-        $tdfedtrustTokenIssuerUriColor = "green"
-        $tdfedtrustTokenIssuerUriFL = $fedtrust.TokenIssuerUri.AbsoluteUri
+    Write-Host -ForegroundColor White " Federation Trust Certificate Expiry:"
+    if ($FedTrust.OrgCertificate.NotAfter.Date -gt $CurrentTime) {
+        Write-Host -ForegroundColor Green "  Not Expired"
+        Write-Host  "   - Expires on " $FedTrust.OrgCertificate.NotAfter.DateTime
+        $tdFedTrustOrgCertificateNotAfterDateColor = "green"
+        $tdFedTrustOrgCertificateNotAfterDateFL = $FedTrust.OrgCertificate.NotAfter.DateTime
+    } else {
+        Write-Host -ForegroundColor Red " Federation Trust Certificate is Expired on " $FedTrust.OrgCertificate.NotAfter.DateTime
+        $tdFedTrustOrgCertificateNotAfterDateColor = "red"
+        $tdFedTrustOrgCertificateNotAfterDateFL = $FedTrust.OrgCertificate.NotAfter.DateTime
     }
-    else {
-        Write-Host -foregroundcolor Red " Federation Trust TokenIssuerUri should be urn:federation:MicrosoftOnline"
-        $tdfedtrustTokenIssuerUriColor = "red"
-        $tdfedtrustTokenIssuerFL = " Federation Trust TokenIssuerUri is currently $fedtrust.TokenIssuerUri.AbsoluteUri but should be urn:federation:MicrosoftOnline"
+    Write-Host -ForegroundColor White " `Federation Trust Token Issuer Certificate Expiry:"
+    if ($FedTrust.TokenIssuerCertificate.NotAfter.DateTime -gt $CurrentTime) {
+        Write-Host -ForegroundColor Green "  Not Expired"
+        Write-Host  "   - Expires on " $FedTrust.TokenIssuerCertificate.NotAfter.DateTime
+        $tdFedTrustTokenIssuerCertificateNotAfterDateTimeColor = "green"
+        $tdFedTrustTokenIssuerCertificateNotAfterDateTimeFL = $FedTrust.TokenIssuerCertificate.NotAfter.DateTime
+    } else {
+        Write-Host -ForegroundColor Red "  Federation Trust TokenIssuerCertificate Expired on " $FedTrust.TokenIssuerCertificate.NotAfter.DateTime
+        $tdFedTrustTokenIssuerCertificateNotAfterDateTimeColor = "red"
+        $tdFedTrustTokenIssuerCertificateNotAfterDateTimeFL = $FedTrust.TokenIssuerCertificate.NotAfter.DateTime
     }
-    Write-Host -foregroundcolor White " Federation Trust Certificate Expiracy:"
-    if ($fedtrust.OrgCertificate.NotAfter.Date -gt $CurrentTime) {
-        Write-Host -foregroundcolor Green "  Not Expired"
-        Write-Host  "   - Expires on " $fedtrust.OrgCertificate.NotAfter.DateTime
-        $tdfedtrustOrgCertificateNotAfterDateColor = "green"
-        $tdfedtrustOrgCertificateNotAfterDateFL = $fedtrust.OrgCertificate.NotAfter.DateTime
-    }
-    else {
-        Write-Host -foregroundcolor Red " Federation Trust Certificate is Expired on " $fedtrust.OrgCertificate.NotAfter.DateTime
-        $tdfedtrustOrgCertificateNotAfterDateColor = "red"
-        $tdfedtrustOrgCertificateNotAfterDateFL = $fedtrust.OrgCertificate.NotAfter.DateTime
-    }
-    Write-Host -foregroundcolor White " `Federation Trust Token Issuer Certificate Expiracy:"
-    if ($fedtrust.TokenIssuerCertificate.NotAfter.DateTime -gt $CurrentTime) {
-        Write-Host -foregroundcolor Green "  Not Expired"
-        Write-Host  "   - Expires on " $fedtrust.TokenIssuerCertificate.NotAfter.DateTime
-        $tdfedtrustTokenIssuerCertificateNotAfterDateTimeColor = "green"
-        $tdfedtrustTokenIssuerCertificateNotAfterDateTimeFL = $fedtrust.TokenIssuerCertificate.NotAfter.DateTime
-    }
-    else {
-        Write-Host -foregroundcolor Red "  Federation Trust TokenIssuerCertificate Expired on " $fedtrust.TokenIssuerCertificate.NotAfter.DateTime
-        $tdfedtrustTokenIssuerCertificateNotAfterDateTimeColor = "red"
-        $tdfedtrustTokenIssuerCertificateNotAfterDateTimeFL = $fedtrust.TokenIssuerCertificate.NotAfter.DateTime
-    }
-    #Write-Host -foregroundcolor White " Federation Trust Token Issuer Prev Certificate Expiracy:"
-    #if ($fedtrust.TokenIssuerPrevCertificate.NotAfter.Date -gt $CurrentTime) {
-    #Write-Host -foregroundcolor Green "  Not Expired"
-    #Write-Host  "   - Expires on " $fedtrust.TokenIssuerPrevCertificate.NotAfter.DateTime
-    #$tdfedtrustTokenIssuerPrevCertificateNotAfterDateColor = "green"
-    #$tdfedtrustTokenIssuerPrevCertificateNotAfterDateFL = $fedtrust.TokenIssuerPrevCertificate.NotAfter.DateTime
+    #Write-Host -ForegroundColor White " Federation Trust Token Issuer Prev Certificate Expiry:"
+    #if ($FedTrust.TokenIssuerPrevCertificate.NotAfter.Date -gt $CurrentTime) {
+    #Write-Host -ForegroundColor Green "  Not Expired"
+    #Write-Host  "   - Expires on " $FedTrust.TokenIssuerPrevCertificate.NotAfter.DateTime
+    #$tdFedTrustTokenIssuerPrevCertificateNotAfterDateColor = "green"
+    #$tdFedTrustTokenIssuerPrevCertificateNotAfterDateFL = $FedTrust.TokenIssuerPrevCertificate.NotAfter.DateTime
     #}
     #else {
-    #Write-Host -foregroundcolor Red "  Federation Trust TokenIssuerPrevCertificate Expired on " $fedtrust.TokenIssuerPrevCertificate.NotAfter.DateTime
-    #$tdfedtrustTokenIssuerPrevCertificateNotAfterDateColor = "red"
-    #$tdfedtrustTokenIssuerPrevCertificateNotAfterDateFL = $fedtrust.TokenIssuerPrevCertificate.NotAfter.DateTime
+    #Write-Host -ForegroundColor Red "  Federation Trust TokenIssuerPrevCertificate Expired on " $FedTrust.TokenIssuerPrevCertificate.NotAfter.DateTime
+    #$tdFedTrustTokenIssuerPrevCertificateNotAfterDateColor = "red"
+    #$tdFedTrustTokenIssuerPrevCertificateNotAfterDateFL = $FedTrust.TokenIssuerPrevCertificate.NotAfter.DateTime
     #}
-    $fedtrustTokenIssuerMetadataEpr = "https://nexus.microsoftonline-p.com/FederationMetadata/2006-12/FederationMetadata.xml"
-    Write-Host -foregroundcolor White " `Token Issuer Metadata EPR:"
-    if ($fedtrust.TokenIssuerMetadataEpr.AbsoluteUri -like $fedtrustTokenIssuerMetadataEpr) {
-        Write-Host -foregroundcolor Green "  Token Issuer Metadata EPR is " $fedtrust.TokenIssuerMetadataEpr.AbsoluteUri
+    $FedTrustTokenIssuerMetadataEpr = "https://nexus.microsoftonline-p.com/FederationMetadata/2006-12/FederationMetadata.xml"
+    Write-Host -ForegroundColor White " `Token Issuer Metadata EPR:"
+    if ($FedTrust.TokenIssuerMetadataEpr.AbsoluteUri -like $FedTrustTokenIssuerMetadataEpr) {
+        Write-Host -ForegroundColor Green "  Token Issuer Metadata EPR is " $FedTrust.TokenIssuerMetadataEpr.AbsoluteUri
         #test if it can be reached
-        $tdfedtrustTokenIssuerMetadataEprAbsoluteUriColor = "green"
-        $tdfedtrustTokenIssuerMetadataEprAbsoluteUriFL = $fedtrust.TokenIssuerMetadataEpr.AbsoluteUri
+        $tdFedTrustTokenIssuerMetadataEprAbsoluteUriColor = "green"
+        $tdFedTrustTokenIssuerMetadataEprAbsoluteUriFL = $FedTrust.TokenIssuerMetadataEpr.AbsoluteUri
+    } else {
+        Write-Host -ForegroundColor Red " Token Issuer Metadata EPR is Not " $FedTrust.TokenIssuerMetadataEpr.AbsoluteUri
+        $tdFedTrustTokenIssuerMetadataEprAbsoluteUriColor = "red"
+        $tdFedTrustTokenIssuerMetadataEprAbsoluteUriFL = $FedTrust.TokenIssuerMetadataEpr.AbsoluteUri
     }
-    else {
-        Write-Host -foregroundcolor Red " Token Issuer Metadata EPR is Not " $fedtrust.TokenIssuerMetadataEpr.AbsoluteUri
-        $tdfedtrustTokenIssuerMetadataEprAbsoluteUriColor = "red"
-        $tdfedtrustTokenIssuerMetadataEprAbsoluteUriFL = $fedtrust.TokenIssuerMetadataEpr.AbsoluteUri
-    }
-    $fedtrustTokenIssuerEpr = "https://login.microsoftonline.com/extSTS.srf"
-    Write-Host -foregroundcolor White " Token Issuer EPR:"
-    if ($fedtrust.TokenIssuerEpr.AbsoluteUri -like $fedtrustTokenIssuerEpr) {
-        Write-Host -foregroundcolor Green "  Token Issuer EPR is:" $fedtrust.TokenIssuerEpr.AbsoluteUri
+    $FedTrustTokenIssuerEpr = "https://login.microsoftonline.com/extSTS.srf"
+    Write-Host -ForegroundColor White " Token Issuer EPR:"
+    if ($FedTrust.TokenIssuerEpr.AbsoluteUri -like $FedTrustTokenIssuerEpr) {
+        Write-Host -ForegroundColor Green "  Token Issuer EPR is:" $FedTrust.TokenIssuerEpr.AbsoluteUri
         #test if it can be reached
-        $tdfedtrustTokenIssuerEprAbsoluteUriColor = "green"
-        $tdfedtrustTokenIssuerEprAbsoluteUriFL = $fedtrust.TokenIssuerEpr.AbsoluteUri
+        $tdFedTrustTokenIssuerEprAbsoluteUriColor = "green"
+        $tdFedTrustTokenIssuerEprAbsoluteUriFL = $FedTrust.TokenIssuerEpr.AbsoluteUri
+    } else {
+        Write-Host -ForegroundColor Red "  Token Issuer EPR is Not:" $FedTrust.TokenIssuerEpr.AbsoluteUri
+        $tdFedTrustTokenIssuerEprAbsoluteUriColor = "red"
+        $tdFedTrustTokenIssuerEprAbsoluteUriFL = $FedTrust.TokenIssuerEpr.AbsoluteUri
     }
-    else {
-        Write-Host -foregroundcolor Red "  Token Issuer EPR is Not:" $fedtrust.TokenIssuerEpr.AbsoluteUri
-        $tdfedtrustTokenIssuerEprAbsoluteUriColor = "red"
-        $tdfedtrustTokenIssuerEprAbsoluteUriFL = $fedtrust.TokenIssuerEpr.AbsoluteUri
-    }
-    $fedinfoTokenIssuerUris = $fedinfo.TokenIssuerUris
-    $fedinfoTargetApplicationUri = $fedinfo.TargetApplicationUri
-    $fedinfoTargetAutodiscoverEpr = $fedinfo.TargetAutodiscoverEpr
-    
-    
-    
+    $FedInfoTokenIssuerUris = $FedInfo.TokenIssuerUris
+    $FedInfoTarGetApplicationUri = $FedInfo.TarGetApplicationUri
+    $script:FedInfoTarGetAutoDiscoverEpr = $FedInfo.TarGetAutoDiscoverEpr
+
     $script:html += "
     <tr>
-    <th colspan='2' style='color:white;'>Summary - Test-FederationTrust</th>
+    <th ColSpan='2' style='color:white;'>Summary - Test-FederationTrust</th>
     </tr>
     <tr>
     <td><b>Get-FederationTrust | select ApplicationUri, TokenIssuerUri, OrgCertificate, TokenIssuerCertificate, TokenIssuerPrevCertificate, TokenIssuerMetadataEpr, TokenIssuerEpr</b></td>
     <td>
-        <div> <b>Application Uri: </b> <span style='color:$tdfedtrustApplicationUricolor'>$tdfedtrustApplicationUriFL</span></div> 
-        <div> <b>TokenIssuerUris: </b> <span style='color:$tdfedtrustTokenIssuerUriColor'>$tdfedtrustTokenIssuerUriFL</span></div> 
-        <div> <b>Certificate Expiracy: </b> <span style='color:$tdfedtrustOrgCertificateNotAfterDateColor'>$tdfedtrustOrgCertificateNotAfterDateFL</span></div>
-        <div> <b>Token Issuer Certificate Expiracy: </b> <span style='color:$tdfedtrustTokenIssuerCertificateNotAfterDateTimeColor'>$tdfedtrustTokenIssuerCertificateNotAfterDateTimeFL</span></div> 
-        <div> <b>Token Issuer Metadata EPR:</b> <span style='color:$tdfedtrustTokenIssuerMetadataEprAbsoluteUriColor'>$tdfedtrustTokenIssuerMetadataEprAbsoluteUriFL</span></div> 
-        <div> <b>Token Issuer EPR: </b> <span style='color:$tdfedtrustTokenIssuerEprAbsoluteUriColor'>$tdfedtrustTokenIssuerEprAbsoluteUriFL</span></div> 
-         
+        <div> <b>Application Uri: </b> <span style='color:$tdFedTrustApplicationUriColor'>$tdFedTrustApplicationUriFL</span></div>
+        <div> <b>TokenIssuerUris: </b> <span style='color:$tdFedTrustTokenIssuerUriColor'>$tdFedTrustTokenIssuerUriFL</span></div>
+        <div> <b>Certificate Expiry: </b> <span style='color:$tdFedTrustOrgCertificateNotAfterDateColor'>$tdFedTrustOrgCertificateNotAfterDateFL</span></div>
+        <div> <b>Token Issuer Certificate Expiry: </b> <span style='color:$tdFedTrustTokenIssuerCertificateNotAfterDateTimeColor'>$tdFedTrustTokenIssuerCertificateNotAfterDateTimeFL</span></div>
+        <div> <b>Token Issuer Metadata EPR:</b> <span style='color:$tdFedTrustTokenIssuerMetadataEprAbsoluteUriColor'>$tdFedTrustTokenIssuerMetadataEprAbsoluteUriFL</span></div>
+        <div> <b>Token Issuer EPR: </b> <span style='color:$tdFedTrustTokenIssuerEprAbsoluteUriColor'>$tdFedTrustTokenIssuerEprAbsoluteUriFL</span></div>
+
     </td>
 </tr>
   "
-    
-    $html | Out-File -FilePath $htmlfile
-    Write-Host -foregroundcolor Yellow "`n  Reference: https://learn.microsoft.com/en-us/exchange/configure-a-federation-trust-exchange-2013-help"
+
+    $html | Out-File -FilePath $htmlFile
+    Write-Host -ForegroundColor Yellow "`n  Reference: https://learn.microsoft.com/en-us/exchange/configure-a-federation-trust-exchange-2013-help"
 }
 
-Function AutoDVirtualDCheck {
-    
-    Write-Host $bar
-    Write-Host -foregroundcolor Green " Get-AutodiscoverVirtualDirectory | Select Identity,Name,ExchangeVersion,*authentication*"
-    Write-Host $bar
-    $Global:AutoDiscoveryVirtualDirectory = Get-AutodiscoverVirtualDirectory | Select-Object Identity, Name, ExchangeVersion, *authentication*
+function AutoDVirtualDCheck {
+
+    Print-DynamicWidthLine
+    Write-Host -ForegroundColor Green " Get-AutoDiscoverVirtualDirectory | Select Identity,Name,ExchangeVersion,*authentication*"
+    Print-DynamicWidthLine
+    $Script:AutoDiscoveryVirtualDirectory = Get-AutoDiscoverVirtualDirectory | Select-Object Identity, Name, ExchangeVersion, *authentication* -ErrorAction SilentlyContinue
     #Check if null or set
     #$AutoDiscoveryVirtualDirectory
-    $Global:AutoDiscoveryVirtualDirectory
-    $AutoDFL = $Global:AutoDiscoveryVirtualDirectory | Format-List
+    $Script:AutoDiscoveryVirtualDirectory
+    $AutoDFL = $Script:AutoDiscoveryVirtualDirectory | Format-List
     $script:html += "<tr>
-    <th colspan='2' style='color:white;'>Summary - Get-AutodiscoverVirtualDirectory</th>
+    <th ColSpan='2' style='color:white;'>Summary - Get-AutoDiscoverVirtualDirectory</th>
     </tr>
     <tr>
-    <td><b>Get-AutodiscoverVirtualDirectory | Select Identity,Name,ExchangeVersion,*authentication*</b></td>
+    <td><b>Get-AutoDiscoverVirtualDirectory | Select Identity,Name,ExchangeVersion,*authentication*</b></td>
     <td>"
-    Write-Host $bar
-    Write-Host -foregroundcolor Green " Summary - On-Prem Get-AutodiscoverVirtualDirectory"
-    Write-Host $bar
+    Print-DynamicWidthLine
+    Write-Host -ForegroundColor Green " Summary - On-Prem Get-AutoDiscoverVirtualDirectory"
+    Print-DynamicWidthLine
     Write-Host -ForegroundColor White "  WSSecurityAuthentication:"
-    if ($Global:AutoDiscoveryVirtualDirectory.WSSecurityAuthentication -eq "True") {
-        foreach ( $ser in $Global:AutoDiscoveryVirtualDirectory) {
+    if ($Script:AutoDiscoveryVirtualDirectory.WSSecurityAuthentication -eq "True") {
+        foreach ( $ser in $Script:AutoDiscoveryVirtualDirectory) {
             Write-Host " $($ser.Identity) "
             Write-Host -ForegroundColor Green "  WSSecurityAuthentication: $($ser.WSSecurityAuthentication)"
 
-            $AutodVDIdentity = $ser.Identity
-            $AutodVDName = $ser.Name
-            $AutodVDInternalAuthenticationMethods = $ser.InternalAuthenticationMethods
-            $AutodVDExternalAuthenticationMethods = $ser.ExternalAuthenticationMethods
-            $AutodVDWSAuthetication = $ser.WSSecurityAuthentication
-            $AutodVDWSAutheticationColor = "green"
-            $AutodVDWindowsAuthentication = $ser.WindowsAuthentication
-            if ($AutodVDWindowsAuthentication -eq "True") {
-                $AutodVDWindowsAuthenticationColor = "green"
+            $AutoD_VD_Identity = $ser.Identity
+            $AutoD_VD_Name = $ser.Name
+            $AutoD_VD_InternalAuthenticationMethods = $ser.InternalAuthenticationMethods
+            $AutoD_VD_ExternalAuthenticationMethods = $ser.ExternalAuthenticationMethods
+            $AutoD_VD_WSAuthentication = $ser.WSSecurityAuthentication
+            $AutoD_VD_WSAuthenticationColor = "green"
+            $AutoD_VD_WindowsAuthentication = $ser.WindowsAuthentication
+            if ($AutoD_VD_WindowsAuthentication -eq "True") {
+                $AutoD_VD_WindowsAuthenticationColor = "green"
+            } else {
+                $AutoD_VD_WindowsAuthenticationColor = "red"
             }
-            else {
-                $AutodVDWindowsAuthenticationColor = "red"
-            }
-            $AutodVDInternalNblBypassUrl = $ser.InternalNblBypassUrl
-            $AutodVDInternalUrl = $ser.InternalUrl
-            $AutodVDExternalUrl = $ser.ExternalUrl
+            $AutoD_VD_InternalNblBypassUrl = $ser.InternalNblBypassUrl
+            $AutoD_VD_InternalUrl = $ser.InternalUrl
+            $AutoD_VD_ExternalUrl = $ser.ExternalUrl
             $script:html +=
             " <div><b>============================</b></div>
-            <div><b>Identity:</b> $AutodVDIdentity</div>
-            <div><b>Name:</b> $AutodVDName </div>
-            <div><b>InternalAuthenticationMethods:</b> $AutodVDInternalAuthenticationMethods </div>
-            <div><b>ExternalAuthenticationMethods:</b> $AutodVDExternalAuthenticationMethods </div>
-            <div><b>WSAuthetication:</b> <span style='color:green'>$AutodVDWSAuthetication</span></div>
-            <div><b>WindowsAuthentication:</b> <span style='color:green'>$AutodVDWindowsAuthentication</span></div>
+            <div><b>Identity:</b> $AutoD_VD_Identity</div>
+            <div><b>Name:</b> $AutoD_VD_Name </div>
+            <div><b>InternalAuthenticationMethods:</b> $AutoD_VD_InternalAuthenticationMethods </div>
+            <div><b>ExternalAuthenticationMethods:</b> $AutoD_VD_ExternalAuthenticationMethods </div>
+            <div><b>WSAuthentication:</b> <span style='color:green'>$AutoD_VD_WSAuthentication</span></div>
+            <div><b>WindowsAuthentication:</b> <span style='color:green'>$AutoD_VD_WindowsAuthentication</span></div>
             "
-            
+
             $serWSSecurityAuthenticationColor = "Green"
         }
-    }
-    else {
-        Write-Host -foregroundcolor Red " WSSecurityAuthentication is NOT correct."
-        foreach ( $ser in $Global:AutoDiscoveryVirtualDirectory) {
+    } else {
+        Write-Host -ForegroundColor Red " WSSecurityAuthentication is NOT correct."
+        foreach ( $ser in $Script:AutoDiscoveryVirtualDirectory) {
             Write-Host " $($ser.Identity)"
             Write-Host -ForegroundColor Red "  WSSecurityAuthentication: $($ser.WSSecurityAuthentication)"
             $serWSSecurityAuthenticationColor = "Red"
             Write-Host " $($ser.Identity) "
-            $AutodVDIdentity = $ser.Identity
-            $AutodVDName = $ser.Name
-            $AutodVDInternalAuthenticationMethods = $ser.InternalAuthenticationMethods
-            $AutodVDExternalAuthenticationMethods = $ser.ExternalAuthenticationMethods
-            $AutodVDWSAuthetication = $ser.WSSecurityAuthentication
-            $AutodVDWSAutheticationColor = "green"
-            $AutodVDWindowsAuthentication = $ser.WindowsAuthentication
-            if ($AutodVDWindowsAuthentication -eq "True") {
-                $AutodVDWindowsAuthenticationColor = "green"
+            $AutoD_VD_Identity = $ser.Identity
+            $AutoD_VD_Name = $ser.Name
+            $AutoD_VD_InternalAuthenticationMethods = $ser.InternalAuthenticationMethods
+            $AutoD_VD_ExternalAuthenticationMethods = $ser.ExternalAuthenticationMethods
+            $AutoD_VD_WSAuthentication = $ser.WSSecurityAuthentication
+            $AutoD_VD_WSAuthenticationColor = "green"
+            $AutoD_VD_WindowsAuthentication = $ser.WindowsAuthentication
+            if ($AutoD_VD_WindowsAuthentication -eq "True") {
+                $AutoD_VD_WindowsAuthenticationColor = "green"
+            } else {
+                $AutoD_VD_WindowsAuthenticationColor = "red"
             }
-            else {
-                $AutodVDWindowsAuthenticationColor = "red"
-            }
-            $AutodVDInternalNblBypassUrl = $ser.InternalNblBypassUrl
-            $AutodVDInternalUrl = $ser.InternalUrl
-            $AutodVDExternalUrl = $ser.ExternalUrl
+            $AutoD_VD_InternalNblBypassUrl = $ser.InternalNblBypassUrl
+            $AutoD_VD_InternalUrl = $ser.InternalUrl
+            $AutoD_VD_ExternalUrl = $ser.ExternalUrl
             $script:html +=
             " <div><b>============================</b></div>
-            <div><b>Identity:</b> $AutodVDIdentity</div>
-            <div><b>Name:</b> $AutodVDName </div>
-            <div><b>InternalAuthenticationMethods:</b> $AutodVDInternalAuthenticationMethods </div>
-            <div><b>ExternalAuthenticationMethods:</b> $AutodVDExternalAuthenticationMethods </div>
-            <div><b>WSAuthetication:</b> <span style='color:red'>$AutodVDWSAuthetication</span></div>
-            <div><b>WindowsAuthentication:</b> <span style='color:$AutodVDWindowsAuthenticationColor'>$AutodVDWindowsAuthentication</span></div>
+            <div><b>Identity:</b> $AutoD_VD_Identity</div>
+            <div><b>Name:</b> $AutoD_VD_Name </div>
+            <div><b>InternalAuthenticationMethods:</b> $AutoD_VD_InternalAuthenticationMethods </div>
+            <div><b>ExternalAuthenticationMethods:</b> $AutoD_VD_ExternalAuthenticationMethods </div>
+            <div><b>WSAuthentication:</b> <span style='color:red'>$AutoD_VD_WSAuthentication</span></div>
+            <div><b>WindowsAuthentication:</b> <span style='color:$AutoD_VD_WindowsAuthenticationColor'>$AutoD_VD_WindowsAuthentication</span></div>
             "
             Write-Host -ForegroundColor Green "  WSSecurityAuthentication: $($ser.WSSecurityAuthentication)"
             $serWSSecurityAuthenticationColor = "Red"
         }
-        Write-Host -foregroundcolor White "  Should be True "
+        Write-Host -ForegroundColor White "  Should be True "
     }
     Write-Host -ForegroundColor White "`n  WindowsAuthentication:"
-    if ($Global:AutoDiscoveryVirtualDirectory.WindowsAuthentication -eq "True") {
-        foreach ( $ser in $Global:AutoDiscoveryVirtualDirectory) {
+    if ($Script:AutoDiscoveryVirtualDirectory.WindowsAuthentication -eq "True") {
+        foreach ( $ser in $Script:AutoDiscoveryVirtualDirectory) {
             Write-Host " $($ser.Identity) "
             Write-Host -ForegroundColor Green "  WindowsAuthentication: $($ser.WindowsAuthentication)"
         }
-    }
-    else {
-        Write-Host -foregroundcolor Red " WindowsAuthentication is NOT correct."
-        foreach ( $ser in $Global:AutoDiscoveryVirtualDirectory) {
+    } else {
+        Write-Host -ForegroundColor Red " WindowsAuthentication is NOT correct."
+        foreach ( $ser in $Script:AutoDiscoveryVirtualDirectory) {
             Write-Host " $($ser.Identity)"
             Write-Host -ForegroundColor Red "  WindowsAuthentication: $($ser.WindowsAuthentication)"
         }
-        Write-Host -foregroundcolor White "  Should be True "
+        Write-Host -ForegroundColor White "  Should be True "
     }
-    Write-Host -foregroundcolor Yellow "`n  Reference: https://learn.microsoft.com/en-us/powershell/module/exchange/get-autodiscovervirtualdirectory?view=exchange-ps"
-    $html | Out-File -FilePath $htmlfile
+    Write-Host -ForegroundColor Yellow "`n  Reference: https://learn.microsoft.com/en-us/powershell/module/exchange/Get-AutoDiscovervirtualdirectory?view=exchange-ps"
+    $html | Out-File -FilePath $htmlFile
 }
 
-Function EWSVirtualDirectoryCheck {
-    Write-Host -foregroundcolor Green " Get-WebServicesVirtualDirectory | Select Identity,Name,ExchangeVersion,*Authentication*,*url"
-    Write-Host $bar
-    $Global:WebServicesVirtualDirectory = Get-WebServicesVirtualDirectory | Select-Object Identity, Name, ExchangeVersion, *Authentication*, *url
-    $Global:WebServicesVirtualDirectory
-    Write-Host $bar
-    Write-Host -foregroundcolor Green " Summary - Get-WebServicesVirtualDirectory"
-    Write-Host $bar
+function EWSVirtualDirectoryCheck {
+    Write-Host -ForegroundColor Green " Get-WebServicesVirtualDirectory | Select Identity,Name,ExchangeVersion,*Authentication*,*url"
+    Print-DynamicWidthLine
+    $Script:WebServicesVirtualDirectory = Get-WebServicesVirtualDirectory | Select-Object Identity, Name, ExchangeVersion, *Authentication*, *url -ErrorAction SilentlyContinue
+    $Script:WebServicesVirtualDirectory
+    Print-DynamicWidthLine
+    Write-Host -ForegroundColor Green " Summary - Get-WebServicesVirtualDirectory"
+    Print-DynamicWidthLine
     $script:html += "
     <tr>
-    <th colspan='2' style='color:white;'>Summary - Get-WebServicesVirtualDirectory</th>
+    <th ColSpan='2' style='color:white;'>Summary - Get-WebServicesVirtualDirectory</th>
     </tr>
     <tr>
     <td><b> Get-WebServicesVirtualDirectory | Select Identity,Name,ExchangeVersion,*Authentication*,*url</b></td>
     <td >"
-    Write-Host -foregroundcolor White "  WSSecurityAuthentication:"
-    if ($Global:WebServicesVirtualDirectory.WSSecurityAuthentication -like "True") {
-        foreach ( $EWS in $Global:WebServicesVirtualDirectory) {
+    Write-Host -ForegroundColor White "  WSSecurityAuthentication:"
+    if ($Script:WebServicesVirtualDirectory.WSSecurityAuthentication -like "True") {
+        foreach ( $EWS in $Script:WebServicesVirtualDirectory) {
             Write-Host " $($EWS.Identity)"
             Write-Host -ForegroundColor Green "  WSSecurityAuthentication: $($EWS.WSSecurityAuthentication) "
-            $EWSVDIdentity = $EWS.Identity
-            $EWSVDName = $EWS.Name
-            $EWSVDInternalAuthenticationMethods = $EWS.InternalAuthenticationMethods
-            $EWSVDExternalAuthenticationMethods = $EWS.ExternalAuthenticationMethods
-            $EWSVDWSAuthetication = $EWS.WSSecurityAuthentication
-            $EWSVDWSAutheticationColor = "green"
-            $EWSVDWindowsAuthentication = $EWS.WindowsAuthentication
-            if ($EWSVDWindowsAuthentication -eq "True") {
-                $EWSVDWindowsAuthenticationColor = "green"
+            $EwsVDIdentity = $EWS.Identity
+            $EwsVDName = $EWS.Name
+            $EwsVDInternalAuthenticationMethods = $EWS.InternalAuthenticationMethods
+            $EwsVDExternalAuthenticationMethods = $EWS.ExternalAuthenticationMethods
+            $EwsVD_WSAuthentication = $EWS.WSSecurityAuthentication
+            $EwsVD_WSAuthenticationColor = "green"
+            $EwsVDWindowsAuthentication = $EWS.WindowsAuthentication
+            if ($EwsVDWindowsAuthentication -eq "True") {
+                $EwsVDWindowsAuthenticationColor = "green"
+            } else {
+                $EWS_DWindowsAuthenticationColor = "red"
             }
-            else {
-                $EWSDWindowsAuthenticationColor = "red"
-            }
-            $EWSVDInternalNblBypassUrl = $EWS.InternalNblBypassUrl
-            $EWSVDInternalUrl = $EWS.InternalUrl
-            $EWSVDExternalUrl = $EWS.ExternalUrl
+            $EwsVDInternalNblBypassUrl = $EWS.InternalNblBypassUrl
+            $EwsVDInternalUrl = $EWS.InternalUrl
+            $EwsVDExternalUrl = $EWS.ExternalUrl
             $script:html +=
             " <div><b>============================</b></div>
-            <div><b>Identity:</b> $EWSVDIdentity</div>
-            <div><b>Name:</b> $EWSVDName </div>
-            <div><b>InternalAuthenticationMethods:</b> $EWSVDInternalAuthenticationMethods </div>
-            <div><b>ExternalAuthenticationMethods:</b> $EWSVDExternalAuthenticationMethods </div>
-            <div><b>WSAuthetication:</b> <span style='color:green'>$EWSVDWSAuthetication</span></div>
-            <div><b>WindowsAuthentication:</b> <span style='color:$EWSVDWindowsAuthenticationColor'>$EWSVDWindowsAuthentication</span></div>
-            <div><b>InternalUrl:</b> $EWSVDInternalUrl </div>
-            <div><b>ExternalUrl:</b> $EWSVDExternalUrl </div>  "
+            <div><b>Identity:</b> $EwsVDIdentity</div>
+            <div><b>Name:</b> $EwsVDName </div>
+            <div><b>InternalAuthenticationMethods:</b> $EwsVDInternalAuthenticationMethods </div>
+            <div><b>ExternalAuthenticationMethods:</b> $EwsVDExternalAuthenticationMethods </div>
+            <div><b>WSAuthentication:</b> <span style='color:green'>$EwsVD_WSAuthentication</span></div>
+            <div><b>WindowsAuthentication:</b> <span style='color:$EwsVDWindowsAuthenticationColor'>$EwsVDWindowsAuthentication</span></div>
+            <div><b>InternalUrl:</b> $EwsVDInternalUrl </div>
+            <div><b>ExternalUrl:</b> $EwsVDExternalUrl </div>  "
         }
-    }
-    else {
-        Write-Host -foregroundcolor Red " WSSecurityAuthentication shoud be True."
-        foreach ( $EWS in $Global:AutoDiscoveryVirtualDirectory) {
+    } else {
+        Write-Host -ForegroundColor Red " WSSecurityAuthentication should be True."
+        foreach ( $EWS in $Script:AutoDiscoveryVirtualDirectory) {
             Write-Host " $($EWS.Identity) "
             Write-Host -ForegroundColor Red "  WSSecurityAuthentication: $($ser.WSSecurityAuthentication) "
-            $EWSVDIdentity = $EWS.Identity
-            $EWSVDName = $EWS.Name
-            $EWSVDInternalAuthenticationMethods = $EWS.InternalAuthenticationMethods
-            $EWSVDExternalAuthenticationMethods = $EWS.ExternalAuthenticationMethods
-            $EWSVDWSAuthetication = $EWS.WSSecurityAuthentication
-            $EWSVDWSAutheticationColor = "green"
-            $EWSVDWindowsAuthentication = $EWS.WindowsAuthentication
-            if ($EWSVDWindowsAuthentication -eq "True") {
-                $EWSVDWindowsAuthenticationColor = "green"
+            $EwsVDIdentity = $EWS.Identity
+            $EwsVDName = $EWS.Name
+            $EwsVDInternalAuthenticationMethods = $EWS.InternalAuthenticationMethods
+            $EwsVDExternalAuthenticationMethods = $EWS.ExternalAuthenticationMethods
+            $EwsVD_WSAuthentication = $EWS.WSSecurityAuthentication
+            $EwsVD_WSAuthenticationColor = "green"
+            $EwsVDWindowsAuthentication = $EWS.WindowsAuthentication
+            if ($EwsVDWindowsAuthentication -eq "True") {
+                $EwsVDWindowsAuthenticationColor = "green"
+            } else {
+                $EWS_DWindowsAuthenticationColor = "red"
             }
-            else {
-                $EWSDWindowsAuthenticationColor = "red"
-            }
-            $EWSVDInternalNblBypassUrl = $EWS.InternalNblBypassUrl
-            $EWSVDInternalUrl = $EWS.InternalUrl
-            $EWSVDExternalUrl = $EWS.ExternalUrl
+            $EwsVDInternalNblBypassUrl = $EWS.InternalNblBypassUrl
+            $EwsVDInternalUrl = $EWS.InternalUrl
+            $EwsVDExternalUrl = $EWS.ExternalUrl
             $script:html +=
             " <div><b>============================</b></div>
-            <div><b>Identity:</b> $EWSVDIdentity</div>
-            <div><b>Name:</b> $EWSVDName </div>
-            <div><b>InternalAuthenticationMethods:</b> $EWSVDInternalAuthenticationMethods </div>
-            <div><b>ExternalAuthenticationMethods:</b> $EWSVDExternalAuthenticationMethods </div>
-            <div><b>WSAuthetication:</b> <span style='color:red'>$EWSVDWSAuthetication</span></div>
-            <div><b>WindowsAuthentication:</b> <span style='color:$EWSVDWindowsAuthenticationColor'>$EWSVDWindowsAuthentication</span></div>
-            <div><b>InternalUrl:</b> $EWSVDInternalUrl </div>
-            <div><b>ExternalUrl:</b> $EWSVDExternalUrl </div>  "
+            <div><b>Identity:</b> $EwsVDIdentity</div>
+            <div><b>Name:</b> $EwsVDName </div>
+            <div><b>InternalAuthenticationMethods:</b> $EwsVDInternalAuthenticationMethods </div>
+            <div><b>ExternalAuthenticationMethods:</b> $EwsVDExternalAuthenticationMethods </div>
+            <div><b>WSAuthentication:</b> <span style='color:red'>$EwsVD_WSAuthentication</span></div>
+            <div><b>WindowsAuthentication:</b> <span style='color:$EwsVDWindowsAuthenticationColor'>$EwsVDWindowsAuthentication</span></div>
+            <div><b>InternalUrl:</b> $EwsVDInternalUrl </div>
+            <div><b>ExternalUrl:</b> $EwsVDExternalUrl </div>  "
         }
-        Write-Host -foregroundcolor White "  Should be True"
+        Write-Host -ForegroundColor White "  Should be True"
     }
-    Write-Host -foregroundcolor White "`n  WindowsAuthentication:"
-    if ($Global:WebServicesVirtualDirectory.WindowsAuthentication -like "True") {
-        foreach ( $EWS in $Global:WebServicesVirtualDirectory) {
+    Write-Host -ForegroundColor White "`n  WindowsAuthentication:"
+    if ($Script:WebServicesVirtualDirectory.WindowsAuthentication -like "True") {
+        foreach ( $EWS in $Script:WebServicesVirtualDirectory) {
             Write-Host " $($EWS.Identity)"
             Write-Host -ForegroundColor Green "  WindowsAuthentication: $($EWS.WindowsAuthentication) "
         }
-    }
-    else {
-        Write-Host -foregroundcolor Red " WindowsAuthentication shoud be True."
-        foreach ( $EWS in $Global:AutoDiscoveryVirtualDirectory) {
+    } else {
+        Write-Host -ForegroundColor Red " WindowsAuthentication should be True."
+        foreach ( $EWS in $Script:AutoDiscoveryVirtualDirectory) {
             Write-Host " $($EWS.Identity) "
             Write-Host -ForegroundColor Red "  WindowsAuthentication: $($ser.WindowsAuthentication) "
         }
-        Write-Host -foregroundcolor White "  Should be True"
+        Write-Host -ForegroundColor White "  Should be True"
     }
     $script:html += "
     </td>
     </tr>
     "
-    $html | Out-File -FilePath $htmlfile
+    $html | Out-File -FilePath $htmlFile
 }
 
-Function AvailabilityAddressSpaceCheck {
-    $bar
-    Write-Host -foregroundcolor Green " Get-AvailabilityAddressSpace $exchangeOnlineDomain | fl ForestName, UserName, UseServiceAccount, AccessMethod, ProxyUrl, Name"
-    Write-Host $bar
-    $AvailabilityAddressSpace = Get-AvailabilityAddressSpace $exchangeOnlineDomain -ErrorAction SilentlyContinue | Select-Object ForestName, UserName, UseServiceAccount, AccessMethod, ProxyUrl, Name
-    If (!$AvailabilityAddressSpace) {
-        $AvailabilityAddressSpace = Get-AvailabilityAddressSpace $exchangeOnlineDomain -ErrorAction SilentlyContinue | Select-Object ForestName, UserName, UseServiceAccount, AccessMethod, ProxyUrl, Name
+function AvailabilityAddressSpaceCheck {
+    Print-DynamicWidthLine
+    Write-Host -ForegroundColor Green " Get-AvailabilityAddressSpace $ExchangeOnlineDomain | fl ForestName, UserName, UseServiceAccount, AccessMethod, ProxyUrl, Name"
+    Print-DynamicWidthLine
+    $AvailabilityAddressSpace = Get-AvailabilityAddressSpace $ExchangeOnlineDomain -ErrorAction SilentlyContinue | Select-Object ForestName, UserName, UseServiceAccount, AccessMethod, ProxyUrl, Name
+    if (!$AvailabilityAddressSpace) {
+        $AvailabilityAddressSpace = Get-AvailabilityAddressSpace $ExchangeOnlineDomain -ErrorAction SilentlyContinue | Select-Object ForestName, UserName, UseServiceAccount, AccessMethod, ProxyUrl, Name
     }
     $AvailabilityAddressSpace
     $tdAvailabilityAddressSpaceName = $AvailabilityAddressSpace.Name
-    Write-Host $bar
-    Write-Host -foregroundcolor Green " Summary - On-Prem Availability Address Space Check"
-    Write-Host $bar
-    Write-Host -foregroundcolor White " ForestName: "
+    Print-DynamicWidthLine
+    Write-Host -ForegroundColor Green " Summary - On-Prem Availability Address Space Check"
+    Print-DynamicWidthLine
+    Write-Host -ForegroundColor White " ForestName: "
     if ($AvailabilityAddressSpace.ForestName -like $ExchangeOnlineDomain) {
-        Write-Host -foregroundcolor Green " " $AvailabilityAddressSpace.ForestName
+        Write-Host -ForegroundColor Green " " $AvailabilityAddressSpace.ForestName
         $tdAvailabilityAddressSpaceForestName = $AvailabilityAddressSpace.ForestName
         $tdAvailabilityAddressSpaceForestColor = "green"
-    }
-    else {
-        Write-Host -foregroundcolor Red "  ForestName appears not to be correct."
-        Write-Host -foregroundcolor White " Should contain the " $ExchaneOnlineDomain
+    } else {
+        Write-Host -ForegroundColor Red "  ForestName appears not to be correct."
+        Write-Host -ForegroundColor White " Should contain the " $ExchangeOnlineDomain
         $tdAvailabilityAddressSpaceForestName = $AvailabilityAddressSpace.ForestName
         $tdAvailabilityAddressSpaceForestColor = "red"
     }
-    Write-Host -foregroundcolor White " UserName: "
+    Write-Host -ForegroundColor White " UserName: "
     if ($AvailabilityAddressSpace.UserName -like "") {
-        Write-Host -foregroundcolor Green "  Blank"
+        Write-Host -ForegroundColor Green "  Blank"
         $tdAvailabilityAddressSpaceUserName = " Blank"
         $tdAvailabilityAddressSpaceUserNameColor = "green"
-    }
-    else {
-        Write-Host -foregroundcolor Red " UserName is NOT correct. "
-        Write-Host -foregroundcolor White "  Normally it should be blank"
+    } else {
+        Write-Host -ForegroundColor Red " UserName is NOT correct. "
+        Write-Host -ForegroundColor White "  Normally it should be blank"
         $tdAvailabilityAddressSpaceUserName = $AvailabilityAddressSpace.UserName
         $tdAvailabilityAddressSpaceUserNameColor = "red"
     }
-    Write-Host -foregroundcolor White " UseServiceAccount: "
+    Write-Host -ForegroundColor White " UseServiceAccount: "
     if ($AvailabilityAddressSpace.UseServiceAccount -like "True") {
-        Write-Host -foregroundcolor Green "  True"
+        Write-Host -ForegroundColor Green "  True"
         $tdAvailabilityAddressSpaceUseServiceAccount = $AvailabilityAddressSpace.UseServiceAccount
         $tAvailabilityAddressSpaceUseServiceAccountColor = "green"
-    }
-    else {
-        Write-Host -foregroundcolor Red "  UseServiceAccount appears not to be correct."
-        Write-Host -foregroundcolor White "  Should be True"
+    } else {
+        Write-Host -ForegroundColor Red "  UseServiceAccount appears not to be correct."
+        Write-Host -ForegroundColor White "  Should be True"
         $tdAvailabilityAddressSpaceUseServiceAccount = $AvailabilityAddressSpace.UseServiceAccount
         $tAvailabilityAddressSpaceUseServiceAccountColor = "red"
     }
-    Write-Host -foregroundcolor White " AccessMethod:"
+    Write-Host -ForegroundColor White " AccessMethod:"
     if ($AvailabilityAddressSpace.AccessMethod -like "InternalProxy") {
-        Write-Host -foregroundcolor Green "  InternalProxy"
+        Write-Host -ForegroundColor Green "  InternalProxy"
         $tdAvailabilityAddressSpaceAccessMethod = $AvailabilityAddressSpace.AccessMethod
         $tdAvailabilityAddressSpaceAccessMethodColor = "green"
-    }
-    else {
-        Write-Host -foregroundcolor Red " AccessMethod appears not to be correct."
-        Write-Host -foregroundcolor White " Should be InternalProxy"
+    } else {
+        Write-Host -ForegroundColor Red " AccessMethod appears not to be correct."
+        Write-Host -ForegroundColor White " Should be InternalProxy"
         $tdAvailabilityAddressSpaceAccessMethod = $AvailabilityAddressSpace.AccessMethod
         $tdAvailabilityAddressSpaceAccessMethodColor = "red"
     }
-    Write-Host -foregroundcolor White " ProxyUrl: "
+    Write-Host -ForegroundColor White " ProxyUrl: "
     $tdAvailabilityAddressSpaceProxyUrl = $AvailabilityAddressSpace.ProxyUrl
-    if ([String]::Equals($tdAvailabilityAddressSpaceProxyUrl, $Global:ExchangeOnPremEWS, [StringComparison]::OrdinalIgnoreCase)) {
-        Write-Host -foregroundcolor Green " "$AvailabilityAddressSpace.ProxyUrl
+    if ([String]::Equals($tdAvailabilityAddressSpaceProxyUrl, $Script:ExchangeOnPremEWS, [StringComparison]::OrdinalIgnoreCase)) {
+        Write-Host -ForegroundColor Green " "$AvailabilityAddressSpace.ProxyUrl
         #$tdAvailabilityAddressSpaceProxyUrl = $AvailabilityAddressSpace.ProxyUrl
         $tdAvailabilityAddressSpaceProxyUrlColor = "green"
-    }
-    else {
-        Write-Host -foregroundcolor Red "  ProxyUrl appears not to be correct."
-        Write-Host -foregroundcolor White "  Should be $Global:ExchangeOnPremEWS[0] and not $tdAvailabilityAddressSpaceProxyUrl"
+    } else {
+        Write-Host -ForegroundColor Red "  ProxyUrl appears not to be correct."
+        Write-Host -ForegroundColor White "  Should be $Script:ExchangeOnPremEWS[0] and not $tdAvailabilityAddressSpaceProxyUrl"
         #$tdAvailabilityAddressSpaceProxyUrl = $AvailabilityAddressSpace.ProxyUrl
         $tdAvailabilityAddressSpaceProxyUrlColor = "red"
     }
-    Write-Host -ForegroundColor Yellow "`n  Reference: https://learn.microsoft.com/en-us/powershell/module/exchange/get-availabilityaddressspace?view=exchange-ps"
+    Write-Host -ForegroundColor Yellow "`n  Reference: https://learn.microsoft.com/en-us/powershell/module/exchange/Get-availabilityaddressspace?view=exchange-ps"
     $script:html += "
     <tr>
-    <th colspan='2' style='color:white;'>Summary - On-Premise Get-AvailabilityAddressSpace</th>
+    <th ColSpan='2' style='color:white;'>Summary - On-Premise Get-AvailabilityAddressSpace</th>
     </tr>
     <tr>
-    <td><b> Get-AvailabilityAddressSpace $exchangeOnlineDomain | fl ForestName, UserName, UseServiceAccount, AccessMethod, ProxyUrl, Name</b></td>
+    <td><b> Get-AvailabilityAddressSpace $ExchangeOnlineDomain | fl ForestName, UserName, UseServiceAccount, AccessMethod, ProxyUrl, Name</b></td>
     <td>
     <div> <b>Forest Name: </b> $tdAvailabilityAddressSpaceForestName</div>
     <div> <b>Name: </b> $tdAvailabilityAddressSpaceName</div>
@@ -1105,377 +1124,343 @@ Function AvailabilityAddressSpaceCheck {
     <div> <b>ProxyUrl: </b> <span style='color:$tdAvailabilityAddressSpaceProxyUrlColor'>$tdAvailabilityAddressSpaceProxyUrl</span></div>
     </td>
     </tr>"
-    $html | Out-File -FilePath $htmlfile
+    $html | Out-File -FilePath $htmlFile
 }
 
-Function TestFedTrust {
-    Write-Host $bar
+function TestFedTrust {
+    Print-DynamicWidthLine
     $TestFedTrustFail = 0
-    $a = Test-FederationTrust -UserIdentity $useronprem -verbose -ErrorAction silentlycontinue #fails the frist time on multiple ocasions so we have a gohst FedTrustCheck
-    Write-Host -foregroundcolor Green  " Test-FederationTrust -UserIdentity $useronprem -verbose"
-    Write-Host $bar
-    $TestFedTrust = Test-FederationTrust -UserIdentity $useronprem -verbose -ErrorAction silentlycontinue
+    $a = Test-FederationTrust -UserIdentity $UserOnPrem -verbose -ErrorAction SilentlyContinue #fails the first time on multiple occasions so we have a ghost FedTrustCheck
+    Write-Host -ForegroundColor Green  " Test-FederationTrust -UserIdentity $UserOnPrem -verbose"
+    Print-DynamicWidthLine
+    $TestFedTrust = Test-FederationTrust -UserIdentity $UserOnPrem -verbose -ErrorAction SilentlyContinue
     $TestFedTrust
     $Script:html += "<tr>
-    <th colspan='2' style='color:white;'><b>Summary - On Premise Test-FederationTrust</b></th>
+    <th ColSpan='2' style='color:white;'><b>Summary - On Premise Test-FederationTrust</b></th>
     </tr>
     <tr>
-    <td><b> Test-FederationTrust -UserIdentity $useronprem</b></td>
+    <td><b> Test-FederationTrust -UserIdentity $UserOnPrem</b></td>
     <td>"
     $i = 0
     while ($i -lt $TestFedTrust.type.Count) {
         $test = $TestFedTrust.type[$i]
         $testType = $TestFedTrust.Type[$i]
         $testMessage = $TestFedTrust.Message[$i]
-        $TestFedTrustID = $($TestFedTrust.ID[$i]) 
+        $TestFedTrustID = $($TestFedTrust.ID[$i])
         if ($test -eq "Error") {
             # Write-Host " $($TestFedTrust.ID[$i]) "
-            # Write-Host -foregroundcolor Red " $($TestFedTrust.Type[$i])  "
+            # Write-Host -ForegroundColor Red " $($TestFedTrust.Type[$i])  "
             # Write-Host " $($TestFedTrust.Message[$i]) "
             $Script:html += "
-            
+
             <div> <span style='color:red'><b>$testType :</b></span> - <div> <b>$TestFedTrustID </b> - $testMessage  </div>
             "
             $TestFedTrustFail++
         }
         if ($test -eq "Success") {
             # Write-Host " $($TestFedTrust.ID[$i]) "
-            # Write-Host -foregroundcolor Green " $($TestFedTrust.Type[$i])  "
+            # Write-Host -ForegroundColor Green " $($TestFedTrust.Type[$i])  "
             # Write-Host " $($TestFedTrust.Message[$i])  "
             $Script:html += "
-            
+
             <div> <span style='color:green'><b>$testType :</b> </span> - <b>$TestFedTrustID </b> - $testMessage</div>"
         }
         $i++
     }
 
     if ($TestFedTrustFail -eq 0) {
-        Write-Host -foregroundcolor Green " Federation Trust Successfully tested"
+        Write-Host -ForegroundColor Green " Federation Trust Successfully tested"
         $Script:html += "
         <p></p>
-        <div class=´green´> <span style='color:green'> Federation Trust Successfully tested </span></div>"
-    }
-    else {
-        Write-Host -foregroundcolor Red " Federation Trust test with Errors"
+        <div class=?green?> <span style='color:green'> Federation Trust Successfully tested </span></div>"
+    } else {
+        Write-Host -ForegroundColor Red " Federation Trust test with Errors"
         $Script:html += "
         <p></p>
-        <div class=´red´> <span style='color:red'> Federation Trust tested with Errors </span></div>"
+        <div class=?red?> <span style='color:red'> Federation Trust tested with Errors </span></div>"
     }
 
-
-
-    #Write-Host $bar
-    #Write-Host -foregroundcolor Green " Test-FederationTrustCertificate"
-    #Write-Host $bar
-    $TestFederationTrustCertificate = Test-FederationTrustCertificate -erroraction SilentlyContinue
+    #Print-DynamicWidthLine
+    #Write-Host -ForegroundColor Green " Test-FederationTrustCertificate"
+    #Print-DynamicWidthLine
+    $TestFederationTrustCertificate = Test-FederationTrustCertificate -ErrorAction SilentlyContinue
     #$TestFederationTrustCertificate
-    #Write-Host $bar
+    #Print-DynamicWidthLine
     if ($TestFederationTrustCertificate) {
-    
-        Write-Host $bar
-        Write-Host -foregroundcolor Green " Test-FederationTrustCertificate"
-        Write-Host $bar
+
+        Print-DynamicWidthLine
+        Write-Host -ForegroundColor Green " Test-FederationTrustCertificate"
+        Print-DynamicWidthLine
         $TestFederationTrustCertificate
-       
+
         $Script:html += "<tr>
-                <th colspan='2' style='color:white;'><b>Summary - Test-FederationTrustCertificate</b></th>
+                <th ColSpan='2' style='color:white;'><b>Summary - Test-FederationTrustCertificate</b></th>
                 </tr>
                 <tr>
-                <td><b> Test-FederationTrustCertificate</b></td> 
+                <td><b> Test-FederationTrustCertificate</b></td>
                 <td>"
 
-     
         $j = 0
         while ($j -lt $TestFederationTrustCertificate.Count) {
-    
-            $TestFederationTrustCertificatej = "<div>" + $TestFederationTrustCertificate.site[$j] + "</div><div>" + $TestFederationTrustCertificate.state[$j] + "</div><div>" + $TestFederationTrustCertificate.Thumbprint[$j] + "</div>"
-            $Script:html += "      
-                $TestFederationTrustCertificatej
-                
+
+            $TestFederationTrustCertificateJ = "<div>" + $TestFederationTrustCertificate.site[$j] + "</div><div>" + $TestFederationTrustCertificate.state[$j] + "</div><div>" + $TestFederationTrustCertificate.Thumbprint[$j] + "</div>"
+            $Script:html += "
+                $TestFederationTrustCertificateJ
+
                 "
             $j++
         }
         $Script:html += "</td>"
     }
-    $html | Out-File -FilePath $htmlfile
+    $html | Out-File -FilePath $htmlFile
 }
 
-Function TestOrgRel {
-    $bar
+function TestOrgRel {
+    Print-DynamicWidthLine
     $TestFail = 0
     $OrgRelIdentity = $OrgRel.Identity
-    
-    $OrgRelTargetApplicationUri = $OrgRel.TargetApplicationUri
 
+    $OrgRelTarGetApplicationUri = $OrgRel.TarGetApplicationUri
 
-    if ( $OrgRelTargetApplicationUri -like "Oulook.com") {
-
-
-    $Script:html += "<tr>
-    <th colspan='2' style='color:white;'><b>Summary - Test-OrganizationRelationship</b></th>
-    </tr>
-    <tr>
-    <td><b>Test-OrganizationRelationship -Identity $OrgRelIdentity  -UserIdentity $useronprem</b></td>
-    <td>"
-    Write-Host -foregroundcolor Green "Test-OrganizationRelationship -Identity $OrgRelIdentity  -UserIdentity $useronprem"
-    #need to grab errors and provide alerts in error case
-    Write-Host $bar
-    $TestOrgRel = Test-OrganizationRelationship -Identity "$($OrgRelIdentity)"  -UserIdentity $useronprem -erroraction SilentlyContinue -warningaction SilentlyContinue
-    #$TestOrgRel
-    if ($TestOrgRel[16] -like "No Significant Issues to Report") {
-        Write-Host -foregroundcolor Green "`n No Significant Issues to Report"
-        $Script:html += "
-        <div class='green'> <b>No Significant Issues to Report</b><div>"
-    }
-    else {
-        Write-Host -foregroundcolor Red "`n Test Organization Relationship Completed with errors"
-        $Script:html += "
-        <div class='red'> <b>Test Organization Relationship Completed with errors</b><div>"
-    }
-    $TestOrgRel[0]
-    $TestOrgRel[1]
-    $i = 0
-    while ($i -lt $TestOrgRel.Length) {
-        $element = $TestOrgRel[$i]
-        #if ($element.Contains("RESULT: Success.")) {
-        if ($element -like "*RESULT: Success.*") {
-            $TestOrgRelStep = $TestOrgRel[$i - 1]
-            $TestOrgRelStep
-            Write-Host -ForegroundColor Green "$element"
-            if (![string]::IsNullOrWhitespace($TestOrgRelStep)) {
+    if ( $OrgRelTarGetApplicationUri -like "Outlook.com" -OR $OrgRelTarGetApplicationUri -like "outlook.com") {
+        $Script:html += "<tr>
+        <th ColSpan='2' style='color:white;'><b>Summary - Test-OrganizationRelationship</b></th>
+        </tr>
+        <tr>
+        <td><b>Test-OrganizationRelationship -Identity $OrgRelIdentity  -UserIdentity $UserOnPrem</b></td>
+        <td>"
+        Write-Host -ForegroundColor Green "Test-OrganizationRelationship -Identity $OrgRelIdentity  -UserIdentity $UserOnPrem"
+        #need to grab errors and provide alerts in error case
+        Print-DynamicWidthLine
+        $TestOrgRel = Test-OrganizationRelationship -Identity "$($OrgRelIdentity)"  -UserIdentity $UserOnPrem -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
+        #$TestOrgRel
+        if ($TestOrgRel[16] -like "No Significant Issues to Report") {
+            Write-Host -ForegroundColor Green "`n No Significant Issues to Report"
             $Script:html += "
-            <div></b> <span style='color:black'> <b> $TestOrgRelStep :</b></span> <span style='color:green'>$element</span></div>"
+        <div class='green'> <b>No Significant Issues to Report</b><div>"
+        } else {
+            Write-Host -ForegroundColor Red "`n Test Organization Relationship Completed with errors"
+            $Script:html += "
+        <div class='red'> <b>Test Organization Relationship Completed with errors</b><div>"
         }
-        }
-
-        else {
-            if ($element -like "*RESULT: Error*") {
+        $TestOrgRel[0]
+        $TestOrgRel[1]
+        $i = 0
+        while ($i -lt $TestOrgRel.Length) {
+            $element = $TestOrgRel[$i]
+            #if ($element.Contains("RESULT: Success.")) {
+            if ($element -like "*RESULT: Success.*") {
                 $TestOrgRelStep = $TestOrgRel[$i - 1]
                 $TestOrgRelStep
-                Write-Host -ForegroundColor Red "$element"
-                if (![string]::IsNullOrWhitespace($TestOrgRelStep)) {    
-                $Script:html += "
+                Write-Host -ForegroundColor Green "$element"
+                if (![string]::IsNullOrWhitespace($TestOrgRelStep)) {
+                    $Script:html += "
+            <div></b> <span style='color:black'> <b> $TestOrgRelStep :</b></span> <span style='color:green'>$element</span></div>"
+                }
+            }
+
+            else {
+                if ($element -like "*RESULT: Error*") {
+                    $TestOrgRelStep = $TestOrgRel[$i - 1]
+                    $TestOrgRelStep
+                    Write-Host -ForegroundColor Red "$element"
+                    if (![string]::IsNullOrWhitespace($TestOrgRelStep)) {
+                        $Script:html += "
                 <div></b> <span style='color:black'> <b> $TestOrgRelStep : </b></span> <span style='color:red'>$element</span></div>"
+                    }
+                }
             }
-            }
+            $i++
         }
-        $i++
-    }
-}
-else {
-    Write-Host -foregroundcolor Green " Test-OrganizationRelationship -Identity $OrgRelIdentity  -UserIdentity $useronprem"
-    #need to grab errors and provide alerts in error case
-    Write-Host $bar
-    $Script:html += "<tr>
-    <th colspan='2' style='color:white;'><b>Summary - Test-OrganizationRelationship</b></th>
+    } else {
+        Write-Host -ForegroundColor Green " Test-OrganizationRelationship -Identity $OrgRelIdentity  -UserIdentity $UserOnPrem"
+        #need to grab errors and provide alerts in error case
+        Print-DynamicWidthLine
+        $Script:html += "<tr>
+    <th ColSpan='2' style='color:white;'><b>Summary - Test-OrganizationRelationship</b></th>
     </tr>
     <tr>
     <td><b>Test-OrganizationRelationship</b></td>
     <td>"
-    Write-Host -foregroundcolor Red "`n Test-OrganizationRelationship can't be run if the Organization Relationship Target Application uri is not correct. Organization Relationship Target Application Uri should be Outlook.com"
-    $Script:html += "
-    <div class='red'> <b> Test-OrganizationRelationship can't be run if the Organization Relationship Target Application uri is not correct. Organization Relationship Target Application Uri should be Outlook.com</b><div>"
-}
+        Write-Host -ForegroundColor Red "`n Test-OrganizationRelationship can't be run if the Organization Relationship TarGet Application uri is not correct. Organization Relationship TarGet Application Uri should be Outlook.com"
+        $Script:html += "
+    <div class='red'> <b> Test-OrganizationRelationship can't be run if the Organization Relationship TarGet Application uri is not correct. Organization Relationship TarGet Application Uri should be Outlook.com</b><div>"
+    }
 
-
-    
-    Write-host -ForegroundColor Yellow "`n  Reference: https://techcommunity.microsoft.com/t5/exchange-team-blog/how-to-address-federation-trust-issues-in-hybrid-configuration/ba-p/1144285"
-    #Write-Host $bar
+    Write-Host -ForegroundColor Yellow "`n  Reference: https://techcommunity.microsoft.com/t5/exchange-team-blog/how-to-address-federation-trust-issues-in-hybrid-configuration/ba-p/1144285"
+    Print-DynamicWidthLine
     $Script:html += "</td>
     </tr>"
-    $html | Out-File -FilePath $htmlfile
+    $html | Out-File -FilePath $htmlFile
 }
 
 #endregion
 
 #region OAuth Functions
 
-Function IntraOrgConCheck {
-
-    Write-Host -foregroundcolor Green " Get-IntraOrganizationConnector | Select Name,TargetAddressDomains,DiscoveryEndpoint,Enabled" 
-    Write-Host $bar
+function IntraOrgConCheck {
+    Print-DynamicWidthLine
+    Write-Host -ForegroundColor Green " Get-IntraOrganizationConnector | Select Name,TarGetAddressDomains,DiscoveryEndpoint,Enabled"
+    Print-DynamicWidthLine
     $IOC = $IntraOrgCon | Format-List
     $IOC
-    $tdIntraOrgTargetAddressDomain = $IntraOrgCon.TargetAddressDomains
+    $tdIntraOrgTarGetAddressDomain = $IntraOrgCon.TarGetAddressDomains
     $tdDiscoveryEndpoint = $IntraOrgCon.DiscoveryEndpoint
     $tdEnabled = $IntraOrgCon.Enabled
 
-    Write-Host $bar
-    Write-Host -foregroundcolor Green " Summary - Get-IntraOrganizationConnector" 
-    Write-Host $bar
-    $IntraOrgTargetAddressDomain = $IntraOrgCon.TargetAddressDomains.Domain
-    $IntraOrgTargetAddressDomain = $IntraOrgTargetAddressDomain.Tolower()
-    Write-Host -foregroundcolor White " Target Address Domains: " 
-    if ($IntraOrgCon.TargetAddressDomains -like "*$ExchangeOnlineDomain*" -Or $IntraOrgCon.TargetAddressDomains -like "*$ExchangeOnlineAltDomain*" ) {
-        Write-Host -foregroundcolor Green " " $IntraOrgCon.TargetAddressDomains
-        $tdIntraOrgTargetAddressDomainColor = "green"
-    }
-    else {
-        Write-Host -foregroundcolor Red " Target Address Domains appears not to be correct."
-        Write-Host -foregroundcolor White " Should contain the $ExchangeOnlineDomain domain or the $ExchangeOnlineAltDomain domain."
-        $tdIntraOrgTargetAddressDomainColor = "red"
+    Print-DynamicWidthLine
+    Write-Host -ForegroundColor Green " Summary - Get-IntraOrganizationConnector"
+    Print-DynamicWidthLine
+    $IntraOrgTarGetAddressDomain = $IntraOrgCon.TarGetAddressDomains.Domain
+    $IntraOrgTarGetAddressDomain = $IntraOrgTarGetAddressDomain.ToLower()
+    Write-Host -ForegroundColor White " TarGet Address Domains: "
+    if ($IntraOrgCon.TarGetAddressDomains -like "*$ExchangeOnlineDomain*" -Or $IntraOrgCon.TarGetAddressDomains -like "*$ExchangeOnlineAltDomain*" ) {
+        Write-Host -ForegroundColor Green " " $IntraOrgCon.TarGetAddressDomains
+        $tdIntraOrgTarGetAddressDomainColor = "green"
+    } else {
+        Write-Host -ForegroundColor Red " TarGet Address Domains appears not to be correct."
+        Write-Host -ForegroundColor White " Should contain the $ExchangeOnlineDomain domain or the $ExchangeOnlineAltDomain domain."
+        $tdIntraOrgTarGetAddressDomainColor = "red"
     }
 
-    Write-Host -foregroundcolor White " DiscoveryEndpoint: " 
-    if ($IntraOrgCon.DiscoveryEndpoint -like "https://autodiscover-s.outlook.com/autodiscover/autodiscover.svc") {
-        Write-Host -foregroundcolor Green "  https://autodiscover-s.outlook.com/autodiscover/autodiscover.svc" 
+    Write-Host -ForegroundColor White " DiscoveryEndpoint: "
+    if ($IntraOrgCon.DiscoveryEndpoint -like "https://AutoDiscover-s.outlook.com/AutoDiscover/AutoDiscover.svc") {
+        Write-Host -ForegroundColor Green "  https://AutoDiscover-s.outlook.com/AutoDiscover/AutoDiscover.svc"
         $tdDiscoveryEndpointColor = "green"
-    }
-    else {
-        Write-Host -foregroundcolor Red "  The DiscoveryEndpoint appears not to be correct. "
-        Write-Host -foregroundcolor White "  It should represent the address of EXO autodiscover endpoint."
-        Write-Host  "  Examples: https://autodiscover-s.outlook.com/autodiscover/autodiscover.svc; https://outlook.office365.com/autodiscover/autodiscover.svc "
+    } else {
+        Write-Host -ForegroundColor Red "  The DiscoveryEndpoint appears not to be correct. "
+        Write-Host -ForegroundColor White "  It should represent the address of EXO AutoDiscover endpoint."
+        Write-Host  "  Examples: https://AutoDiscover-s.outlook.com/AutoDiscover/AutoDiscover.svc; https://outlook.office365.com/AutoDiscover/AutoDiscover.svc "
         $tdDiscoveryEndpointColor = "red"
     }
-    Write-Host -foregroundcolor White " Enabled: " 
-    if ($IntraOrgCon.Enabled -like "True") { 
-        Write-Host -foregroundcolor Green "  True "  
+    Write-Host -ForegroundColor White " Enabled: "
+    if ($IntraOrgCon.Enabled -like "True") {
+        Write-Host -ForegroundColor Green "  True "
         $tdEnabledColor = "green"
-    }
-    else {
-        Write-Host -foregroundcolor Red "  On-Prem Intra Organization Connector is not Enabled"
-        Write-Host -foregroundcolor White "  In order to use OAuth it Should be True." 
-        write-Host "  If it is set to False, the Organization Realtionship (DAuth) , if enabled, is used for the Hybrid Availability Sharing"
+    } else {
+        Write-Host -ForegroundColor Red "  On-Prem Intra Organization Connector is not Enabled"
+        Write-Host -ForegroundColor White "  In order to use OAuth it Should be True."
+        Write-Host "  If it is set to False, the Organization Relationship (DAuth) , if enabled, is used for the Hybrid Availability Sharing"
         $tdEnabledColor = "red"
     }
 
-
     Write-Host -ForegroundColor Yellow "https://techcommunity.microsoft.com/t5/exchange-team-blog/demystifying-hybrid-free-busy-what-are-the-moving-parts/ba-p/607704"
 
-
     # Build HTML table row
-    if ($Auth -like "OAuth"){
+    if ($Auth -like "OAuth") {
         $Script:html += "
         <div class='Black'><p></p></div>
-    
+
         <div class='Black'><h2><b>`n Exchange On Premise Free Busy Configuration: `n</b></h2></div>
-    
+
         <div class='Black'><p></p></div>"
     }
-        $Script:html += "
+    $Script:html += "
 
     <table style='width:100%'>
 
    <tr>
-      <th colspan='2' style='text-align:center; color:white;'>Exchange On Premise OAuth Configuration</th>
+      <th ColSpan='2' style='text-align:center; color:white;'>Exchange On Premise OAuth Configuration</th>
     </tr>
     <tr>
-      <th colspan='2' style='color:white;'>Summary - Get-IntraOrganizationConnector</th>
+      <th ColSpan='2' style='color:white;'>Summary - Get-IntraOrganizationConnector</th>
     </tr>
 
     <tr>
       <td><b>Get-IntraOrganizationConnector:</b></td>
       <td>
-        <div><b>Target Address Domains:</b><span style='color: $tdIntraOrgTargetAddressDomainColor'>$($tdIntraOrgTargetAddressDomain)</span></div>
+        <div><b>TarGet Address Domains:</b><span style='color: $tdIntraOrgTarGetAddressDomainColor'>$($tdIntraOrgTarGetAddressDomain)</span></div>
         <div><b>Discovery Endpoint:</b><span style='color: $tdDiscoveryEndpointColor;'>$($tdDiscoveryEndpoint)</span></div>
         <div><b>Enabled:</b><span style='color: $tdEnabledColor;'>$($tdEnabled)</span></div>
       </td>
     </tr>
   "
 
-    $html | Out-File -FilePath $htmlfile
+    $html | Out-File -FilePath $htmlFile
+}
 
-} 
-
-Function AuthServerCheck {
-    #Write-Host $bar
-    Write-Host -foregroundcolor Green " Get-AuthServer | Select Name,IssuerIdentifier,TokenIssuingEndpoint,AuthMetadataUrl,Enabled"
-    Write-Host $bar
-    $AuthServer = Get-AuthServer | Where-Object { $_.Name -like "ACS*" } | Select-Object Name, IssuerIdentifier, TokenIssuingEndpoint, AuthMetadataUrl, Enabled
+function AuthServerCheck {
+    #Print-DynamicWidthLine
+    Write-Host -ForegroundColor Green " Get-AuthServer | Select Name,IssuerIdentifier,TokenIssuingEndpoint,AuthMetadatAUrl,Enabled"
+    Print-DynamicWidthLine
+    $AuthServer = Get-AuthServer | Where-Object { $_.Name -like "ACS*" } | Select-Object Name, IssuerIdentifier, TokenIssuingEndpoint, AuthMetadatAUrl, Enabled
     $AuthServer
-    $tdAuthServerIssuerIdentifier = $AuthServer.IssuerIdentifier
-    $tdAuthServerTokenIssuingEndpoint = $AuthServer.TokenIssuingEndpoint 
-    $tdAuthServerAuthMetadataUrl = $AuthServer.AuthMetadataUrl
-    $tdAuthServerEnabled = $AuthServer.Enabled
-    Write-Host $bar
-    Write-Host -foregroundcolor Green " Summary - Auth Server"
-    Write-Host $bar
-    Write-Host -foregroundcolor White " IssuerIdentifier: "
+    $tDAuthServerIssuerIdentifier = $AuthServer.IssuerIdentifier
+    $tDAuthServerTokenIssuingEndpoint = $AuthServer.TokenIssuingEndpoint
+    $tDAuthServerAuthMetadatAUrl = $AuthServer.AuthMetadatAUrl
+    $tDAuthServerEnabled = $AuthServer.Enabled
+    Print-DynamicWidthLine
+    Write-Host -ForegroundColor Green " Summary - Auth Server"
+    Print-DynamicWidthLine
+    Write-Host -ForegroundColor White " IssuerIdentifier: "
     if ($AuthServer.IssuerIdentifier -like "00000001-0000-0000-c000-000000000000" ) {
-        Write-Host -foregroundcolor Green " " $AuthServer.IssuerIdentifier
-        $tdAuthServerIssuerIdentifierColor = "green"
-       
+        Write-Host -ForegroundColor Green " " $AuthServer.IssuerIdentifier
+        $tDAuthServerIssuerIdentifierColor = "green"
+    } else {
+        Write-Host -ForegroundColor Red " IssuerIdentifier appears not to be correct."
+        Write-Host -ForegroundColor White " Should be 00000001-0000-0000-c000-000000000000"
+        $tDAuthServerIssuerIdentifierColor = "red"
     }
-    else {
-        Write-Host -foregroundcolor Red " IssuerIdentifier appears not to be correct."
-        Write-Host -foregroundcolor White " Should be 00000001-0000-0000-c000-000000000000"
-        $tdAuthServerIssuerIdentifierColor = "red"
-    
-    }
-    Write-Host -foregroundcolor White " TokenIssuingEndpoint: "
+    Write-Host -ForegroundColor White " TokenIssuingEndpoint: "
     if ($AuthServer.TokenIssuingEndpoint -like "https://accounts.accesscontrol.windows.net/*" -and $AuthServer.TokenIssuingEndpoint -like "*/tokens/OAuth/2" ) {
-        Write-Host -foregroundcolor Green " " $AuthServer.TokenIssuingEndpoint
-        $tdAuthServerTokenIssuingEndpointColor = "green"
-    
-    
+        Write-Host -ForegroundColor Green " " $AuthServer.TokenIssuingEndpoint
+        $tDAuthServerTokenIssuingEndpointColor = "green"
+    } else {
+        Write-Host -ForegroundColor Red " TokenIssuingEndpoint appears not to be correct."
+        Write-Host -ForegroundColor White " Should be  https://accounts.accesscontrol.windows.net/<Cloud Tenant ID>/tokens/OAuth/2"
+        $tDAuthServerTokenIssuingEndpointColor = "red"
     }
-    else {
-        Write-Host -foregroundcolor Red " TokenIssuingEndpoint appears not to be correct."
-        Write-Host -foregroundcolor White " Should be  https://accounts.accesscontrol.windows.net/<Cloud Tenant ID>/tokens/OAuth/2"
-        $tdAuthServerTokenIssuingEndpointColor = "red"
-    
+    Write-Host -ForegroundColor White " AuthMetadatAUrl: "
+    if ($AuthServer.AuthMetadatAUrl -like "https://accounts.accesscontrol.windows.net/*" -and $AuthServer.TokenIssuingEndpoint -like "*/tokens/OAuth/2" ) {
+        Write-Host -ForegroundColor Green " " $AuthServer.AuthMetadatAUrl
+        $tDAuthServerAuthMetadatAUrlColor = "green"
+    } else {
+        Write-Host -ForegroundColor Red " AuthMetadatAUrl appears not to be correct."
+        Write-Host -ForegroundColor White " Should be  https://accounts.accesscontrol.windows.net/<Cloud Tenant ID>/metadata/json/1"
+        $tDAuthServerAuthMetadatAUrlColor = "red"
     }
-    Write-Host -foregroundcolor White " AuthMetadataUrl: "
-    if ($AuthServer.AuthMetadataUrl -like "https://accounts.accesscontrol.windows.net/*" -and $AuthServer.TokenIssuingEndpoint -like "*/tokens/OAuth/2" ) {
-        Write-Host -foregroundcolor Green " " $AuthServer.AuthMetadataUrl
-        $tdAuthServerAuthMetadataUrlColor = "green"
-    
-    
-    }
-    else {
-        Write-Host -foregroundcolor Red " AuthMetadataUrl appears not to be correct."
-        Write-Host -foregroundcolor White " Should be  https://accounts.accesscontrol.windows.net/<Cloud Tenant ID>/metadata/json/1"
-        $tdAuthServerAuthMetadataUrlColor = "red"
-    
-    
-    }
-    Write-Host -foregroundcolor White " Enabled: "
+    Write-Host -ForegroundColor White " Enabled: "
     if ($AuthServer.Enabled -like "True" ) {
-        Write-Host -foregroundcolor Green " " $AuthServer.Enabled
-        $tdAuthServerEnabledColor = "green"
-    
-    
+        Write-Host -ForegroundColor Green " " $AuthServer.Enabled
+        $tDAuthServerEnabledColor = "green"
+    } else {
+        Write-Host -ForegroundColor Red " Enabled: False "
+        Write-Host -ForegroundColor White " Should be True"
+        $tDAuthServerEnabledColor = "red"
     }
-    else {
-        Write-Host -foregroundcolor Red " Enalbed: False "
-        Write-Host -foregroundcolor White " Should be True"
-        $tdAuthServerEnabledColor = "red"
-   
-   
-    }
-
 
     $Script:html += "
     <tr>
-      <th colspan='2' style='color:white;'>Summary - Get-AuthServer</th>
+      <th ColSpan='2' style='color:white;'>Summary - Get-AuthServer</th>
     </tr>
 
     <tr>
-      <td><b> Get-AuthServer | Select Name,IssuerIdentifier,TokenIssuingEndpoint,AuthMetadataUrl,Enabled</b></td>
+      <td><b> Get-AuthServer | Select Name,IssuerIdentifier,TokenIssuingEndpoint,AuthMetadatAUrl,Enabled</b></td>
       <td>
-        <div><b>IssuerIdentifier:</b><span style='color: $tdAuthServerIssuerIdentifierColor'>$($tdAuthServerIssuerIdentifier)</span></div>
-        <div><b>TokenIssuingEndpoint:</b><span style='color: $tdAuthServerTokenIssuingEndpointColor;'>$($tdAuthServerTokenIssuingEndpoint)</span></div>
-        <div><b>AuthMetadataUrl:</b><span style='color: $tdAuthServerAuthMetadataUrlColor;'>$($tdAuthServerAuthMetadataUrl)</span></div>
-        <div><b>Enabled:</b><span style='color: $tdAuthServerEnabledColor;'>$($tdAuthServerEnabled)</span></div>
+        <div><b>IssuerIdentifier:</b><span style='color: $tDAuthServerIssuerIdentifierColor'>$($tDAuthServerIssuerIdentifier)</span></div>
+        <div><b>TokenIssuingEndpoint:</b><span style='color: $tDAuthServerTokenIssuingEndpointColor;'>$($tDAuthServerTokenIssuingEndpoint)</span></div>
+        <div><b>AuthMetadatAUrl:</b><span style='color: $tDAuthServerAuthMetadatAUrlColor;'>$($tDAuthServerAuthMetadatAUrl)</span></div>
+        <div><b>Enabled:</b><span style='color: $tDAuthServerEnabledColor;'>$($tDAuthServerEnabled)</span></div>
       </td>
     </tr>
   "
 
-    $html | Out-File -FilePath $htmlfile
+    $html | Out-File -FilePath $htmlFile
 }
 
-Function PartnerApplicationCheck {
-    #Write-Host $bar
-    Write-Host -foregroundcolor Green " Get-PartnerApplication |  ?{$_.ApplicationIdentifier -eq '00000002-0000-0ff1-ce00-000000000000'
-    -and $_.Realm -eq ''} | Select Enabled, ApplicationIdentifier, CertificateStrings, AuthMetadataUrl, Realm, UseAuthServer,
+function PartnerApplicationCheck {
+    #Print-DynamicWidthLine
+    Write-Host -ForegroundColor Green " Get-PartnerApplication |  ?{`$_.ApplicationIdentifier -eq '00000002-0000-0ff1-ce00-000000000000'
+    -and `$_.Realm -eq ''} | Select Enabled, ApplicationIdentifier, CertificateStrings, AuthMetadatAUrl, Realm, UseAuthServer,
     AcceptSecurityIdentifierInformation, LinkedAccount, IssuerIdentifier, AppOnlyPermissions, ActAsPermissions, Name"
-    Write-Host $bar
-    $PartnerApplication = Get-PartnerApplication |  Where-Object { $_.ApplicationIdentifier -eq '00000002-0000-0ff1-ce00-000000000000' -and $_.Realm -eq '' } | Select-Object Enabled, ApplicationIdentifier, CertificateStrings, AuthMetadataUrl, Realm, UseAuthServer, AcceptSecurityIdentifierInformation, LinkedAccount, IssuerIdentifier, AppOnlyPermissions, ActAsPermissions, Name
+
+    Print-DynamicWidthLine
+    $PartnerApplication = Get-PartnerApplication | Where-Object { $_.ApplicationIdentifier -eq '00000002-0000-0ff1-ce00-000000000000' -and $_.Realm -eq '' } | Select-Object Enabled, ApplicationIdentifier, CertificateStrings, AuthMetadatAUrl, Realm, UseAuthServer, AcceptSecurityIdentifierInformation, LinkedAccount, IssuerIdentifier, AppOnlyPermissions, ActAsPermissions, Name
     $PartnerApplication
     $tdPartnerApplicationEnabled = $PartnerApplication.Enabled
     $tdPartnerApplicationApplicationIdentifier = $PartnerApplication.ApplicationIdentifier
     $tdPartnerApplicationCertificateStrings = $PartnerApplication.CertificateStrings
-    $tdPartnerApplicationAuthMetadataUrl = $PartnerApplication.AuthMetadataUrl
+    $tdPartnerApplicationAuthMetadatAUrl = $PartnerApplication.AuthMetadatAUrl
     $tdPartnerApplicationRealm = $PartnerApplication.Realm
     $tdPartnerApplicationUseAuthServer = $PartnerApplication.UseAuthServer
     $tdPartnerApplicationAcceptSecurityIdentifierInformation = $PartnerApplication.AcceptSecurityIdentifierInformation
@@ -1484,153 +1469,133 @@ Function PartnerApplicationCheck {
     $tdPartnerApplicationAppOnlyPermissions = $PartnerApplication.AppOnlyPermissions
     $tdPartnerApplicationActAsPermissions = $PartnerApplication.ActAsPermissions
     $tdPartnerApplicationName = $PartnerApplication.Name
-    
-    Write-Host $bar
-    Write-Host -foregroundcolor Green " Summary - Partner Application"
-    Write-Host $bar
-    Write-Host -foregroundcolor White " Enabled: "
+
+    Print-DynamicWidthLine
+    Write-Host -ForegroundColor Green " Summary - Partner Application"
+    Print-DynamicWidthLine
+    Write-Host -ForegroundColor White " Enabled: "
     if ($PartnerApplication.Enabled -like "True" ) {
-        Write-Host -foregroundcolor Green " " $PartnerApplication.Enabled
+        Write-Host -ForegroundColor Green " " $PartnerApplication.Enabled
         $tdPartnerApplicationEnabledColor = "green"
-    
-    }
-    else {
-        Write-Host -foregroundcolor Red " Enabled: False "
-        Write-Host -foregroundcolor White " Should be True"
+    } else {
+        Write-Host -ForegroundColor Red " Enabled: False "
+        Write-Host -ForegroundColor White " Should be True"
         $tdPartnerApplicationEnabledColor = "red"
-    
-    
     }
-    Write-Host -foregroundcolor White " ApplicationIdentifier: "
+    Write-Host -ForegroundColor White " ApplicationIdentifier: "
     if ($PartnerApplication.ApplicationIdentifier -like "00000002-0000-0ff1-ce00-000000000000" ) {
-        Write-Host -foregroundcolor Green " " $PartnerApplication.ApplicationIdentifier
+        Write-Host -ForegroundColor Green " " $PartnerApplication.ApplicationIdentifier
         $tdPartnerApplicationApplicationIdentifierColor = "green"
-    
-    
-    }
-    else {
-        Write-Host -foregroundcolor Red " ApplicationIdentifier does not appear to be correct"
-        Write-Host -foregroundcolor White " Should be 00000002-0000-0ff1-ce00-000000000000"
+    } else {
+        Write-Host -ForegroundColor Red " ApplicationIdentifier does not appear to be correct"
+        Write-Host -ForegroundColor White " Should be 00000002-0000-0ff1-ce00-000000000000"
         $tdPartnerApplicationApplicationIdentifierColor = "red"
-    
-    
     }
-    Write-Host -foregroundcolor White " AuthMetadataUrl: "
-    if ([string]::IsNullOrWhitespace( $PartnerApplication.AuthMetadataUrl)) {
-        Write-Host -foregroundcolor Green "  Blank"
-        $tdPartnerApplicationAuthMetadataUrlColor = "green"
-        $tdPartnerApplicationAuthMetadataUrl = "Blank"    
-    
+    Write-Host -ForegroundColor White " AuthMetadatAUrl: "
+    if ([string]::IsNullOrWhitespace( $PartnerApplication.AuthMetadatAUrl)) {
+        Write-Host -ForegroundColor Green "  Blank"
+        $tdPartnerApplicationAuthMetadatAUrlColor = "green"
+        $tdPartnerApplicationAuthMetadatAUrl = "Blank"
+    } else {
+        Write-Host -ForegroundColor Red " AuthMetadatAUrl does not seem to be correct"
+        Write-Host -ForegroundColor White " Should be Blank"
+        $tdPartnerApplicationAuthMetadatAUrlColor = "red"
+        $tdPartnerApplicationAuthMetadatAUrl = " Should be Blank"
     }
-    else {
-        Write-Host -foregroundcolor Red " AuthMetadataUrl does not aooear correct"
-        Write-Host -foregroundcolor White " Should be Blank"
-        $tdPartnerApplicationAuthMetadataUrlColor = "red"
-        $tdPartnerApplicationAuthMetadataUrl = " Should be Blank"
-    }
-    Write-Host -foregroundcolor White " Realm: "
+    Write-Host -ForegroundColor White " Realm: "
     if ([string]::IsNullOrWhitespace( $PartnerApplication.Realm)) {
-        Write-Host -foregroundcolor Green "  Blank"
+        Write-Host -ForegroundColor Green "  Blank"
         $tdPartnerApplicationRealmColor = "green"
         $tdPartnerApplicationRealm = "Blank"
-    
-    }
-    else {
-        Write-Host -foregroundcolor Red "  Realm does not appear to be correct"
-        Write-Host -foregroundcolor White " Should be Blank"
+    } else {
+        Write-Host -ForegroundColor Red "  Realm does not seem to be correct"
+        Write-Host -ForegroundColor White " Should be Blank"
         $tdPartnerApplicationRealmColor = "Red"
         $tdPartnerApplicationRealm = "Should be Blank"
-    
     }
-    Write-Host -foregroundcolor White " LinkedAccount: "
+    Write-Host -ForegroundColor White " LinkedAccount: "
     if ($PartnerApplication.LinkedAccount -like "$exchangeOnPremDomain/Users/Exchange Online-ApplicationAccount" -or $PartnerApplication.LinkedAccount -like "$exchangeOnPremLocalDomain/Users/Exchange Online-ApplicationAccount"  ) {
-        Write-Host -foregroundcolor Green " " $PartnerApplication.LinkedAccount
+        Write-Host -ForegroundColor Green " " $PartnerApplication.LinkedAccount
         $tdPartnerApplicationLinkedAccountColor = "green"
-    
-    }
-    else {
-        Write-Host -foregroundcolor Red "  LinkedAccount value does not appear to be correct"
-        Write-Host -foregroundcolor White "  Should be $exchangeOnPremLocalDomain/Users/Exchange Online-ApplicationAccount"
-        Write-Host "  If you value is empty, set it to correspond to the Exchange Online-ApplicationAccount which is located at the root of Users container in AD. After you make the change, reboot the servers."
+    } else {
+        Write-Host -ForegroundColor Red "  LinkedAccount value does not appear to be correct"
+        Write-Host -ForegroundColor White "  Should be $exchangeOnPremLocalDomain/Users/Exchange Online-ApplicationAccount"
+        Write-Host "  If you value is empty, set it to correspond to the Exchange Online-ApplicationAccount which is located at the root of Users container in AD. After you make the change, reboot the Servers."
         Write-Host "  Example: contoso.com/Users/Exchange Online-ApplicationAccount"
         $tdPartnerApplicationLinkedAccountColor = "red"
-        $tdPartnerApplicationLinkedAccount 
+        $tdPartnerApplicationLinkedAccount
     }
-
 
     $Script:html += "
     <tr>
-      <th colspan='2' style='color:white;'>Summary - Get-PartnerApplication</th>
+      <th ColSpan='2' style='color:white;'>Summary - Get-PartnerApplication</th>
     </tr>
     <tr>
-      <td><b> Get-PartnerApplication |  ?{$_.ApplicationIdentifier -eq '00000002-0000-0ff1-ce00-000000000000'
-    -and $_.Realm -eq ''} | Select Enabled, ApplicationIdentifier, CertificateStrings, AuthMetadataUrl, Realm, UseAuthServer,
+      <td><b> Get-PartnerApplication |  ?{`$_.ApplicationIdentifier -eq '00000002-0000-0ff1-ce00-000000000000'
+    -and `$_.Realm -eq ''} | Select Enabled, ApplicationIdentifier, CertificateStrings, AuthMetadatAUrl, Realm, UseAuthServer,
     AcceptSecurityIdentifierInformation, LinkedAccount, IssuerIdentifier, AppOnlyPermissions, ActAsPermissions, Name</b></td>
       <td>
         <div><b>Enabled:</b><span style='color: $tdPartnerApplicationEnabledColor'>$($tdPartnerApplicationEnabled)</span></div>
         <div><b>ApplicationIdentifier:</b><span style='color: $tdPartnerApplicationApplicationIdentifierColor;'>$($tdPartnerApplicationApplicationIdentifier)</span></div>
         <div><b>CertificateStrings:</b><span style='color: $tdPartnerApplicationCertificateStringsColor;'>$($tdPartnerApplicationCertificateStrings)</span></div>
-        <div><b>AuthMetadataUrl:</b><span style='color: $tdPartnerApplicationAuthMetadataUrlColor;'>$($tdPartnerApplicationAuthMetadataUrl)</span></div>
+        <div><b>AuthMetadatAUrl:</b><span style='color: $tdPartnerApplicationAuthMetadatAUrlColor;'>$($tdPartnerApplicationAuthMetadatAUrl)</span></div>
         <div><b>Realm:</b><span style='color: $tdPartnerApplicationRealmColor'>$($tdPartnerApplicationRealm)</span></div>
         <div><b>LinkedAccount:</b><span style='color: $tdPartnerApplicationLinkedAccountColor;'>$($tdPartnerApplicationLinkedAccount)</span></div>
         <div><b>IssuerIdentifier:</b><span style='color: $tdPartnerApplicationEnabledColor'>$($tdPartnerApplicationEnabled)</span></div>
         <div><b>AppOnlyPermissions:</b><span style='color: $tdPartnerApplicationApplicationIdentifierColor;'>$($tdPartnerApplicationApplicationIdentifier)</span></div>
         <div><b>ActAsPermissions:</b><span style='color: $tdPartnerApplicationCertificateStringsColor;'>$($tdPartnerApplicationCertificateStrings)</span></div>
-        <div><b>Name:</b><span style='color: $tdPartnerApplicationAuthMetadataUrlColor;'>$($tdPartnerApplicationAuthMetadataUrl)</span></div>
+        <div><b>Name:</b><span style='color: $tdPartnerApplicationAuthMetadatAUrlColor;'>$($tdPartnerApplicationAuthMetadatAUrl)</span></div>
 
       </td>
     </tr>
   "
 
-    $html | Out-File -FilePath $htmlfile
+    $html | Out-File -FilePath $htmlFile
 }
 
-Function ApplicationAccounCheck {
-    #Write-Host $bar
-    Write-Host -foregroundcolor Green " Get-user '$exchangeOnPremLocalDomain/Users/Exchange Online-ApplicationAccount' | Select Name, RecipientType, RecipientTypeDetails, UserAccountControl"
-    Write-Host $bar
-    $ApplicationAccount = Get-user "$exchangeOnPremLocalDomain/Users/Exchange Online-ApplicationAccount"  | Select-Object Name, RecipientType, RecipientTypeDetails, UserAccountControl
+function ApplicationAccountCheck {
+    #Print-DynamicWidthLine
+    Write-Host -ForegroundColor Green " Get-user '$exchangeOnPremLocalDomain/Users/Exchange Online-ApplicationAccount' | Select Name, RecipientType, RecipientTypeDetails, UserAccountControl"
+    Print-DynamicWidthLine
+    $ApplicationAccount = Get-user "$exchangeOnPremLocalDomain/Users/Exchange Online-ApplicationAccount" | Select-Object Name, RecipientType, RecipientTypeDetails, UserAccountControl
     $ApplicationAccount
     $tdApplicationAccountRecipientType = $ApplicationAccount.RecipientType
     $tdApplicationAccountRecipientTypeDetails = $ApplicationAccount.RecipientTypeDetails
     $tdApplicationAccountUserAccountControl = $ApplicationAccount.UserAccountControl
-    Write-Host $bar
-    Write-Host -foregroundcolor Green " Summary - Application Account"
-    Write-Host $bar
-    Write-Host -foregroundcolor White " RecipientType: "
+    Print-DynamicWidthLine
+    Write-Host -ForegroundColor Green " Summary - Application Account"
+    Print-DynamicWidthLine
+    Write-Host -ForegroundColor White " RecipientType: "
     if ($ApplicationAccount.RecipientType -like "User" ) {
-        Write-Host -foregroundcolor Green " " $ApplicationAccount.RecipientType
+        Write-Host -ForegroundColor Green " " $ApplicationAccount.RecipientType
         $tdApplicationAccountRecipientTypeColor = "green"
-    }
-    else {
-        Write-Host -foregroundcolor Red " RecipientType value is $ApplicationAccount.RecipientType "
-        Write-Host -foregroundcolor White " Should be User"
+    } else {
+        Write-Host -ForegroundColor Red " RecipientType value is $ApplicationAccount.RecipientType "
+        Write-Host -ForegroundColor White " Should be User"
         $tdApplicationAccountRecipientTypeColor = "red"
     }
-    Write-Host -foregroundcolor White " RecipientTypeDetails: "
+    Write-Host -ForegroundColor White " RecipientTypeDetails: "
     if ($ApplicationAccount.RecipientTypeDetails -like "LinkedUser" ) {
-        Write-Host -foregroundcolor Green " " $ApplicationAccount.RecipientTypeDetails
+        Write-Host -ForegroundColor Green " " $ApplicationAccount.RecipientTypeDetails
         $tdApplicationAccountRecipientTypeDetailsColor = "green"
-    }
-    else {
-        Write-Host -foregroundcolor Red " RecipientTypeDetails value is $ApplicationAccount.RecipientTypeDetails"
-        Write-Host -foregroundcolor White " Should be LinkedUser"
+    } else {
+        Write-Host -ForegroundColor Red " RecipientTypeDetails value is $ApplicationAccount.RecipientTypeDetails"
+        Write-Host -ForegroundColor White " Should be LinkedUser"
         $tdApplicationAccountRecipientTypeDetailsColor = "red"
     }
-    Write-Host -foregroundcolor White " UserAccountControl: "
+    Write-Host -ForegroundColor White " UserAccountControl: "
     if ($ApplicationAccount.UserAccountControl -like "AccountDisabled, PasswordNotRequired, NormalAccount" ) {
-        Write-Host -foregroundcolor Green " " $ApplicationAccount.UserAccountControl
+        Write-Host -ForegroundColor Green " " $ApplicationAccount.UserAccountControl
         $tdApplicationAccountUserAccountControlColor = "green"
-    }
-    else {
-        Write-Host -foregroundcolor Red " UserAccountControl value does not seem correct"
-        Write-Host -foregroundcolor White " Should be AccountDisabled, PasswordNotRequired, NormalAccount"
+    } else {
+        Write-Host -ForegroundColor Red " UserAccountControl value does not seem correct"
+        Write-Host -ForegroundColor White " Should be AccountDisabled, PasswordNotRequired, NormalAccount"
         $tdApplicationAccountUserAccountControlColor = "red"
     }
-     
+
     $Script:html += "
       <tr>
-      <th colspan='2' style='color:white;'>Summary - Get-User ApplicationAccount</th>
+      <th ColSpan='2' style='color:white;'>Summary - Get-User ApplicationAccount</th>
     </tr>
     <tr>
       <td><b>  Get-user '$exchangeOnPremLocalDomain/Users/Exchange Online-ApplicationAccount' | Select Name, RecipientType, RecipientTypeDetails, UserAccountControl':</b></td>
@@ -1638,129 +1603,95 @@ Function ApplicationAccounCheck {
         <div><b>RecipientType:</b><span style='color: $tdApplicationAccountRecipientTypeColor'>$($tdApplicationAccountRecipientType)</span></div>
         <div><b>RecipientTypeDetails:</b><span style='color: $tdApplicationAccountRecipientTypeDetailsColor;'>$($tdApplicationAccountRecipientTypeDetails)</span></div>
         <div><b>UserAccountControl:</b><span style='color: $tdApplicationAccountUserAccountControlColor;'>$($tdApplicationAccountUserAccountControl)</span></div>
-        
+
       </td>
     </tr>
   "
 
-    $html | Out-File -FilePath $htmlfile
+    $html | Out-File -FilePath $htmlFile
 }
 
-Function ManagementRoleAssignmentCheck {
-    Write-Host -foregroundcolor Green " Get-ManagementRoleAssignment -RoleAssignee Exchange Online-ApplicationAccount | Select Name,Role -AutoSize"
-    Write-Host $bar
-    $ManagementRoleAssignment = Get-ManagementRoleAssignment -RoleAssignee "Exchange Online-ApplicationAccount"  | Select-Object Name, Role
+function ManagementRoleAssignmentCheck {
+    Write-Host -ForegroundColor Green " Get-ManagementRoleAssignment -RoleAssignee Exchange Online-ApplicationAccount | Select Name,Role -AutoSize"
+    Print-DynamicWidthLine
+    $ManagementRoleAssignment = Get-ManagementRoleAssignment -RoleAssignee "Exchange Online-ApplicationAccount" | Select-Object Name, Role
     $M = $ManagementRoleAssignment | Out-String
     $M
-   
 
-    Write-Host $bar
-    Write-Host -foregroundcolor Green " Summary - Management Role Assignment for the Exchange Online-ApplicationAccount"
-    Write-Host $bar
-    Write-Host -foregroundcolor White " Role: "
+    Print-DynamicWidthLine
+    Write-Host -ForegroundColor Green " Summary - Management Role Assignment for the Exchange Online-ApplicationAccount"
+    Print-DynamicWidthLine
+    Write-Host -ForegroundColor White " Role: "
     if ($ManagementRoleAssignment.Role -like "*UserApplication*" ) {
-        Write-Host -foregroundcolor Green "  UserApplication Role Assigned"
+        Write-Host -ForegroundColor Green "  UserApplication Role Assigned"
         $tdManagementRoleAssignmentUserApplication = " UserApplication Role Assigned"
         $tdManagementRoleAssignmentUserApplicationColor = "green"
-    }
-    else {
-        Write-Host -foregroundcolor Red "  UserApplication Role not present for the Exchange Online-ApplicationAccount"
+    } else {
+        Write-Host -ForegroundColor Red "  UserApplication Role not present for the Exchange Online-ApplicationAccount"
         $tdManagementRoleAssignmentUserApplication = " UserApplication Role not present"
         $tdManagementRoleAssignmentUserApplicationColor = "red"
-    
     }
     if ($ManagementRoleAssignment.Role -like "*ArchiveApplication*" ) {
-        Write-Host -foregroundcolor Green "  ArchiveApplication Role Assigned"
+        Write-Host -ForegroundColor Green "  ArchiveApplication Role Assigned"
         $tdManagementRoleAssignmentArchiveApplication = " ArchiveApplication Role Assigned"
         $tdManagementRoleAssignmentArchiveApplicationColor = "green"
-    
-    }
-    else {
-        Write-Host -foregroundcolor Red "  ArchiveApplication Role not present for the Exchange Online-ApplicationAccount"
+    } else {
+        Write-Host -ForegroundColor Red "  ArchiveApplication Role not present for the Exchange Online-ApplicationAccount"
         $tdManagementRoleAssignmentArchiveApplication = " ArchiveApplication Role not Assigned"
         $tdManagementRoleAssignmentArchiveApplicationColor = "red"
-    
     }
     if ($ManagementRoleAssignment.Role -like "*LegalHoldApplication*" ) {
-        Write-Host -foregroundcolor Green "  LegalHoldApplication Role Assigned"
+        Write-Host -ForegroundColor Green "  LegalHoldApplication Role Assigned"
         $tdManagementRoleAssignmentLegalHoldApplication = " LegalHoldApplication Role Assigned"
         $tdManagementRoleAssignmentLegalHoldApplicationColor = "green"
-    
-    }
-    else {
-        Write-Host -foregroundcolor Red "  LegalHoldApplication Role not present for the Exchange Online-ApplicationAccount"
+    } else {
+        Write-Host -ForegroundColor Red "  LegalHoldApplication Role not present for the Exchange Online-ApplicationAccount"
         $tdManagementRoleAssignmentLegalHoldApplication = " LegalHoldApplication Role Assigned"
         $tdManagementRoleAssignmentLegalHoldApplicationColor = "green"
-    
     }
     if ($ManagementRoleAssignment.Role -like "*Mailbox Search*" ) {
-        Write-Host -foregroundcolor Green "  Mailbox Search Role Assigned"
+        Write-Host -ForegroundColor Green "  Mailbox Search Role Assigned"
         $tdManagementRoleAssignmentMailboxSearch = " Mailbox Search Role Assigned"
         $tdManagementRoleAssignmentMailboxSearchColor = "green"
-    
-    }
-    else {
-        Write-Host -foregroundcolor Red "  Mailbox Search Role not present for the Exchange Online-ApplicationAccount"
+    } else {
+        Write-Host -ForegroundColor Red "  Mailbox Search Role not present for the Exchange Online-ApplicationAccount"
         $tdManagementRoleAssignmentMailboxSearch = " Mailbox Search Role Not Assigned"
         $tdManagementRoleAssignmentMailboxSearchColor = "red"
-    
-    
     }
     if ($ManagementRoleAssignment.Role -like "*TeamMailboxLifecycleApplication*" ) {
-        Write-Host -foregroundcolor Green "  TeamMailboxLifecycleApplication Role Assigned"
+        Write-Host -ForegroundColor Green "  TeamMailboxLifecycleApplication Role Assigned"
         $tdManagementRoleAssignmentTeamMailboxLifecycleApplication = " TeamMailboxLifecycleApplication Role Assigned"
         $tdManagementRoleAssignmentTeamMailboxLifecycleApplicationColor = "green"
-    
-    
-    }
-    else {
-        Write-Host -foregroundcolor Red "  TeamMailboxLifecycleApplication Role not present for the Exchange Online-ApplicationAccount"
+    } else {
+        Write-Host -ForegroundColor Red "  TeamMailboxLifecycleApplication Role not present for the Exchange Online-ApplicationAccount"
         $tdManagementRoleAssignmentTeamMailboxLifecycleApplication = " TeamMailboxLifecycleApplication Role Not Assigned"
         $tdManagementRoleAssignmentTeamMailboxLifecycleApplicationColor = "red"
-    
-    
-    
     }
     if ($ManagementRoleAssignment.Role -like "*MailboxSearchApplication*" ) {
-        Write-Host -foregroundcolor Green "  MailboxSearchApplication Role Assigned"
+        Write-Host -ForegroundColor Green "  MailboxSearchApplication Role Assigned"
         $tdManagementRoleMailboxSearchApplication = " MailboxSearchApplication Role Assigned"
         $tdManagementRoleMailboxSearchApplicationColor = "green"
-    
-    
-    
-    }
-    else {
-        Write-Host -foregroundcolor Red "  MailboxSearchApplication Role not present for the Exchange Online-ApplicationAccount"
+    } else {
+        Write-Host -ForegroundColor Red "  MailboxSearchApplication Role not present for the Exchange Online-ApplicationAccount"
         $tdManagementRoleMailboxSearchApplication = " MailboxSearchApplication Role Not Assigned"
         $tdManagementRoleMailboxSearchApplicationColor = "red"
-    
-    
     }
     if ($ManagementRoleAssignment.Role -like "*MeetingGraphApplication*" ) {
-        Write-Host -foregroundcolor Green "  MeetingGraphApplication Role Assigned"
+        Write-Host -ForegroundColor Green "  MeetingGraphApplication Role Assigned"
         $tdManagementRoleMeetingGraphApplication = " MeetingGraphApplication Role Assigned"
         $tdManagementRoleMeetingGraphApplicationColor = "green"
-        
-    
-    }
-    else {
-        Write-Host -foregroundcolor Red "  MeetingGraphApplication Role not present for the Exchange Online-ApplicationAccount"
+    } else {
+        Write-Host -ForegroundColor Red "  MeetingGraphApplication Role not present for the Exchange Online-ApplicationAccount"
         $tdManagementRoleMeetingGraphApplication = " MeetingGraphApplication Role Not Assigned"
         $tdManagementRoleMeetingGraphApplicationColor = "red"
-        
     }
 
-     
-
-      
-              
     $tdManagementRoleMeetingGraphApplication = " MailboxSearchApplication Role Assigned"
     $tdManagementRoleMeetingGraphApplicationColor = "green"
 
-    
     $Script:html += "
       <tr>
-      <th colspan='2' style='color:white;'>Summary - Get-ManagementRoleAssignment</th>
+      <th ColSpan='2' style='color:white;'>Summary - Get-ManagementRoleAssignment</th>
     </tr>
     <tr>
       <td><b>  Get-ManagementRoleAssignment -RoleAssignee Exchange Online-ApplicationAccount | Select Name,Role</b></td>
@@ -1770,196 +1701,158 @@ Function ManagementRoleAssignmentCheck {
         <div><b>LegalHoldApplication Role:</b><span style='color: $tdManagementRoleAssignmentLegalHoldApplicationColor;'>$($tdManagementRoleAssignmentLegalHoldApplication)</span></div>
         <div><b>Mailbox Search Role:</b><span style='color: $tdManagementRoleAssignmentMailboxSearchColor'>$($tdManagementRoleAssignmentMailboxSearch)</span></div>
         <div><b>TeamMailboxLifecycleApplication Role:</b><span style='color: $tdManagementRoleAssignmentTeamMailboxLifecycleApplicationColor;'>$($tdManagementRoleAssignmentTeamMailboxLifecycleApplication)</span></div>
-        <div><b>MailboxSearchApplication Rolel:</b><span style='color: $tdManagementRoleMailboxSearchApplicationColor;'>$($tdManagementRoleMailboxSearchApplication)</span></div>
+        <div><b>MailboxSearchApplication Role:</b><span style='color: $tdManagementRoleMailboxSearchApplicationColor;'>$($tdManagementRoleMailboxSearchApplication)</span></div>
         <div><b>MeetingGraphApplication Role:</b><span style='color: $tdManagementRoleMeetingGraphApplicationColor;'>$($tdManagementRoleMeetingGraphApplication)</span></div>
-        
+
       </td>
     </tr>
   "
 
-    $html | Out-File -FilePath $htmlfile
-
+    $html | Out-File -FilePath $htmlFile
 }
 
-Function AuthConfigCheck {
-    Write-Host -foregroundcolor Green " Get-AuthConfig | Select *Thumbprint, ServiceName, Realm, Name"
-    Write-Host $bar
+function AuthConfigCheck {
+    Write-Host -ForegroundColor Green " Get-AuthConfig | Select *Thumbprint, ServiceName, Realm, Name"
+    Print-DynamicWidthLine
     $AuthConfig = Get-AuthConfig | Select-Object *Thumbprint, ServiceName, Realm, Name
     $AC = $AuthConfig | Format-List
     $AC
-    
-    $tdAuthConfigName = $AuthConfig.Name
-    
 
+    $tDAuthConfigName = $AuthConfig.Name
 
-    Write-Host $bar
-    Write-Host -foregroundcolor Green " Summary - Auth Config"
-    Write-Host $bar
+    Print-DynamicWidthLine
+    Write-Host -ForegroundColor Green " Summary - Auth Config"
+    Print-DynamicWidthLine
     if (![string]::IsNullOrWhitespace($AuthConfig.CurrentCertificateThumbprint)) {
-        Write-HOst " Thumbprint: "$AuthConfig.CurrentCertificateThumbprint
-        Write-Host -foregroundcolor Green " Certificate is Assigned"
-        $tdAuthConfigCurrentCertificateThumbprint = $AuthConfig.CurrentCertificateThumbprint
-        $tdAuthConfigCurrentCertificateThumbprintColor = "green"
-    }
-    else {
-        Write-HOst " Thumbprint: "$AuthConfig.CurrentCertificateThumbprint
-        Write-Host -foregroundcolor Red " No valid certificate Assigned "
-        $tdAuthConfigCurrentCertificateThumbprintColor = "red"
-        $tdAuthConfigCurrentCertificateThumbprint = "$AuthConfig.CurrentCertificateThumbprint - No valid certificate Assigned "
+        Write-Host " Thumbprint: "$AuthConfig.CurrentCertificateThumbprint
+        Write-Host -ForegroundColor Green " Certificate is Assigned"
+        $tDAuthConfigCurrentCertificateThumbprint = $AuthConfig.CurrentCertificateThumbprint
+        $tDAuthConfigCurrentCertificateThumbprintColor = "green"
+    } else {
+        Write-Host " Thumbprint: "$AuthConfig.CurrentCertificateThumbprint
+        Write-Host -ForegroundColor Red " No valid certificate Assigned "
+        $tDAuthConfigCurrentCertificateThumbprintColor = "red"
+        $tDAuthConfigCurrentCertificateThumbprint = "$AuthConfig.CurrentCertificateThumbprint - No valid certificate Assigned "
     }
     if ($AuthConfig.ServiceName -like "00000002-0000-0ff1-ce00-000000000000" ) {
-        Write-HOst " ServiceName: "$AuthConfig.ServiceName
-        Write-Host -foregroundcolor Green " Service Name Seems correct"
-        $tdAuthConfigServiceNameColor = "green"
-        $tdAuthConfigServiceName = $AuthConfig.ServiceName
-    }
-    else {
-        Write-HOst " ServiceName: "$AuthConfig.ServiceName
-        Write-Host -foregroundcolor Red " Service Name does not Seems correct. Should be 00000002-0000-0ff1-ce00-000000000000"
-        $tdAuthConfigServiceNameColor = "red"
-        $tdAuthConfigServiceName = "$AuthConfig.ServiceName  Should be 00000002-0000-0ff1-ce00-000000000000"
+        Write-Host " ServiceName: "$AuthConfig.ServiceName
+        Write-Host -ForegroundColor Green " Service Name Seems correct"
+        $tDAuthConfigServiceNameColor = "green"
+        $tDAuthConfigServiceName = $AuthConfig.ServiceName
+    } else {
+        Write-Host " ServiceName: "$AuthConfig.ServiceName
+        Write-Host -ForegroundColor Red " Service Name does not Seems correct. Should be 00000002-0000-0ff1-ce00-000000000000"
+        $tDAuthConfigServiceNameColor = "red"
+        $tDAuthConfigServiceName = "$AuthConfig.ServiceName  Should be 00000002-0000-0ff1-ce00-000000000000"
     }
     if ([string]::IsNullOrWhitespace($AuthConfig.Realm)) {
-        Write-HOst " Realm: "
-        Write-Host -foregroundcolor Green " Realm is Blank"
-        $tdAuthConfigRealmColor = "green"
-        $tdAuthConfigRealm = " Realm is Blank"
+        Write-Host " Realm: "
+        Write-Host -ForegroundColor Green " Realm is Blank"
+        $tDAuthConfigRealmColor = "green"
+        $tDAuthConfigRealm = " Realm is Blank"
+    } else {
+        Write-Host " Realm: "$AuthConfig.Realm
+        Write-Host -ForegroundColor Red " Realm should be Blank"
+        $tDAuthConfigRealmColor = "red"
+        $tDAuthConfigRealm = "$tDAuthConfig.Realm - Realm should be Blank"
     }
-    else {
-        Write-HOst " Realm: "$AuthConfig.Realm
-        Write-Host -foregroundcolor Red " Realm should be Blank"
-        $tdAuthConfigRealmColor = "red"
-        $tdAuthConfigRealm = "$tdAuthConfig.Realm - Realm should be Blank"
 
-    }
-    
     $Script:html += "
       <tr>
-      <th colspan='2' style='color:white;'>Summary - Get-AuthConfig</th>
+      <th ColSpan='2' style='color:white;'>Summary - Get-AuthConfig</th>
     </tr>
     <tr>
       <td><b>  Get-AuthConfig | Select-Object *Thumbprint, ServiceName, Realm, Name</b></td>
       <td>
-        <div><b>Name:</b><span >$($tdAuthConfigName)</span></div>
-        <div><b>Thumbprint:</b><span style='color: $tdAuthConfigCurrentCertificateThumbprintColor'>$($tdAuthConfigCurrentCertificateThumbprint)</span></div>
-        <div><b>ServiceName:</b><span style='color:$tdAuthConfigServiceNameColor;'>$( $tdAuthConfigServiceName)</span></div>
-        <div><b>Realm:</b><span style='color: $tdAuthConfigRealmColor;'>$($tdAuthConfigRealm)</span></div>
-        
-        
+        <div><b>Name:</b><span >$($tDAuthConfigName)</span></div>
+        <div><b>Thumbprint:</b><span style='color: $tDAuthConfigCurrentCertificateThumbprintColor'>$($tDAuthConfigCurrentCertificateThumbprint)</span></div>
+        <div><b>ServiceName:</b><span style='color:$tDAuthConfigServiceNameColor;'>$( $tDAuthConfigServiceName)</span></div>
+        <div><b>Realm:</b><span style='color: $tDAuthConfigRealmColor;'>$($tDAuthConfigRealm)</span></div>
+
+
       </td>
     </tr>
   "
 
-    $html | Out-File -FilePath $htmlfile
-
-
+    $html | Out-File -FilePath $htmlFile
 }
 
-Function CurrentCertificateThumbprintCheck {
+function CurrentCertificateThumbprintCheck {
     $thumb = Get-AuthConfig | Select-Object CurrentCertificateThumbprint
-    $thumbprint = $thumb.currentcertificateThumbprint
-    #Write-Host $bar
-    Write-Host -ForegroundColor Green " Get-ExchangeCertificate -Thumbprint $thumbprint | Select *"
-    Write-Host $bar
-    $CurrentCertificate = get-exchangecertificate $thumb.CurrentCertificateThumbprint | Select-Object *
+    $thumbprint = $thumb.CurrentCertificateThumbprint
+    #Print-DynamicWidthLine
+    Write-Host -ForegroundColor Green " Get-ExchangeCertificate -Thumbprint $thumbprint | Select FriendlyName, Issuer, Services, NotAfter, Status, HasPrivateKey, Subject, Thumb*"
+    Print-DynamicWidthLine
+    $CurrentCertificate = Get-ExchangeCertificate $thumb.CurrentCertificateThumbprint | Select-Object  FriendlyName, Issuer, Services, NotAfter, Status, HasPrivateKey, Subject, Thumb*
     $CC = $CurrentCertificate | Format-List
     $CC
 
-
-
-
-
-    Write-Host $bar
-    Write-Host -foregroundcolor Green " Summary - Microsoft Exchange Server Auth Certificate"
-    Write-Host $bar
+    Print-DynamicWidthLine
+    Write-Host -ForegroundColor Green " Summary - Microsoft Exchange Server Auth Certificate"
+    Print-DynamicWidthLine
     if ($CurrentCertificate.Issuer -like "CN=Microsoft Exchange Server Auth Certificate" ) {
-        write-Host " Issuer: " $CurrentCertificate.Issuer
-        Write-Host -foregroundcolor Green " Issuer is CN=Microsoft Exchange Server Auth Certificate"
+        Write-Host " Issuer: " $CurrentCertificate.Issuer
+        Write-Host -ForegroundColor Green " Issuer is CN=Microsoft Exchange Server Auth Certificate"
         $tdCurrentCertificateIssuer = "   $($CurrentCertificate.Issuer) - Issuer is CN=Microsoft Exchange Server Auth Certificate"
         $tdCurrentCertificateIssuerColor = "green"
-
-
-    }
-    else {
-        Write-Host -foregroundcolor Red "  Issuer is not CN=Microsoft Exchange Server Auth Certificate"
+    } else {
+        Write-Host -ForegroundColor Red "  Issuer is not CN=Microsoft Exchange Server Auth Certificate"
         $tdCurrentCertificateIssuer = "   $($CurrentCertificate.Issuer) - Issuer is Not CN=Microsoft Exchange Server Auth Certificate"
         $tdCurrentCertificateIssuerColor = "red"
-    
-    
     }
     if ($CurrentCertificate.Services -like "SMTP" ) {
         Write-Host " Services: " $CurrentCertificate.Services
-        Write-Host -foregroundcolor Green "  Certificate enabled for SMTP"
+        Write-Host -ForegroundColor Green "  Certificate enabled for SMTP"
         $tdCurrentCertificateServices = "  $($tdCurrentCertificate.Services) - Certificate enabled for SMTP"
         $tdCurrentCertificateServicesColor = "green"
-    
-    
-    
-    }
-    else {
-        Write-Host -foregroundcolor Red "  Certificate Not enabled for SMTP"
+    } else {
+        Write-Host -ForegroundColor Red "  Certificate Not enabled for SMTP"
         $tdCurrentCertificateServices = "  $($tdCurrentCertificate.Services) - Certificate Not enabled for SMTP"
         $tdCurrentCertificateServicesColor = "red"
-    
-    
     }
     if ($CurrentCertificate.Status -like "Valid" ) {
         Write-Host " Status: " $CurrentCertificate.Status
-        Write-Host -foregroundcolor Green "  Certificate is valid"
+        Write-Host -ForegroundColor Green "  Certificate is valid"
         $tdCurrentCertificateStatus = "  Certificate is valid"
         $tdCurrentCertificateStatusColor = "green"
-    
-    
-    }
-    else {
-        Write-Host -foregroundcolor Red "  Certificate is not Valid"
+    } else {
+        Write-Host -ForegroundColor Red "  Certificate is not Valid"
         $tdCurrentCertificateStatus = "  Certificate is Not Valid"
         $tdCurrentCertificateStatusColor = "red"
-    
-    
-    
     }
     if ($CurrentCertificate.Subject -like "CN=Microsoft Exchange Server Auth Certificate" ) {
         Write-Host " Subject: " $CurrentCertificate.Subject
-        Write-Host -foregroundcolor Green "  Subject is CN=Microsoft Exchange Server Auth Certificate"
+        Write-Host -ForegroundColor Green "  Subject is CN=Microsoft Exchange Server Auth Certificate"
         $tdCurrentCertificateSubject = "  Subject is CN=Microsoft Exchange Server Auth Certificate"
         $tdCurrentCertificateSubjectColor = "green"
-    
-    }
-    else {
-        Write-Host -foregroundcolor Red "  Subject is not CN=Microsoft Exchange Server Auth Certificate"
+    } else {
+        Write-Host -ForegroundColor Red "  Subject is not CN=Microsoft Exchange Server Auth Certificate"
         $tdCurrentCertificateSubject = "  $($CurrentCertificate.Subject) - Subject should be CN=Microsoft Exchange Server Auth Certificate"
         $tdCurrentCertificateSubjectColor = "red"
-    
-    
     }
     Write-Host -ForegroundColor White "`n Checking Exchange Auth Certificate Distribution `n"
-    $CheckAuthCertDistribution = foreach ($name in (get-exchangeserver).name) { Get-Exchangecertificate -Thumbprint (Get-AuthConfig).CurrentCertificateThumbprint -server $name -ErrorAction SilentlyContinue | Select-Object Identity, thumbprint, services, subject }
-    foreach ($serv in $CheckAuthCertDistribution) {
-        $Servername = ($serv -split "\.")[0]
-        Write-Host -ForegroundColor White  "  Server: " $servername
+    $CheckAuthCertDistribution = foreach ($name in (Get-ExchangeServer).name) { Get-ExchangeCertificate -Thumbprint (Get-AuthConfig).CurrentCertificateThumbprint -Server $name -ErrorAction SilentlyContinue | Select-Object Identity, thumbprint, Services, subject }
+    foreach ($Server in $CheckAuthCertDistribution) {
+        $ServerName = ($Server -split "\.")[0]
+        Write-Host -ForegroundColor White  "  Server: " $ServerName
         #Write-Host  "   Thumbprint: " $Thumbprint
-        if ($serv.Thumbprint -like $thumbprint) {
-            Write-Host  "   Thumbprint: "$serv.Thumbprint
-            Write-Host  "   Subject: "$serv.Subject
-            $servIdentity = $serv.Identity
-            $tdCheckAuthCertDistribution = "   <div>Certificate with Thumbprint: $($serv.Thumbprint) Subject: $($serv.Subject) is present in server $servIdentity</div>"
+        if ($Server.Thumbprint -like $thumbprint) {
+            Write-Host  "   Thumbprint: "$Server.Thumbprint
+            Write-Host  "   Subject: "$Server.Subject
+            $ServerIdentity = $Server.Identity
+            $tdCheckAuthCertDistribution = "   <div>Certificate with Thumbprint: $($Server.Thumbprint) Subject: $($Server.Subject) is present in Server $ServerIdentity</div>"
             $tdCheckAuthCertDistributionColor = "green"
-    
-
         }
-        if ($serv.Thumbprint -ne $thumbprint) {
-            Write-Host -foregroundcolor Red "  Auth Certificate seems Not to be present in $Servername"
-            $tdCheckAuthCertDistribution = "   Auth Certificate seems Not to be present in $Servername"
+        if ($Server.Thumbprint -ne $thumbprint) {
+            Write-Host -ForegroundColor Red "  Auth Certificate seems Not to be present in $ServerName"
+            $tdCheckAuthCertDistribution = "   Auth Certificate seems Not to be present in $ServerName"
             $tdCheckAuthCertDistributionColor = "Red"
-        
-        
         }
     }
 
     $Script:html += "
       <tr>
-      <th colspan='2' style='color:white;'>Summary - Get-ExchnageCertificate AuthCertificate</th>
+      <th ColSpan='2' style='color:white;'>Summary - Get-ExchangeCertificate AuthCertificate</th>
     </tr>
     <tr>
       <td><b>  Get-ExchangeCertificate $thumb.CurrentCertificateThumbprint | Select-Object *</b></td>
@@ -1969,721 +1862,587 @@ Function CurrentCertificateThumbprintCheck {
         <div><b>Status:</b><span style='color:$tdCurrentCertificateStatusColor;'>$( $tdCurrentCertificateStatus)</span></div>
         <div><b>Subject:</b><span style='color: $tdCurrentCertificateSubjectColor;'>$($tdCurrentCertificateSubject)</span></div>
         <div><b>Distribution:</b><span style='color: $tdCheckAuthCertDistributionColor;'>$($tdCheckAuthCertDistribution)</span></div>
-        
-        
+
+
       </td>
     </tr>
   "
 
-    $html | Out-File -FilePath $htmlfile
-
-
+    $html | Out-File -FilePath $htmlFile
 }
 
-Function AutoDVirtualDCheckOauth {
-    #Write-Host -foregroundcolor Green " `n On-Prem Autodiscover Virtual Directory `n "
-    Write-Host -foregroundcolor Green " Get-AutodiscoverVirtualDirectory | Select Identity, Name,ExchangeVersion,*authentication*"
-    Write-Host $bar
-    $AutoDiscoveryVirtualDirectoryOAuth = Get-AutodiscoverVirtualDirectory | Select-Object Identity, Name, ExchangeVersion, *authentication*
+function AutoDVirtualDCheckOauth {
+    #Write-Host -ForegroundColor Green " `n On-Prem AutoDiscover Virtual Directory `n "
+    Write-Host -ForegroundColor Green " Get-AutoDiscoverVirtualDirectory | Select Identity, Name,ExchangeVersion,*authentication*"
+    Print-DynamicWidthLine
+    $AutoDiscoveryVirtualDirectoryOAuth = Get-AutoDiscoverVirtualDirectory | Select-Object Identity, Name, ExchangeVersion, *authentication* -ErrorAction SilentlyContinue
     #Check if null or set
     $AD = $AutoDiscoveryVirtualDirectoryOAuth | Format-List
     $AD
     $script:html += "<tr>
-    <th colspan='2' style='color:white;'>Summary - Get-AutodiscoverVirtualDirectory</th>
+    <th ColSpan='2' style='color:white;'>Summary - Get-AutoDiscoverVirtualDirectory</th>
     </tr>
     <tr>
-    <td><b>Get-AutodiscoverVirtualDirectory:</b></td>
+    <td><b>Get-AutoDiscoverVirtualDirectory:</b></td>
     <td>"
-
-
 
     if ($Auth -contains "OAuth") {
     }
-    Write-Host $bar
-    Write-Host -foregroundcolor Green " Summary - Get-AutodiscoverVirtualDirectory"
-    Write-Host $bar
-    Write-Host -foregroundcolor White "  InternalAuthenticationMethods"
+    Print-DynamicWidthLine
+    Write-Host -ForegroundColor Green " Summary - Get-AutoDiscoverVirtualDirectory"
+    Print-DynamicWidthLine
+    Write-Host -ForegroundColor White "  InternalAuthenticationMethods"
     if ($AutoDiscoveryVirtualDirectoryOAuth.InternalAuthenticationMethods -like "*OAuth*") {
         foreach ( $EWS in $AutoDiscoveryVirtualDirectoryOAuth) {
             Write-Host " $($EWS.Identity) "
             Write-Host -ForegroundColor Green "  InternalAuthenticationMethods Include OAuth Authentication Method "
-            
-            $AutodVDIdentity = $EWS.Identity
-            $AutodVDName = $EWS.Name
-            $AutodVDInternalAuthenticationMethods = $EWS.InternalAuthenticationMethods
-            $AutodVDExternalAuthenticationMethods = $EWS.ExternalAuthenticationMethods
-            $AutodVDWSAuthetication = $EWS.WSSecurityAuthentication
-            $AutodVDWSAutheticationColor = "green"
-            $AutodVDWindowsAuthentication = $EWS.WindowsAuthentication
-            $AutodVDOAuthAuthentication = $EWS.OAuthAuthentication
-            if ($AutodVDWindowsAuthentication -eq "True") {
-                $AutodVDWindowsAuthenticationColor = "green"
+
+            $AutoD_VD_Identity = $EWS.Identity
+            $AutoD_VD_Name = $EWS.Name
+            $AutoD_VD_InternalAuthenticationMethods = $EWS.InternalAuthenticationMethods
+            $AutoD_VD_ExternalAuthenticationMethods = $EWS.ExternalAuthenticationMethods
+            $AutoD_VD_WSAuthentication = $EWS.WSSecurityAuthentication
+            $AutoD_VD_WSAuthenticationColor = "green"
+            $AutoD_VD_WindowsAuthentication = $EWS.WindowsAuthentication
+            $AutoD_VD_OAuthAuthentication = $EWS.OAuthAuthentication
+            if ($AutoD_VD_WindowsAuthentication -eq "True") {
+                $AutoD_VD_WindowsAuthenticationColor = "green"
+            } else {
+                $AutoD_VD_WindowsAuthenticationColor = "red"
             }
-            else {
-                $AutodVDWindowsAuthenticationColor = "red"
+            if ($AutoD_VD_OAuthAuthentication -eq "True") {
+                $AutoD_VD_OAuthAuthenticationColor = "green"
+            } else {
+                $AutoD_VD_OAuthAuthenticationColor = "red"
             }
-            if ($AutodVDOAuthAuthentication -eq "True") {
-                $AutodVDOAuthAuthenticationColor = "green"
-            }
-            else {
-                $AutodVDOAuthAuthenticationColor = "red"
-            }
-            $AutodVDInternalNblBypassUrl = $EWS.InternalNblBypassUrl
-            $AutodVDInternalUrl = $EWS.InternalUrl
-            $AutodVDExternalUrl = $EWS.ExternalUrl
+            $AutoD_VD_InternalNblBypassUrl = $EWS.InternalNblBypassUrl
+            $AutoD_VD_InternalUrl = $EWS.InternalUrl
+            $AutoD_VD_ExternalUrl = $EWS.ExternalUrl
             $script:html +=
             " <div><b>============================</b></div>
-            <div><b>Identity:</b> $AutodVDIdentity</div>
-            <div><b>Name:</b> $AutodVDName </div>
-            <div><b>InternalAuthenticationMethods:</b> $AutodVDInternalAuthenticationMethods </div>
-            <div><b>ExternalAuthenticationMethods:</b> $AutodVDExternalAuthenticationMethods </div>
-            <div><b>WSAuthetication:</b> <span style='color:green'>$AutodVDWSAuthetication</span></div>
-            <div><b>WindowsAuthentication:</b> <span style='color:green'>$AutodVDWindowsAuthentication</span></div>
-            <div><b>OAuthAuthentication:</b> <span style='color:$AutodVDOAuthAuthenticationColor'>$AutodVDOAuthAuthentication</span></div>
+            <div><b>Identity:</b> $AutoD_VD_Identity</div>
+            <div><b>Name:</b> $AutoD_VD_Name </div>
+            <div><b>InternalAuthenticationMethods:</b> $AutoD_VD_InternalAuthenticationMethods </div>
+            <div><b>ExternalAuthenticationMethods:</b> $AutoD_VD_ExternalAuthenticationMethods </div>
+            <div><b>WSAuthentication:</b> <span style='color:green'>$AutoD_VD_WSAuthentication</span></div>
+            <div><b>WindowsAuthentication:</b> <span style='color:green'>$AutoD_VD_WindowsAuthentication</span></div>
+            <div><b>OAuthAuthentication:</b> <span style='color:$AutoD_VD_OAuthAuthenticationColor'>$AutoD_VD_OAuthAuthentication</span></div>
             "
-            
         }
-    }
-    else {
-        Write-Host -foregroundcolor Red "  InternalAuthenticationMethods seems not to include OAuth Authentication Method."
-        $AutodVDIdentity = $EWS.Identity
-        $AutodVDName = $EWS.Name
-        $AutodVDInternalAuthenticationMethods = $EWS.InternalAuthenticationMethods
-        $AutodVDExternalAuthenticationMethods = $EWS.ExternalAuthenticationMethods
-        $AutodVDWSAuthetication = $EWS.WSSecurityAuthentication
-        $AutodVDWSAutheticationColor = "green"
-        $AutodVDOAuthAuthentication = $EWS.OAuthAuthentication
-        $AutodVDWindowsAuthentication = $EWS.WindowsAuthentication
-        if ($AutodVDWindowsAuthentication -eq "True") {
-            $AutodVDWindowsAuthenticationColor = "green"
+    } else {
+        Write-Host -ForegroundColor Red "  InternalAuthenticationMethods seems not to include OAuth Authentication Method."
+        $AutoD_VD_Identity = $EWS.Identity
+        $AutoD_VD_Name = $EWS.Name
+        $AutoD_VD_InternalAuthenticationMethods = $EWS.InternalAuthenticationMethods
+        $AutoD_VD_ExternalAuthenticationMethods = $EWS.ExternalAuthenticationMethods
+        $AutoD_VD_WSAuthentication = $EWS.WSSecurityAuthentication
+        $AutoD_VD_WSAuthenticationColor = "green"
+        $AutoD_VD_OAuthAuthentication = $EWS.OAuthAuthentication
+        $AutoD_VD_WindowsAuthentication = $EWS.WindowsAuthentication
+        if ($AutoD_VD_WindowsAuthentication -eq "True") {
+            $AutoD_VD_WindowsAuthenticationColor = "green"
+        } else {
+            $AutoD_VD_WindowsAuthenticationColor = "red"
         }
-        else {
-            $AutodVDWindowsAuthenticationColor = "red"
-        }
-        $AutodVDInternalNblBypassUrl = $EWS.InternalNblBypassUrl
-        $AutodVDInternalUrl = $EWS.InternalUrl
-        $AutodVDExternalUrl = $EWS.ExternalUrl
+        $AutoD_VD_InternalNblBypassUrl = $EWS.InternalNblBypassUrl
+        $AutoD_VD_InternalUrl = $EWS.InternalUrl
+        $AutoD_VD_ExternalUrl = $EWS.ExternalUrl
         $script:html +=
         " <div><b>============================</b></div>
-            <div><b>Identity:</b> $AutodVDIdentity</div>
-            <div><b>Name:</b> $AutodVDName </div>
-            <div><b>InternalAuthenticationMethods:</b> $AutodVDInternalAuthenticationMethods </div>
-            <div><b>ExternalAuthenticationMethods:</b> $AutodVDExternalAuthenticationMethods </div>
-            <div><b>WSAuthetication:</b> <span style='color:red'>$AutodVDWSAuthetication</span></div>
-            <div><b>WindowsAuthentication:</b> <span style='color:$AutodVDWindowsAuthenticationColor'>$AutodVDWindowsAuthentication</span></div>
-            <div><b>OAuthAuthentication:</b> <span style='color:$AutodVDOAuthAuthenticationColor'>$AutodVDOAuthAuthentication</span></div>
+            <div><b>Identity:</b> $AutoD_VD_Identity</div>
+            <div><b>Name:</b> $AutoD_VD_Name </div>
+            <div><b>InternalAuthenticationMethods:</b> $AutoD_VD_InternalAuthenticationMethods </div>
+            <div><b>ExternalAuthenticationMethods:</b> $AutoD_VD_ExternalAuthenticationMethods </div>
+            <div><b>WSAuthentication:</b> <span style='color:red'>$AutoD_VD_WSAuthentication</span></div>
+            <div><b>WindowsAuthentication:</b> <span style='color:$AutoD_VD_WindowsAuthenticationColor'>$AutoD_VD_WindowsAuthentication</span></div>
+            <div><b>OAuthAuthentication:</b> <span style='color:$AutoD_VD_OAuthAuthenticationColor'>$AutoD_VD_OAuthAuthentication</span></div>
             "
-
-
-
     }
-    Write-Host -foregroundcolor White "`n  ExternalAuthenticationMethods"
+    Write-Host -ForegroundColor White "`n  ExternalAuthenticationMethods"
     if ($AutoDiscoveryVirtualDirectoryOAuth.ExternalAuthenticationMethods -like "*OAuth*") {
         foreach ( $EWS in $AutoDiscoveryVirtualDirectoryOAuth) {
             Write-Host " $($EWS.Identity) "
             Write-Host -ForegroundColor Green "  ExternalAuthenticationMethods Include OAuth Authentication Method "
-        
-        
-        
         }
-    }
-    else {
-        Write-Host -foregroundcolor Red "  ExternalAuthenticationMethods seems not to include OAuth Authentication Method."
-        
-        
+    } else {
+        Write-Host -ForegroundColor Red "  ExternalAuthenticationMethods seems not to include OAuth Authentication Method."
     }
     Write-Host -ForegroundColor White "`n  WSSecurityAuthentication:"
     if ($AutoDiscoveryVirtualDirectoryOAuth.WSSecurityAuthentication -like "True") {
-        #Write-Host -foregroundcolor Green " `n  " $Global:AutoDiscoveryVirtualDirectory.WSSecurityAuthentication
-        foreach ( $ADVD in $AutoDiscoveryVirtualDirectoryOAuth) {
-            Write-Host " $($ADVD.Identity) "
-            Write-Host -ForegroundColor Green "  WSSecurityAuthentication: $($ADVD.WSSecurityAuthentication)"
-        
-        
-        
-         
+        #Write-Host -ForegroundColor Green " `n  " $Script:AutoDiscoveryVirtualDirectory.WSSecurityAuthentication
+        foreach ( $AdVd in $AutoDiscoveryVirtualDirectoryOAuth) {
+            Write-Host " $($AdVd.Identity) "
+            Write-Host -ForegroundColor Green "  WSSecurityAuthentication: $($AdVd.WSSecurityAuthentication)"
         }
-    }
-    else {
-        Write-Host -foregroundcolor Red "  WSSecurityAuthentication settings are NOT correct."
-        foreach ( $ADVD in $AutoDiscoveryVirtualDirectoryOAuth) {
-            Write-Host " $($ADVD.Identity) "
-            Write-Host -ForegroundColor Red "  WSSecurityAuthentication: $($ADVD.WSSecurityAuthentication).  WSSecurityAuthentication setting should be True."
-        
-
-
-
+    } else {
+        Write-Host -ForegroundColor Red "  WSSecurityAuthentication settings are NOT correct."
+        foreach ( $AdVd in $AutoDiscoveryVirtualDirectoryOAuth) {
+            Write-Host " $($AdVd.Identity) "
+            Write-Host -ForegroundColor Red "  WSSecurityAuthentication: $($AdVd.WSSecurityAuthentication).  WSSecurityAuthentication setting should be True."
         }
-        Write-Host -foregroundcolor White "  Should be True "
+        Write-Host -ForegroundColor White "  Should be True "
     }
     Write-Host -ForegroundColor White "`n  WindowsAuthentication:"
     if ($AutoDiscoveryVirtualDirectoryOAuth.WindowsAuthentication -eq "True") {
         foreach ( $ser in $AutoDiscoveryVirtualDirectoryOAuth) {
             Write-Host " $($ser.Identity) "
             Write-Host -ForegroundColor Green "  WindowsAuthentication: $($ser.WindowsAuthentication)"
-            
-
-
-        
         }
-    }
-    else {
-        Write-Host -foregroundcolor Red " WindowsAuthentication is NOT correct."
+    } else {
+        Write-Host -ForegroundColor Red " WindowsAuthentication is NOT correct."
         foreach ( $ser in $AutoDiscoveryVirtualDirectoryOAuth) {
             Write-Host " $($ser.Identity)"
             Write-Host -ForegroundColor Red "  WindowsAuthentication: $($ser.WindowsAuthentication)"
-            
-
-
-        
         }
-        Write-Host -foregroundcolor White "  Should be True "
+        Write-Host -ForegroundColor White "  Should be True "
     }
-    #Write-Host $bar
+    #Print-DynamicWidthLine
 
-
-    $html | Out-File -FilePath $htmlfile
-
-
-
+    $html | Out-File -FilePath $htmlFile
 }
 
-Function EWSVirtualDirectoryCheckOAuth {
-    Write-Host -foregroundcolor Green " Get-WebServicesVirtualDirectory | Select Identity,Name,ExchangeVersion,*Authentication*,*url"
-    Write-Host $bar
+function EWSVirtualDirectoryCheckOAuth {
+    Write-Host -ForegroundColor Green " Get-WebServicesVirtualDirectory | Select Identity,Name,ExchangeVersion,*Authentication*,*url"
+    Print-DynamicWidthLine
     $WebServicesVirtualDirectoryOAuth = Get-WebServicesVirtualDirectory | Select-Object Identity, Name, ExchangeVersion, *Authentication*, *url
     $W = $WebServicesVirtualDirectoryOAuth | Format-List
     $W
 
     $script:html += "
     <tr>
-    <th colspan='2' style='color:white;'>Summary - Get-WebServicesVirtualDirectory</th>
+    <th ColSpan='2' style='color:white;'>Summary - Get-WebServicesVirtualDirectory</th>
     </tr>
     <tr>
     <td><b>Get-WebServicesVirtualDirectory | Select Identity,Name,ExchangeVersion,*Authentication*,*url</b></td>
     <td >"
 
-
     if ($Auth -contains "OAuth") {
     }
-    Write-Host $bar
-    Write-Host -foregroundcolor Green " Summary - On-Prem Get-WebServicesVirtualDirectory"
-    Write-Host $bar
-    Write-Host -foregroundcolor White "  InternalAuthenticationMethods"
+    Print-DynamicWidthLine
+    Write-Host -ForegroundColor Green " Summary - On-Prem Get-WebServicesVirtualDirectory"
+    Print-DynamicWidthLine
+    Write-Host -ForegroundColor White "  InternalAuthenticationMethods"
     if ($WebServicesVirtualDirectoryOAuth.InternalAuthenticationMethods -like "*OAuth*") {
         foreach ( $EWS in $WebServicesVirtualDirectoryOAuth) {
             Write-Host " $($EWS.Identity) "
             Write-Host -ForegroundColor Green "  InternalAuthenticationMethods Include OAuth Authentication Method "
 
-
-            $EWSVDIdentity = $EWS.Identity
-            $EWSVDName = $EWS.Name
-            $EWSVDInternalAuthenticationMethods = $EWS.InternalAuthenticationMethods
-            $EWSVDExternalAuthenticationMethods = $EWS.ExternalAuthenticationMethods
-            $EWSVDWSAuthetication = $EWS.WSSecurityAuthentication
-            $EWSVDWSAutheticationColor = "green"
-            $EWSVDWindowsAuthentication = $EWS.WindowsAuthentication
-            $EWSVDOAuthAuthentication = $EWS.OAuthAuthentication
-            if ($EWSVDWindowsAuthentication -eq "True") {
-                $EWSVDWindowsAuthenticationColor = "green"
+            $EwsVDIdentity = $EWS.Identity
+            $EwsVDName = $EWS.Name
+            $EwsVDInternalAuthenticationMethods = $EWS.InternalAuthenticationMethods
+            $EwsVDExternalAuthenticationMethods = $EWS.ExternalAuthenticationMethods
+            $EwsVD_WSAuthentication = $EWS.WSSecurityAuthentication
+            $EwsVD_WSAuthenticationColor = "green"
+            $EwsVDWindowsAuthentication = $EWS.WindowsAuthentication
+            $EwsVDOAuthAuthentication = $EWS.OAuthAuthentication
+            if ($EwsVDWindowsAuthentication -eq "True") {
+                $EwsVDWindowsAuthenticationColor = "green"
+            } else {
+                $EWS_DWindowsAuthenticationColor = "red"
             }
-            else {
-                $EWSDWindowsAuthenticationColor = "red"
+            if ($EwsVDOAuthAuthentication -eq "True") {
+                $EwsVDW_OAuthAuthenticationColor = "green"
+            } else {
+                $EWS_DOAuthAuthenticationColor = "red"
             }
-            if ($EWSVDOAuthAuthentication -eq "True") {
-                $EWSVDWOAuthAuthenticationColor = "green"
-            }
-            else {
-                $EWSDOAuthAuthenticationColor = "red"
-            }
-            $EWSVDInternalNblBypassUrl = $EWS.InternalNblBypassUrl
-            $EWSVDInternalUrl = $EWS.InternalUrl
-            $EWSVDExternalUrl = $EWS.ExternalUrl
+            $EwsVDInternalNblBypassUrl = $EWS.InternalNblBypassUrl
+            $EwsVDInternalUrl = $EWS.InternalUrl
+            $EwsVDExternalUrl = $EWS.ExternalUrl
             $script:html +=
             " <div><b>============================</b></div>
-            <div><b>Identity:</b> $EWSVDIdentity</div>
-            <div><b>Name:</b> $EWSVDName </div>
-            <div><b>InternalAuthenticationMethods:</b> $EWSVDInternalAuthenticationMethods </div>
-            <div><b>ExternalAuthenticationMethods:</b> $EWSVDExternalAuthenticationMethods </div>
-            <div><b>WSAuthetication:</b> <span style='color:green'>$EWSVDWSAuthetication</span></div>
-            <div><b>WindowsAuthentication:</b> <span style='color:$EWSVDWindowsAuthenticationColor'>$EWSVDWindowsAuthentication</span></div>
-            <div><b>OAuthAuthentication:</b> <span style='color:$EWSVDWOAuthAuthenticationColor'>$EWSVDOAuthAuthentication</span></div>
-            <div><b>InternalUrl:</b> $EWSVDInternalUrl </div>
-            <div><b>ExternalUrl:</b> $EWSVDExternalUrl </div>  "
-
-
-
+            <div><b>Identity:</b> $EwsVDIdentity</div>
+            <div><b>Name:</b> $EwsVDName </div>
+            <div><b>InternalAuthenticationMethods:</b> $EwsVDInternalAuthenticationMethods </div>
+            <div><b>ExternalAuthenticationMethods:</b> $EwsVDExternalAuthenticationMethods </div>
+            <div><b>WSAuthentication:</b> <span style='color:green'>$EwsVD_WSAuthentication</span></div>
+            <div><b>WindowsAuthentication:</b> <span style='color:$EwsVDWindowsAuthenticationColor'>$EwsVDWindowsAuthentication</span></div>
+            <div><b>OAuthAuthentication:</b> <span style='color:$EwsVDW_OAuthAuthenticationColor'>$EwsVDOAuthAuthentication</span></div>
+            <div><b>InternalUrl:</b> $EwsVDInternalUrl </div>
+            <div><b>ExternalUrl:</b> $EwsVDExternalUrl </div>  "
         }
-    }
-    else {
-        Write-Host -foregroundcolor Red "  InternalAuthenticationMethods seems not to include OAuth Authentication Method."
-        $EWSVDIdentity = $EWS.Identity
-        $EWSVDName = $EWS.Name
-        $EWSVDInternalAuthenticationMethods = $EWS.InternalAuthenticationMethods
-        $EWSVDExternalAuthenticationMethods = $EWS.ExternalAuthenticationMethods
-        $EWSVDWSAuthetication = $EWS.WSSecurityAuthentication
-        $EWSVDWSAutheticationColor = "green"
-        $EWSVDWindowsAuthentication = $EWS.WindowsAuthentication
-        $EWSVDOAuthAuthentication = $EWS.OAuthAuthentication
-        if ($EWSVDWindowsAuthentication -eq "True") {
-            $EWSVDWindowsAuthenticationColor = "green"
+    } else {
+        Write-Host -ForegroundColor Red "  InternalAuthenticationMethods seems not to include OAuth Authentication Method."
+        $EwsVDIdentity = $EWS.Identity
+        $EwsVDName = $EWS.Name
+        $EwsVDInternalAuthenticationMethods = $EWS.InternalAuthenticationMethods
+        $EwsVDExternalAuthenticationMethods = $EWS.ExternalAuthenticationMethods
+        $EwsVD_WSAuthentication = $EWS.WSSecurityAuthentication
+        $EwsVD_WSAuthenticationColor = "green"
+        $EwsVDWindowsAuthentication = $EWS.WindowsAuthentication
+        $EwsVDOAuthAuthentication = $EWS.OAuthAuthentication
+        if ($EwsVDWindowsAuthentication -eq "True") {
+            $EwsVDWindowsAuthenticationColor = "green"
+        } else {
+            $EWS_DWindowsAuthenticationColor = "red"
         }
-        else {
-            $EWSDWindowsAuthenticationColor = "red"
+        if ($EwsVDOAuthAuthentication -eq "True") {
+            $EwsVDW_OAuthAuthenticationColor = "green"
+        } else {
+            $EWS_DOAuthAuthenticationColor = "red"
         }
-        if ($EWSVDOAuthAuthentication -eq "True") {
-            $EWSVDWOAuthAuthenticationColor = "green"
-        }
-        else {
-            $EWSDOAuthAuthenticationColor = "red"
-        }
-        $EWSVDInternalNblBypassUrl = $EWS.InternalNblBypassUrl
-        $EWSVDInternalUrl = $EWS.InternalUrl
-        $EWSVDExternalUrl = $EWS.ExternalUrl
+        $EwsVDInternalNblBypassUrl = $EWS.InternalNblBypassUrl
+        $EwsVDInternalUrl = $EWS.InternalUrl
+        $EwsVDExternalUrl = $EWS.ExternalUrl
         $script:html +=
         " <div><b>============================</b></div>
-            <div><b>Identity:</b> $EWSVDIdentity</div>
-            <div><b>Name:</b> $EWSVDName </div>
-            <div><b>InternalAuthenticationMethods:</b> $EWSVDInternalAuthenticationMethods </div>
-            <div><b>ExternalAuthenticationMethods:</b> $EWSVDExternalAuthenticationMethods </div>
-            <div><b>WSAuthetication:</b> <span style='color:red'>$EWSVDWSAuthetication</span></div>
-            <div><b>WindowsAuthentication:</b> <span style='color:$EWSVDWindowsAuthenticationColor'>$EWSVDWindowsAuthentication</span></div>
-            <div><b>OAuthAuthentication:</b> <span style='color:$EWSVDWOAuthAuthenticationColor'>$EWSVDOAuthAuthentication</span></div>
-            <div><b>InternalUrl:</b> $EWSVDInternalUrl </div>
-            <div><b>ExternalUrl:</b> $EWSVDExternalUrl </div>  "
-
-
-
+            <div><b>Identity:</b> $EwsVDIdentity</div>
+            <div><b>Name:</b> $EwsVDName </div>
+            <div><b>InternalAuthenticationMethods:</b> $EwsVDInternalAuthenticationMethods </div>
+            <div><b>ExternalAuthenticationMethods:</b> $EwsVDExternalAuthenticationMethods </div>
+            <div><b>WSAuthentication:</b> <span style='color:red'>$EwsVD_WSAuthentication</span></div>
+            <div><b>WindowsAuthentication:</b> <span style='color:$EwsVDWindowsAuthenticationColor'>$EwsVDWindowsAuthentication</span></div>
+            <div><b>OAuthAuthentication:</b> <span style='color:$EwsVDW_OAuthAuthenticationColor'>$EwsVDOAuthAuthentication</span></div>
+            <div><b>InternalUrl:</b> $EwsVDInternalUrl </div>
+            <div><b>ExternalUrl:</b> $EwsVDExternalUrl </div>  "
     }
-    Write-Host -foregroundcolor White "`n  ExternalAuthenticationMethods"
+    Write-Host -ForegroundColor White "`n  ExternalAuthenticationMethods"
     if ($WebServicesVirtualDirectoryOAuth.ExternalAuthenticationMethods -like "*OAuth*") {
         foreach ( $EWS in $WebServicesVirtualDirectoryOAuth) {
             Write-Host " $($EWS.Identity) "
             Write-Host -ForegroundColor Green "  ExternalAuthenticationMethods Include OAuth Authentication Method "
-
-
-
-
         }
-    }
-    else {
-        Write-Host -foregroundcolor Red "  ExternalAuthenticationMethods seems not to include OAuth Authentication Method."
-
-
-
-
-
+    } else {
+        Write-Host -ForegroundColor Red "  ExternalAuthenticationMethods seems not to include OAuth Authentication Method."
     }
     Write-Host -ForegroundColor White "`n  WSSecurityAuthentication:"
     if ($WebServicesVirtualDirectoryOAuth.WSSecurityAuthentication -like "True") {
         foreach ( $EWS in $WebServicesVirtualDirectoryOAuth) {
             Write-Host " $($EWS.Identity) "
             Write-Host -ForegroundColor Green "  WSSecurityAuthentication: $($EWS.WSSecurityAuthentication) "
-
-
-
-
         }
-    }
-    else {
-        Write-Host -foregroundcolor Red "  WSSecurityAuthentication is NOT correct."
+    } else {
+        Write-Host -ForegroundColor Red "  WSSecurityAuthentication is NOT correct."
         foreach ( $EWS in $WebServicesVirtualDirectoryOauth) {
             Write-Host " $($EWS.Identity) "
             Write-Host -ForegroundColor Red "  WSSecurityAuthentication: $($EWS.WSSecurityAuthentication)"
-
-
-
-
         }
-        Write-Host -foregroundcolor White "  Should be True"
+        Write-Host -ForegroundColor White "  Should be True"
     }
-    #Write-Host $bar
+    #Print-DynamicWidthLine
     Write-Host -ForegroundColor White "`n  WindowsAuthentication:"
     if ($WebServicesVirtualDirectoryOauth.WindowsAuthentication -eq "True") {
         foreach ( $ser in $WebServicesVirtualDirectoryOauth) {
             Write-Host " $($ser.Identity) "
             Write-Host -ForegroundColor Green "  WindowsAuthentication: $($ser.WindowsAuthentication)"
-
-
-
         }
-    }
-    else {
-        Write-Host -foregroundcolor Red " WindowsAuthentication is NOT correct."
+    } else {
+        Write-Host -ForegroundColor Red " WindowsAuthentication is NOT correct."
         foreach ( $ser in $WebServicesVirtualDirectoryOauth) {
             Write-Host " $($ser.Identity)"
             Write-Host -ForegroundColor Red "  WindowsAuthentication: $($ser.WindowsAuthentication)"
-
-
-
-
-
         }
-        Write-Host -foregroundcolor White "  Should be True "
+        Write-Host -ForegroundColor White "  Should be True "
     }
-    $html | Out-File -FilePath $htmlfile
+    $html | Out-File -FilePath $htmlFile
 }
 
-Function AvailabilityAddressSpaceCheckOAuth {
-    Write-Host -foregroundcolor Green " Get-AvailabilityAddressSpace $exchangeOnlineDomain | Select ForestName, UserName, UseServiceAccount, AccessMethod, ProxyUrl, Name"
-    Write-Host $bar
-    $AvailabilityAddressSpace = Get-AvailabilityAddressSpace $exchangeOnlineDomain | Select-Object ForestName, UserName, UseServiceAccount, AccessMethod, ProxyUrl, Name
+function AvailabilityAddressSpaceCheckOAuth {
+    Write-Host -ForegroundColor Green " Get-AvailabilityAddressSpace $ExchangeOnlineDomain | Select ForestName, UserName, UseServiceAccount, AccessMethod, ProxyUrl, Name"
+    Print-DynamicWidthLine
+    $AvailabilityAddressSpace = Get-AvailabilityAddressSpace $ExchangeOnlineDomain | Select-Object ForestName, UserName, UseServiceAccount, AccessMethod, ProxyUrl, Name
     $AAS = $AvailabilityAddressSpace | Format-List
     $AAS
     if ($Auth -contains "OAuth") {
     }
-    Write-Host $bar
-    Write-Host -foregroundcolor Green " Summary - On-Prem Availability Address Space"
-    Write-Host $bar
-    Write-Host -foregroundcolor White " ForestName: "
+    Print-DynamicWidthLine
+    Write-Host -ForegroundColor Green " Summary - On-Prem Availability Address Space"
+    Print-DynamicWidthLine
+    Write-Host -ForegroundColor White " ForestName: "
     if ($AvailabilityAddressSpace.ForestName -like $ExchangeOnlineDomain) {
-        Write-Host -foregroundcolor Green " "$AvailabilityAddressSpace.ForestName
+        Write-Host -ForegroundColor Green " "$AvailabilityAddressSpace.ForestName
         $tdAvailabilityAddressSpaceForestName = $AvailabilityAddressSpace.ForestName
         $tdAvailabilityAddressSpaceForestNameColor = "green"
-
-
-    }
-    else {
-        Write-Host -foregroundcolor Red " ForestName is NOT correct. "
-        Write-Host -foregroundcolor White " Should be $ExchaneOnlineDomain "
+    } else {
+        Write-Host -ForegroundColor Red " ForestName is NOT correct. "
+        Write-Host -ForegroundColor White " Should be $ExchangeOnlineDomain "
         $tdAvailabilityAddressSpaceForestName = $AvailabilityAddressSpace.ForestName
         $tdAvailabilityAddressSpaceForestNameColor = "red"
-
-
     }
-    Write-Host -foregroundcolor White " UserName: "
+    Write-Host -ForegroundColor White " UserName: "
     if ($AvailabilityAddressSpace.UserName -like "") {
-        Write-Host -foregroundcolor Green "  Blank "
+        Write-Host -ForegroundColor Green "  Blank "
         $tdAvailabilityAddressSpaceUserName = "  Blank. This is the correct value. "
         $tdAvailabilityAddressSpaceUserNameColor = "green"
-
-
-    }
-    else {
-        Write-Host -foregroundcolor Red "  UserName is NOT correct. "
-        Write-Host -foregroundcolor White "  Should be blank "
+    } else {
+        Write-Host -ForegroundColor Red "  UserName is NOT correct. "
+        Write-Host -ForegroundColor White "  Should be blank "
         $tdAvailabilityAddressSpaceUserName = "  Blank. This is the correct value. "
         $tdAvailabilityAddressSpaceUserNameColor = "red"
-
-
     }
-    Write-Host -foregroundcolor White " UseServiceAccount: "
+    Write-Host -ForegroundColor White " UseServiceAccount: "
     if ($AvailabilityAddressSpace.UseServiceAccount -like "True") {
-        Write-Host -foregroundcolor Green "  True "
+        Write-Host -ForegroundColor Green "  True "
         $tdAvailabilityAddressSpaceUseServiceAccount = $AvailabilityAddressSpace.UseServiceAccount
         $tdAvailabilityAddressSpaceUseServiceAccountColor = "green"
-
-
-
-    }
-    else {
-        Write-Host -foregroundcolor Red "  UseServiceAccount is NOT correct."
-        Write-Host -foregroundcolor White "  Should be True "
+    } else {
+        Write-Host -ForegroundColor Red "  UseServiceAccount is NOT correct."
+        Write-Host -ForegroundColor White "  Should be True "
         $tdAvailabilityAddressSpaceUseServiceAccount = "$($tAvailabilityAddressSpace.UseServiceAccount). Should be True"
         $tdAvailabilityAddressSpaceUseServiceAccountColor = "red"
-
-
-
     }
-    Write-Host -foregroundcolor White " AccessMethod: "
+    Write-Host -ForegroundColor White " AccessMethod: "
     if ($AvailabilityAddressSpace.AccessMethod -like "InternalProxy") {
-        Write-Host -foregroundcolor Green "  InternalProxy "
+        Write-Host -ForegroundColor Green "  InternalProxy "
         $tdAvailabilityAddressSpaceAccessMethod = $AvailabilityAddressSpace.AccessMethod
         $tdAvailabilityAddressSpaceAccessMethodColor = "green"
-    
-    }
-    else {
-        Write-Host -foregroundcolor Red "  AccessMethod is NOT correct. "
-        Write-Host -foregroundcolor White "  Should be InternalProxy "
+    } else {
+        Write-Host -ForegroundColor Red "  AccessMethod is NOT correct. "
+        Write-Host -ForegroundColor White "  Should be InternalProxy "
         $tdAvailabilityAddressSpaceAccessMethod = $AvailabilityAddressSpace.AccessMethod
         $tdAvailabilityAddressSpaceAccessMethodColor = "red"
-    
-    
     }
-    Write-Host -foregroundcolor White " ProxyUrl: "
+    Write-Host -ForegroundColor White " ProxyUrl: "
     if ($AvailabilityAddressSpace.ProxyUrl -like $exchangeOnPremEWS) {
-        Write-Host -foregroundcolor Green " "$AvailabilityAddressSpace.ProxyUrl
+        Write-Host -ForegroundColor Green " "$AvailabilityAddressSpace.ProxyUrl
         $tdAvailabilityAddressSpaceProxyUrl = $AvailabilityAddressSpace.ProxyUrl
         $tdAvailabilityAddressSpaceProxyUrlColor = "green"
-    
-    
-    }
-    else {
-        Write-Host -foregroundcolor Red "  ProxyUrl is NOT correct. "
-        Write-Host -foregroundcolor White "  Should be $exchangeOnPremEWS"
+    } else {
+        Write-Host -ForegroundColor Red "  ProxyUrl is NOT correct. "
+        Write-Host -ForegroundColor White "  Should be $exchangeOnPremEWS"
         $tdAvailabilityAddressSpaceProxyUrl = $AvailabilityAddressSpace.ProxyUrl
         $tdAvailabilityAddressSpaceProxyUrlColor = "red"
-    
     }
-
 
     $Script:html += "
       <tr>
-      <th colspan='2' style='color:white;'>Summary - Get-AvailabilityAddressSpace</th>
+      <th ColSpan='2' style='color:white;'>Summary - Get-AvailabilityAddressSpace</th>
     </tr>
     <tr>
-      <td><b>  Get-AvailabilityAddressSpace $exchangeOnlineDomain | Select ForestName, UserName, UseServiceAccount, AccessMethod, ProxyUrl, Name</b></td>
+      <td><b>  Get-AvailabilityAddressSpace $ExchangeOnlineDomain | Select ForestName, UserName, UseServiceAccount, AccessMethod, ProxyUrl, Name</b></td>
       <td>
         <div><b>AddressSpaceForestName:</b><span style='color: $tdAvailabilityAddressSpaceForestNameColor'>$($tdAvailabilityAddressSpaceForestName)</span></div>
         <div><b>AddressSpaceUserName:</b><span style='color: $tdAvailabilityAddressSpaceUserNameColor'>$($tdAvailabilityAddressSpaceUserName)</span></div>
         <div><b>UseServiceAccount:</b><span style='color:$tdAvailabilityAddressSpaceUseServiceAccountColor;'>$( $tdAvailabilityAddressSpaceUseServiceAccount)</span></div>
         <div><b>AccessMethod:</b><span style='color: $tdAvailabilityAddressSpaceAccessMethodColor;'>$($tdAvailabilityAddressSpaceAccessMethod)</span></div>
         <div><b>ProxyUrl:</b><span style='color: $tdAvailabilityAddressSpaceProxyUrlColor;'>$($tdAvailabilityAddressSpaceProxyUrl)</span></div>
-        
-        
+
+
       </td>
     </tr>
   "
 
-    $html | Out-File -FilePath $htmlfile
+    $html | Out-File -FilePath $htmlFile
 }
 
-Function OAuthConnectivityCheck {
-    DisConnect-ExchangeOnline -Confirm:$False
-    Write-Host -foregroundcolor Green " Test-OAuthConnectivity -Service EWS -TargetUri https://outlook.office365.com/EWS/Exchange.asmx -Mailbox $useronprem"
-    Write-Host $bar
-    #testing OAuth twice as often fails the first time with a cleared cache error
-    $aux = Test-OAuthConnectivity -Service EWS -TargetUri https://outlook.office365.com/EWS/Exchange.asmx -Mailbox $useronprem | fl
+function OAuthConnectivityCheck {
+    Write-Host -ForegroundColor Green " Test-OAuthConnectivity -Service EWS -TarGetUri https://outlook.office365.com/EWS/Exchange.asmx -Mailbox $UserOnPrem"
+    Print-DynamicWidthLine
+    #$OAuthConnectivity = Test-OAuthConnectivity -Service EWS -TarGetUri https://outlook.office365.com/EWS/Exchange.asmx -Mailbox $UserOnPrem | fl
     #$OAuthConnectivity
-    $OAuthConnectivity = Test-OAuthConnectivity -Service EWS -TargetUri https://outlook.office365.com/EWS/Exchange.asmx -Mailbox $useronprem
+    $OAuthConnectivity = Test-OAuthConnectivity -Service EWS -TarGetUri https://outlook.office365.com/EWS/Exchange.asmx -Mailbox $UserOnPrem
     if ($OAuthConnectivity.ResultType -eq 'Success' ) {
         #$OAuthConnectivity.ResultType
-    }
-    else {
+    } else {
         $OAuthConnectivity
     }
     #$OAC = $OAuthConnectivity | Format-List
     #$OAC
-    #$bar
+    #Print-DynamicWidthLine
     #$OAuthConnectivity.Detail.FullId
-    #$bar
+    #Print-DynamicWidthLine
     if ($OAuthConnectivity.Detail.FullId -like '*(401) Unauthorized*') {
-        write-host -ForegroundColor Red "Error: The remote server returned an error: (401) Unauthorized"
+        Write-Host -ForegroundColor Red "Error: The remote Server returned an error: (401) Unauthorized"
         if ($OAuthConnectivity.Detail.FullId -like '*The user specified by the user-context in the token does not exist*') {
-            write-host -ForegroundColor Yellow "The user specified by the user-context in the token does not exist"
-            write-host "Please run Test-OAuthConnectivity with a different Exchange On Premises Mailbox"
+            Write-Host -ForegroundColor Yellow "The user specified by the user-context in the token does not exist"
+            Write-Host "Please run Test-OAuthConnectivity with a different Exchange On Premises Mailbox"
         }
     }
 
-    # Write-Host $bar
+    # Print-DynamicWidthLine
     #$OAuthConnectivity.detail.LocalizedString
-    Write-Host -foregroundcolor Green " Summary - Test OAuth Connectivity"
-    Write-Host $bar
+    Write-Host -ForegroundColor Green " Summary - Test OAuth Connectivity"
+    Print-DynamicWidthLine
     if ($OAuthConnectivity.ResultType -like "Success") {
-        Write-Host -foregroundcolor Green "$($OAuthConnectivity.ResultType). OAuth Test was completed successfully "
+        Write-Host -ForegroundColor Green "$($OAuthConnectivity.ResultType). OAuth Test was completed successfully "
         $OAuthConnectivityResultType = " OAuth Test was completed successfully "
         $OAuthConnectivityResultTypeColor = "green"
-    }
-    else {
-        Write-Host -foregroundcolor Red " $OAuthConnectivity.ResultType - OAuth Test was completed with Error. "
-        Write-Host -foregroundcolor White " Please rerun Test-OAuthConnectivity -Service EWS -TargetUri https://outlook.office365.com/EWS/Exchange.asmx -Mailbox <On Premises Mailbox> | fl to confirm the test failure"
-        $OAuthConnectivityResultType = " <div>OAuth Test was completed with Error.</div><div>Please rerun Test-OAuthConnectivity -Service EWS -TargetUri https://outlook.office365.com/EWS/Exchange.asmx -Mailbox <On Premises Mailbox> | fl to confirm the test failure</div>"
+    } else {
+        Write-Host -ForegroundColor Red " $OAuthConnectivity.ResultType - OAuth Test was completed with Error. "
+        Write-Host -ForegroundColor White " Please rerun Test-OAuthConnectivity -Service EWS -TarGetUri https://outlook.office365.com/EWS/Exchange.asmx -Mailbox <On Premises Mailbox> | fl to confirm the test failure"
+        $OAuthConnectivityResultType = " <div>OAuth Test was completed with Error.</div><div>Please rerun Test-OAuthConnectivity -Service EWS -TarGetUri https://outlook.office365.com/EWS/Exchange.asmx -Mailbox <On Premises Mailbox> | fl to confirm the test failure</div>"
         $OAuthConnectivityResultTypeColor = "red"
-
-
-        
     }
-    #Write-Host -foregroundcolor Green " Note:"
-    #Write-Host -foregroundcolor Yellow " You can ignore the warning 'The SMTP address has no mailbox associated with it'"
-    #Write-Host -foregroundcolor Yellow " when the Test-OAuthConnectivity returns a Success"
-    Write-Host -foregroundcolor Green " Reference: "
-    Write-Host -foregroundcolor White " Configure OAuth authentication between Exchange and Exchange Online organizations"
-    Write-Host -foregroundcolor Yellow " https://technet.microsoft.com/en-us/library/dn594521(v=exchg.150).aspx"
+    #Write-Host -ForegroundColor Green " Note:"
+    #Write-Host -ForegroundColor Yellow " You can ignore the warning 'The SMTP address has no mailbox associated with it'"
+    #Write-Host -ForegroundColor Yellow " when the Test-OAuthConnectivity returns a Success"
+    Write-Host -ForegroundColor Green " Reference: "
+    Write-Host -ForegroundColor White " Configure OAuth authentication between Exchange and Exchange Online organizations"
+    Write-Host -ForegroundColor Yellow " https://technet.microsoft.com/en-us/library/dn594521(v=exchg.150).aspx"
 
     $Script:html += "
       <tr>
-      <th colspan='2' style='color:white;'>Summary - Test-OAuthConnectivity</th>
+      <th ColSpan='2' style='color:white;'>Summary - Test-OAuthConnectivity</th>
     </tr>
     <tr>
-      <td><b>  Test-OAuthConnectivity -Service EWS -TargetUri https://outlook.office365.com/EWS/Exchange.asmx -Mailbox $useronprem | fl</b></td>
+      <td><b>  Test-OAuthConnectivity -Service EWS -TarGetUri https://outlook.office365.com/EWS/Exchange.asmx -Mailbox $UserOnPrem | fl</b></td>
       <td>
         <div><b>Result:</b><span style='color: $OAuthConnectivityResultTypeColor'> $OAuthConnectivityResultType</span></div>
-        
-        
-        
+
+
+
       </td>
     </tr>
   "
 
-    $html | Out-File -FilePath $htmlfile
+    $html | Out-File -FilePath $htmlFile
 }
 
 #endregion
 
 # EXO FUNCTIONS
 
-#region ExoDauthFuntions
+#region ExoDAuthFunctions
 
-Function ExoOrgRelCheck () {
-    Write-Host $bar
-    Write-Host -foregroundcolor Green " Get-OrganizationRelationship  | Where{($_.DomainNames -like $ExchangeOnPremDomain )} | Select Identity,DomainNames,FreeBusy*,Target*,Enabled"
-    Write-Host $bar
+function ExoOrgRelCheck () {
+    Print-DynamicWidthLine
+    Write-Host -ForegroundColor Green " Get-OrganizationRelationship  | Where{($_.DomainNames -like $ExchangeOnPremDomain )} | Select Identity,DomainNames,FreeBusy*,TarGet*,Enabled"
+    Print-DynamicWidthLine
     $ExoOrgRel
-    Write-Host $bar
-    Write-Host  -foregroundcolor Green " Summary - Organization Relationship"
-    Write-Host $bar
+    Print-DynamicWidthLine
+    Write-Host  -ForegroundColor Green " Summary - Organization Relationship"
+    Print-DynamicWidthLine
     Write-Host  " Domain Names:"
-    #Write-Host  " Domain Names:"$exoOrgRel.DmainNames[0]
-    #Write-Host  " Org Rel:"$exoOrgRel
+
     if ($exoOrgRel.DomainNames -like $ExchangeOnPremDomain) {
-        Write-Host -foregroundcolor Green "  Domain Names Include the $ExchangeOnPremDomain Domain"
+        Write-Host -ForegroundColor Green "  Domain Names Include the $ExchangeOnPremDomain Domain"
         $tdEXOOrgRelDomainNames = $exoOrgRel.DomainNames
         $tdEXOOrgRelDomainNamesColor = "green"
-
-    }
-    else {
-        Write-Host -foregroundcolor Red "  Domain Names do Not Include the $ExchangeOnPremDomain Domain"
+    } else {
+        Write-Host -ForegroundColor Red "  Domain Names do Not Include the $ExchangeOnPremDomain Domain"
         $exoOrgRel.DomainNames
 
         $tdEXOOrgRelDomainNames = "$($exoOrgRel.DomainNames) - Domain Names do Not Include the $ExchangeOnPremDomain Domain"
         $tdEXOOrgRelDomainNamesColor = "green"
-
-
     }
     #FreeBusyAccessEnabled
     Write-Host  " FreeBusyAccessEnabled:"
     if ($exoOrgRel.FreeBusyAccessEnabled -like "True" ) {
-        Write-Host -foregroundcolor Green "  FreeBusyAccessEnabled is set to True"
-        $tdExoOrgRelFreeBusyAccessEnabled = "$($exoOrgRel.FreeBusyAccessEnabled)"
-        $tdExoOrgRelFreeBusyAccessEnabledColor = "green" 
-
-
-    }
-    else {
-        Write-Host -foregroundcolor Red "  FreeBusyAccessEnabled : False"
+        Write-Host -ForegroundColor Green "  FreeBusyAccessEnabled is set to True"
+        $tdEXOOrgRelFreeBusyAccessEnabled = "$($exoOrgRel.FreeBusyAccessEnabled)"
+        $tdEXOOrgRelFreeBusyAccessEnabledColor = "green"
+    } else {
+        Write-Host -ForegroundColor Red "  FreeBusyAccessEnabled : False"
         #$countOrgRelIssues++
-        $tdExoOrgRelFreeBusyAccessEnabled = "$($exoOrgRel.FreeBusyAccessEnabled). Free busy access is not enabled for the organization Relationship"
-        $tdExoOrgRelFreeBusyAccessEnabledColor = "Red" 
-
-
+        $tdEXOOrgRelFreeBusyAccessEnabled = "$($exoOrgRel.FreeBusyAccessEnabled). Free busy access is not enabled for the organization Relationship"
+        $tdEXOOrgRelFreeBusyAccessEnabledColor = "Red"
     }
     #FreeBusyAccessLevel
     Write-Host  " FreeBusyAccessLevel:"
     if ($exoOrgRel.FreeBusyAccessLevel -like "AvailabilityOnly" ) {
-        Write-Host -foregroundcolor Green "  FreeBusyAccessLevel is set to AvailabilityOnly"
-        $tdExoOrgRelFreeBusyAccessLevel = "$($exoOrgRel.FreeBusyAccessLevel)"
-        $tdExoOrgRelFreeBusyAccessLevelColor = "green" 
-
-
-
+        Write-Host -ForegroundColor Green "  FreeBusyAccessLevel is set to AvailabilityOnly"
+        $tdEXOOrgRelFreeBusyAccessLevel = "$($exoOrgRel.FreeBusyAccessLevel)"
+        $tdEXOOrgRelFreeBusyAccessLevelColor = "green"
     }
     if ($exoOrgRel.FreeBusyAccessLevel -like "LimitedDetails" ) {
-        Write-Host -foregroundcolor Green "  FreeBusyAccessLevel is set to LimitedDetails"
-        $tdExoOrgRelFreeBusyAccessLevel = "$($exoOrgRel.FreeBusyAccessLevel)"
-        $tdExoOrgRelFreeBusyAccessLevelColor = "green" 
-
-
-
+        Write-Host -ForegroundColor Green "  FreeBusyAccessLevel is set to LimitedDetails"
+        $tdEXOOrgRelFreeBusyAccessLevel = "$($exoOrgRel.FreeBusyAccessLevel)"
+        $tdEXOOrgRelFreeBusyAccessLevelColor = "green"
     }
-    #fix porque este else só respeita o if anterior
+
     if ($exoOrgRel.FreeBusyAccessLevel -NE "AvailabilityOnly" -AND $exoOrgRel.FreeBusyAccessLevel -NE "LimitedDetails") {
-        Write-Host -foregroundcolor Red "  FreeBusyAccessEnabled : False"
+        Write-Host -ForegroundColor Red "  FreeBusyAccessEnabled : False"
         #$countOrgRelIssues++
-        $tdExoOrgRelFreeBusyAccessLevel = "$($exoOrgRel.FreeBusyAccessLevel)"
-        $tdExoOrgRelFreeBusyAccessLevelColor = "red" 
-
-
-
-     #TargetApplicationUri
-    Write-Host  " TargetApplicationUri:"
-   # Write-host $fedinfoTargetApplicationUri
-    $a= "FYDIBOHF25SPDLT." + $ExchangeOnPremDomain
-   #write-host $a 
-    if ($exoOrgRel.TargetApplicationUri -like $fedtrust.ApplicationUri) {
-        Write-Host -foregroundcolor Green "  TargetApplicationUri is" $fedtrust.ApplicationUri.originalstring
-        $tdEXOOrgRelTargetApplicationUri = "  TargetApplicationUri is $($fedtrust.ApplicationUri.originalstring)"
-        $tdEXOOrgRelTargetApplicationUriColor = "green"
-
-
+        $tdEXOOrgRelFreeBusyAccessLevel = "$($exoOrgRel.FreeBusyAccessLevel)"
+        $tdEXOOrgRelFreeBusyAccessLevelColor = "red"
     }
+    #TarGetApplicationUri
+    Write-Host  " TarGetApplicationUri:"
+    # Write-Host $FedInfoTarGetApplicationUri
+    $a = "FYDIBOHF25SPDLT." + $ExchangeOnPremDomain
+    $HybridAgentTargetSharingEpr = "http://outlook.office.com/"
+    $HATargetAutodiscoverEpr = "https://autodiscover-s.outlook.com/autodiscover/autodiscover.svc/"
+    #Write-Host $a
+
+    if ($exoOrgRel.TarGetSharingEpr -like "*resource.mailboxMigration.his.MSAppProxy.net/EWS/Exchange.asmx") {
+        if ($exoOrgRel.TarGetApplicationUri -like $HybridAgentTargetSharingEpr) {
+            Write-Host -ForegroundColor Green "  TarGetApplicationUri is $($exoOrgRel.TarGetSharingEpr) . This is correct when Hybrid Agent is in use"
+            $tdEXOOrgRelTarGetApplicationUri = "  TarGetApplicationUri is $($exoOrgRel.TarGetSharingEpr) . This is correct when Hybrid Agent is in use"
+            $tdEXOOrgRelTarGetApplicationUriColor = "green"
+        } else {
+            Write-Host -ForegroundColor Red "  TarGetApplicationUri should be  $HybridAgentTargetSharingEpr when Hybrid Agent is used"
+            #$countOrgRelIssues++
+            $tdEXOOrgRelTarGetApplicationUri = "  TarGetApplicationUri should be $HybridAgentTargetSharingEpr when Hybrid Agent is used. Please Check if Exchange On Premise Federation is correctly configured."
+            $tdEXOOrgRelTarGetApplicationUriColor = "red"
+        }
+    } else {
+        if ($exoOrgRel.TarGetApplicationUri -like $FedTrust.ApplicationUri) {
+            Write-Host -ForegroundColor Green "  TarGetApplicationUri is" $FedTrust.ApplicationUri.OriginalString
+            $tdEXOOrgRelTarGetApplicationUri = "  TarGetApplicationUri is $($FedTrust.ApplicationUri.OriginalString)"
+            $tdEXOOrgRelTarGetApplicationUriColor = "green"
+        } else {
+            Write-Host -ForegroundColor Red "  TarGetApplicationUri should be " $a
+            #$countOrgRelIssues++
+            $tdEXOOrgRelTarGetApplicationUri = "  TarGetApplicationUri should be $a. Please Check if Exchange On Premise Federation is correctly configured."
+            $tdEXOOrgRelTarGetApplicationUriColor = "red"
+        }
+    }
+
+    #TarGetSharingEpr
+    Write-Host  " TarGetSharingEpr:"
+
+    if ($exoOrgRel.TarGetSharingEpr -like "*resource.mailboxMigration.his.MsAppProxy.net/EWS/Exchange.asmx") {
+        Write-Host -ForegroundColor Green "  TarGetSharingEpr is points to resource.mailboxMigration.his.MsAppProxy.net/EWS/Exchange.asmx. This means Hybrid Agent is in use."
+        $tdEXOOrgRelTarGetSharingEpr = "TarGetSharingEpr is points to resource.mailboxMigration.his.MsAppProxy.net/EWS/Exchange.asmx. This means Hybrid Agent is in use."
+        $tdEXOOrgRelTarGetSharingEprColor = "green"
+    } else {
+        if ([string]::IsNullOrWhitespace($exoOrgRel.TarGetSharingEpr)) {
+            Write-Host -ForegroundColor Green "  TarGetSharingEpr is blank. This is the standard Value."
+            $tdEXOOrgRelTarGetSharingEpr = "TarGetSharingEpr is blank. This is the standard Value."
+            $tdEXOOrgRelTarGetSharingEprColor = "green"
+        } else {
+            Write-Host -ForegroundColor Red "  TarGetSharingEpr should be blank. If it is set, it should be the On-Premises Exchange Servers EWS ExternalUrl endpoint."
+            #$countOrgRelIssues++
+            $tdEXOOrgRelTarGetSharingEpr = "  TarGetSharingEpr should be blank. If it is set, it should be the On-Premises Exchange Servers EWS ExternalUrl endpoint."
+            $tdEXOOrgRelTarGetSharingEprColor = "red"
+        }
+    }
+    #TarGetAutoDiscoverEpr:
+    Write-Host  " TarGetAutoDiscoverEpr:"
+    #Write-Host  "  OrgRel: " $exoOrgRel.TarGetAutoDiscoverEpr
+    #Write-Host  "  FedInfo: " $FedInfoEOP
+    #Write-Host  "  FedInfoEPR: " $FedInfoEOP.TarGetAutoDiscoverEpr
+
+    if ($exoOrgRel.TarGetSharingEpr -like "*resource.mailboxMigration.his.MSAppProxy.net/EWS/Exchange.asmx") {
+
+        if ($exoOrgRel.TarGetAutoDiscoverEpr -like $HATargetAutodiscoverEpr) {
+            Write-Host -ForegroundColor Green "  TarGetAutoDiscoverEpr is $($exoOrgRel.TarGetAutoDiscoverEpr) . This is correct when Hybrid Agent is in use"
+
+            $tdEXOOrgRelTarGetAutoDiscoverEpr = "TarGetAutoDiscoverEpr is $($exoOrgRel.TarGetAutoDiscoverEpr) . This is correct when Hybrid Agent is in use"
+            $tdEXOOrgRelTarGetAutoDiscoverEprColor = "green"
+        } else {
+            Write-Host -ForegroundColor Red "  TarGetAutoDiscoverEpr is not $HATargetAutodiscoverEpr . This is the correct  value when Hybrid Agent is in use."
+            #$countOrgRelIssues++
+            $tdEXOOrgRelTarGetAutoDiscoverEpr = "  TarGetAutoDiscoverEpr is not $HATargetAutodiscoverEpr. This is the correct  value when Hybrid Agent is in use."
+            $tdEXOOrgRelTarGetAutoDiscoverEprColor = "red"
+        }
+    }
+
     else {
-        Write-Host -foregroundcolor Red "  TargetApplicationUri should be " $a
-        #$countOrgRelIssues++
-        $tdEXOOrgRelTargetApplicationUri = "  TargetApplicationUri should be $a. Please check if Exchange On Premise Federation is correctly configured."
-        $tdEXOOrgRelTargetApplicationUriColor = "red"
 
+        if ($exoOrgRel.TarGetAutoDiscoverEpr -like $FedInfoEOP.TarGetAutoDiscoverEpr) {
+            Write-Host -ForegroundColor Green "  TarGetAutoDiscoverEpr is" $exoOrgRel.TarGetAutoDiscoverEpr
 
+            $tdEXOOrgRelTarGetAutoDiscoverEpr = $exoOrgRel.TarGetAutoDiscoverEpr
+            $tdEXOOrgRelTarGetAutoDiscoverEprColor = "green"
+        } else {
+            Write-Host -ForegroundColor Red "  TarGetAutoDiscoverEpr is not" $FedInfoEOP.TarGetAutoDiscoverEpr
+            #$countOrgRelIssues++
+            $tdEXOOrgRelTarGetAutoDiscoverEpr = "  TarGetAutoDiscoverEpr is not $($FedInfoEOP.TarGetAutoDiscoverEpr)"
+            $tdEXOOrgRelTarGetAutoDiscoverEprColor = "red"
+        }
     }
-    #TargetApplicationUri
-#    Write-Host  " TargetApplicationUri:"
-#    if ($exoOrgRel.TargetApplicationUri -like $fedtrust.ApplicationUri) {
-#        Write-Host -foregroundcolor Green "  TargetApplicationUri is" $fedtrust.ApplicationUri.originalstring
-#        $tdEXOOrgRelTargetApplicationUri = "  TargetApplicationUri is $($fedtrust.ApplicationUri.originalstring)"
-#        $tdEXOOrgRelTargetApplicationUriColor = "green"
 
-
-#    }
-#    else {
-#        Write-Host -foregroundcolor Red "  TargetApplicationUri should be " $fedtrust.ApplicationUri.originalstring
-        #$countOrgRelIssues++
-#        $tdEXOOrgRelTargetApplicationUri = "  TargetApplicationUri should be $($fedtrust.ApplicationUri.originalstring)"
-#        $tdEXOOrgRelTargetApplicationUriColor = "red"
-
-
-
-    }
-    #TargetSharingEpr
-    Write-Host  " TargetSharingEpr:"
-    if ([string]::IsNullOrWhitespace($exoOrgRel.TargetSharingEpr)) {
-        Write-Host -foregroundcolor Green "  TargetSharingEpr is blank. This is the standard Value."
-        $tdEXOOrgRelTargetSharingEpr = "TargetSharingEpr is blank. This is the standard Value."
-        $tdEXOOrgRelTargetSharingEprColor = "green"
-
-
-    }
-    else {
-        Write-Host -foregroundcolor Red "  TargetSharingEpr should be blank. If it is set, it should be the On-Premises Exchange servers EWS ExternalUrl endpoint."
-        #$countOrgRelIssues++
-        $tdEXOOrgRelTargetSharingEpr = "  TargetSharingEpr should be blank. If it is set, it should be the On-Premises Exchange servers EWS ExternalUrl endpoint."
-        $tdEXOOrgRelTargetSharingEprColor = "red"
-
-
-
-    }
-    #TargetAutodiscoverEpr:
-    Write-Host  " TargetAutodiscoverEpr:"
-    #Write-Host  "  OrgRel: " $exoOrgRel.TargetAutodiscoverEpr
-    #Write-Host  "  FedInfo: " $fedinfoEOP
-    #Write-Host  "  FedInfoEPR: " $fedinfoEOP.TargetAutodiscoverEpr
-    if ($exoOrgRel.TargetAutodiscoverEpr -like $fedinfoEOP.TargetAutodiscoverEpr) {
-        Write-Host -foregroundcolor Green "  TargetAutodiscoverEpr is" $exoOrgRel.TargetAutodiscoverEpr
-
-        $tdexoOrgRelTargetAutodiscoverEpr = $exoOrgRel.TargetAutodiscoverEpr
-        $tdexoOrgRelTargetAutodiscoverEprColor = "green" 
-
-    }
-    else {
-        Write-Host -foregroundcolor Red "  TargetAutodiscoverEpr is not" $fedinfoEOP.TargetAutodiscoverEpr
-        #$countOrgRelIssues++
-        $tdexoOrgRelTargetAutodiscoverEpr = "  TargetAutodiscoverEpr is not $($fedinfoEOP.TargetAutodiscoverEpr)"
-        $tdexoOrgRelTargetAutodiscoverEprColor = "red"
-
-
-
-    }
     #Enabled
     Write-Host  " Enabled:"
     if ($exoOrgRel.enabled -like "True" ) {
-        Write-Host -foregroundcolor Green "  Enabled is set to True"
+        Write-Host -ForegroundColor Green "  Enabled is set to True"
         $tdEXOOrgRelEnabled = "  True"
         $tdEXOOrgRelEnabledColor = "green"
-
-
-    }
-    else {
-        Write-Host -foregroundcolor Red "  Enabled is set to False."
+    } else {
+        Write-Host -ForegroundColor Red "  Enabled is set to False."
         $tdEXOOrgRelEnabled = "  False"
         $tdEXOOrgRelEnabledColor = "red"
-
-
-
-
-
-
     }
-
-
-
 
     $script:html += "
 
@@ -2692,224 +2451,191 @@ Function ExoOrgRelCheck () {
 
 
      <tr>
-        <th colspan='2' style='text-align:center; color:white;'>Exchange Online DAuth Configuration</th>
+        <th ColSpan='2' style='text-align:center; color:white;'>Exchange Online DAuth Configuration</th>
      </tr>
       <tr>
-      <th colspan='2' style='color:white;'>Summary - Get-OrganizationRelationship</th>
+      <th ColSpan='2' style='color:white;'>Summary - Get-OrganizationRelationship</th>
     </tr>
     <tr>
-      <td><b>  Get-OrganizationRelationship  | Where{($_.DomainNames -like $ExchangeOnPremDomain )} | Select Identity,DomainNames,FreeBusy*,Target*,Enabled</b></td>
+      <td><b>  Get-OrganizationRelationship  | Where{($_.DomainNames -like $ExchangeOnPremDomain )} | Select Identity,DomainNames,FreeBusy*,TarGet*,Enabled</b></td>
       <td>
         <div><b>Domain Names:</b><span >$($tdEXOOrgRelDomainNames)</span></div>
-        <div><b>FreeBusyAccessEnabled:</b><span style='color: $tdExoOrgRelFreeBusyAccessEnabledColor'>$($tdExoOrgRelFreeBusyAccessEnabled)</span></div>
+        <div><b>FreeBusyAccessEnabled:</b><span style='color: $tdEXOOrgRelFreeBusyAccessEnabledColor'>$($tdEXOOrgRelFreeBusyAccessEnabled)</span></div>
         <div><b>FreeBusyAccessLevel::</b><span style='color:$tdEXOOrgRelFreeBusyAccessLevelColor;'>$( $tdEXOOrgRelFreeBusyAccessLevel)</span></div>
-        <div><b>TargetApplicationUri:</b><span style='color: $tdEXOOrgRelTargetApplicationUriColor;'>$($tdEXOOrgRelTargetApplicationUri)</span></div>
-        <div><b>TargetOwaURL:</b><span >$($tdEXOOrgRelTargetOwaUrl)</span></div>
-        <div><b>TargetSharingEpr:</b><span style='color: $tdEXOOrgRelTargetSharingEprColor'>$($tdEXOOrgRelTargetSharingEpr)</span></div>
-        <div><b>TargetAutodiscoverEpr:</b><span style='color:$tdEXOOrgRelFreeBusyAccessScopeColor;'>$( $tdEXOOrgRelFreeBusyAccessScope)</span></div>
+        <div><b>TarGetApplicationUri:</b><span style='color: $tdEXOOrgRelTarGetApplicationUriColor;'>$($tdEXOOrgRelTarGetApplicationUri)</span></div>
+        <div><b>TarGetOwAUrl:</b><span >$($tdEXOOrgRelTarGetOwAUrl)</span></div>
+        <div><b>TarGetSharingEpr:</b><span style='color: $tdEXOOrgRelTarGetSharingEprColor'>$($tdEXOOrgRelTarGetSharingEpr)</span></div>
+        <div><b>TarGetAutoDiscoverEpr:</b><span style='color:$tdEXOOrgRelFreeBusyAccessScopeColor;'>$( $tdEXOOrgRelFreeBusyAccessScope)</span></div>
         <div><b>Enabled:</b><span style='color: $tdEXOOrgRelEnabledColor;'>$($tdEXOOrgRelEnabled)</span></div>
-        
-        
+
+
       </td>
     </tr>
   "
 
-
-    
-    $html | Out-File -FilePath $htmlfile
-
-
-
+    $html | Out-File -FilePath $htmlFile
 }
 
-Function EXOFedOrgIdCheck {
-    Write-Host -foregroundcolor Green " Get-FederatedOrganizationIdentifier | select AccountNameSpace,Domains,Enabled"
-    Write-Host $bar
+function EXOFedOrgIdCheck {
+    Write-Host -ForegroundColor Green " Get-FederatedOrganizationIdentifier | select AccountNameSpace,Domains,Enabled"
+    Print-DynamicWidthLine
     $exoFedOrgId = Get-FederatedOrganizationIdentifier | Select-Object AccountNameSpace, Domains, Enabled
     #$IntraOrgConCheck
-    $efedorgid = $exoFedOrgId | Format-List
-    $efedorgid
-    Write-Host $bar
-    Write-Host -foregroundcolor Green " Summary - Online Federated Organization Identifier"
-    Write-Host $bar
-    Write-Host -foregroundcolor White " Domains: "
+    $eFedOrgID = $exoFedOrgId | Format-List
+    $eFedOrgID
+    Print-DynamicWidthLine
+    Write-Host -ForegroundColor Green " Summary - Online Federated Organization Identifier"
+    Print-DynamicWidthLine
+    Write-Host -ForegroundColor White " Domains: "
     if ($exoFedOrgId.Domains -like "*$ExchangeOnlineDomain*") {
-        Write-Host -foregroundcolor Green " " $exoFedOrgId.Domains
-        $tdexoFedOrgIdDomains = $exoFedOrgId.Domains
-        $tdexoFedOrgIdDomainsColor = "green" 
-
+        Write-Host -ForegroundColor Green " " $exoFedOrgId.Domains
+        $tdEXOFedOrgIdDomains = $exoFedOrgId.Domains
+        $tdEXOFedOrgIdDomainsColor = "green"
+    } else {
+        Write-Host -ForegroundColor Red " Domains are NOT correct."
+        Write-Host -ForegroundColor White " Should contain the $ExchangeOnlineMDomain"
+        $tdEXOFedOrgIdDomains = "$($exoFedOrgId.Domains) . Domains Should contain the $ExchangeOnlineMDomain"
+        $tdEXOFedOrgIdDomainsColor = "red"
     }
-    else {
-        Write-Host -foregroundcolor Red " Domains are NOT correct."
-        Write-Host -foregroundcolor White " Should contain the $ExchangeOnlinemDomain"
-        $tdexoFedOrgIdDomains = "$($exoFedOrgId.Domains) . Domains Should contain the $ExchangeOnlinemDomain"
-        $tdexoFedOrgIdDomainsColor = "red" 
-
-    }
-    Write-Host -foregroundcolor White " Enabled: "
+    Write-Host -ForegroundColor White " Enabled: "
     if ($exoFedOrgId.Enabled -like "True") {
-        Write-Host -foregroundcolor Green "  True "
-        $tdexoFedOrgIdEnabled = $exoFedOrgId.Enabled
-        $tdexoFedOrgIdEnabledColor = "green"
+        Write-Host -ForegroundColor Green "  True "
+        $tdEXOFedOrgIdEnabled = $exoFedOrgId.Enabled
+        $tdEXOFedOrgIdEnabledColor = "green"
+    } else {
+        Write-Host -ForegroundColor Red "  Enabled is NOT correct."
+        Write-Host -ForegroundColor White " Should be True"
+        $tdEXOFedOrgIdEnabled = $exoFedOrgId.Enabled
+        $tdEXOFedOrgIdEnabledColor = "green"
     }
-    else {
-        Write-Host -foregroundcolor Red "  Enabled is NOT correct."
-        Write-Host -foregroundcolor White " Should be True"
-        $tdexoFedOrgIdEnabled = $exoFedOrgId.Enabled
-        $tdexoFedOrgIdEnabledColor = "green"
-
-    }
-
-
-
-    
 
     $script:html += "
     <tr>
-      <th colspan='2' style='color:white;'>Summary - Get-FederatedOrganizationIdentifier</th>
+      <th ColSpan='2' style='color:white;'>Summary - Get-FederatedOrganizationIdentifier</th>
     </tr>
     <tr>
       <td><b>  Get-FederatedOrganizationIdentifier | select AccountNameSpace,Domains,Enabled</b></td>
       <td>
-        <div><b>Domains:</b><span style='color: $tdexoFedOrgIdDomainsColor;'>$($tdexoFedOrgIdDomains)</span></div>
-        <div><b>Enabled:</b><span style='color: $tdexoFedOrgIdEnabledColor;'>$($tdexoFedOrgIdEnabled)</span></div>
-        
-        
+        <div><b>Domains:</b><span style='color: $tdEXOFedOrgIdDomainsColor;'>$($tdEXOFedOrgIdDomains)</span></div>
+        <div><b>Enabled:</b><span style='color: $tdEXOFedOrgIdEnabledColor;'>$($tdEXOFedOrgIdEnabled)</span></div>
+
+
       </td>
     </tr>
   "
 
-
-    
-    $html | Out-File -FilePath $htmlfile
-
-
+    $html | Out-File -FilePath $htmlFile
 }
 
-Function EXOTestOrgRelCheck {
+function ExoTestOrgRelCheck {
     $exoIdentity = $ExoOrgRel.Identity
-    
-    $exoOrgRelTragetApplicationUri = $exoOrgRel.TargetApplicationUri
-    $exoOrgRelTragetOWAurl = $ExoOrgRel.TargetOwaURL
+
+    $exoOrgRelTarGetApplicationUri = $exoOrgRel.TarGetApplicationUri
+    $exoOrgRelTarGetOWAUrl = $ExoOrgRel.TarGetOwAUrl
 
     $script:html += "
         <tr>
-            <th colspan='2' style='color:white;'>Summary - Test-OrganizationRelationship</th>
+            <th ColSpan='2' style='color:white;'>Summary - Test-OrganizationRelationship</th>
         </tr>
         <tr>
             <td><b>  Test-OrganizationRelationship -Identity $exoIdentity -UserIdentity $UserOnline</b></td>
         <td>"
 
+    Write-Host -ForegroundColor Green " Test-OrganizationRelationship -Identity $exoIdentity -UserIdentity $UserOnline"
+    Print-DynamicWidthLine
 
+    if ((![string]::IsNullOrWhitespace($exoOrgRelTarGetApplicationUri)) -and (![string]::IsNullOrWhitespace($exoOrgRelTarGetOWAUrl))) {
+        $ExoTestOrgRel = Test-OrganizationRelationship -Identity $exoIdentity -UserIdentity $UserOnline -WarningAction SilentlyContinue
 
-    Write-Host -foregroundcolor Green " Test-OrganizationRelationship -Identity $exoIdentity -UserIdentity $UserOnline"
-    Write-Host $bar
-
-    if ((![string]::IsNullOrWhitespace($exoOrgRelTragetApplicationUri)) -and (![string]::IsNullOrWhitespace($exoOrgRelTragetOWAUrl))) {
-        $exotestorgrel = Test-OrganizationRelationship -Identity $exoIdentity -UserIdentity $UserOnline -WarningAction SilentlyContinue
-    
         $i = 2
-    
 
-        while ($i -lt $exotestorgrel.Length) {
-            $element = $exotestorgrel[$i]
-        
+        while ($i -lt $ExoTestOrgRel.Length) {
+            $element = $ExoTestOrgRel[$i]
+
             $aux = "0"
-  
-            if ($element -like "*RESULT:*" -and $aux -like "0") {   
+
+            if ($element -like "*RESULT:*" -and $aux -like "0") {
                 $el = $element.TrimStart()
                 if ($element -like "*Success.*") {
                     Write-Host -ForegroundColor Green "  $el"
                     $Script:html += "
-            <div> <b> $exotestorgrelStep </b> <span style='color:green'>&emsp; $el</span>"
+            <div> <b> $ExoTestOrgRelStep </b> <span style='color:green'>&EmSp;; $el</span>"
                     $aux = "1"
-                }
-                elseif ($element -like "*Error*" -or $element -like "*Unable*") {
+                } elseif ($element -like "*Error*" -or $element -like "*Unable*") {
                     $Script:html += "
-                <div> <b> $exotestorgrelStep </b> <span style='color:red'>&emsp; $el</span>"
+                <div> <b> $ExoTestOrgRelStep </b> <span style='color:red'>&EmSp;; $el</span>"
                     Write-Host -ForegroundColor Red "  $el"
                     $aux = "1"
                 }
-            }
-            elseif ($aux -like "0" ) {
+            } elseif ($aux -like "0" ) {
                 if ($element -like "*STEP*" -or $element -like "*Complete*") {
                     Write-Host -ForegroundColor White "  $element"
                     $Script:html += "
                <p></p>
-                <div> <b> $exotestorgrelStep </b> <span style='color:black'> $element</span></div>"
+                <div> <b> $ExoTestOrgRelStep </b> <span style='color:black'> $element</span></div>"
                     $aux = "1"
-                }
-                else {
+                } else {
                     $ID = $element.ID
                     $Status = $element.Status
-                    $Description = $element.Description 
+                    $Description = $element.Description
                     if (![string]::IsNullOrWhitespace($ID)) {
                         Write-Host -ForegroundColor White "`n  ID         : $ID"
-                        $Script:html += "<div> <b>&emsp; ID &emsp;&emsp;&emsp;&emsp;&emsp;&nbsp;:</b> <span style='color:black'> $ID</span></div>"
+                        $Script:html += "<div> <b>&EmSp;; ID &EmSp;;&EmSp;;&EmSp;;&EmSp;;&EmSp;;&NbSp;:</b> <span style='color:black'> $ID</span></div>"
                         if ($Status -like "*Success*") {
                             Write-Host -ForegroundColor White "  Status     : $Status"
-                            $Script:html += "<div> <b>&emsp; Status &emsp;&emsp;&ensp;&ensp;:</b> <span style='color:green'> $Status</span></div>"
+                            $Script:html += "<div> <b>&EmSp;; Status &EmSp;;&EmSp;;&EnSp;;&EnSp;;:</b> <span style='color:green'> $Status</span></div>"
                         }
-                    
 
                         if ($status -like "*error*") {
                             Write-Host -ForegroundColor White "  Status     : $Status"
-                            $Script:html += "<div> <b>&emsp; Status &emsp;&emsp;&ensp;&ensp;:</b> <span style='color:red'> $Status</span></div>"
+                            $Script:html += "<div> <b>&EmSp;; Status &EmSp;;&EmSp;;&EnSp;;&EnSp;;:</b> <span style='color:red'> $Status</span></div>"
                         }
 
                         Write-Host -ForegroundColor White "  Description: $Description"
-                        $Script:html += "<div> <b>&emsp; Description :</b> <span style='color:black'> $Description</span></div>"
+                        Write-Host -ForegroundColor yellow "  Note: Test-Organization Relationship fails on Step 3 with error MismatchedFederation if Hybrid Agent is in use"
+                        $Script:html += "<div> <b>&EmSp;; Description :</b> <span style='color:black'> $Description</span></div>
+                        <div><span style='color:yellow'>Note: Test-Organization Relationship fails on Step 3 with error MismatchedFederation if Hybrid Agent is in use</span></div>"
                     }
                     #$element
                     $aux = "1"
                 }
-        
             }
-       
-        
-        
-    
+
             $i++
         }
     }
- 
-    
-    elseif ((([string]::IsNullOrWhitespace($exoOrgRelTragetApplicationUri)) -and ([string]::IsNullOrWhitespace($exoOrgRelTragetOWAUrl)))) {
-        <# Action when all if and elseif conditions are false #>
-        Write-Host -ForegroundColor Red "  Error: Exchange Online Test-OrganizationRelationship cannot be run if the Organization Relationship TragetApplicationUri and TargetOwaURL are not set"
-        $Script:html += "
-    <div> <span style='color:red'>&emsp; Exchange Online Test-OrganizationRelationship cannot be run if the Organization Relationship TragetApplicationUri and TargetOwaURL are not set</span>"
-    }
-    elseif ((([string]::IsNullOrWhitespace($exoOrgRelTragetApplicationUri)) )) {
-        <# Action when all if and elseif conditions are false #>
-        Write-Host -ForegroundColor Red "  Error: Exchange Online Test-OrganizationRelationship cannot be run if the Organization Relationship TragetApplicationUri is not set"
-        $Script:html += "
-    <div> <span style='color:red'>&emsp; Exchange Online Test-OrganizationRelationship cannot be run if the Organization Relationship TragetApplicationUri is not set</span>"
-    }
-    elseif ((([string]::IsNullOrWhitespace($exoOrgRelTragetApplicationUri)) )) {
-        <# Action when all if and elseif conditions are false #>
-        Write-Host -ForegroundColor Red "  Error: Exchange Online Test-OrganizationRelationship cannot be run if the Organization Relationship TargetOwaURL is not set"
-        $Script:html += "
-    <div> <span style='color:red'>&emsp; Exchange Online Test-OrganizationRelationship cannot be run if the Organization Relationship TragetApplicationUri is not set</span>"
-    }
 
-
+    elseif ((([string]::IsNullOrWhitespace($exoOrgRelTarGetApplicationUri)) -and ([string]::IsNullOrWhitespace($exoOrgRelTarGetOWAUrl)))) {
+        <# Action when all if and elseif conditions are false #>
+        Write-Host -ForegroundColor Red "  Error: Exchange Online Test-OrganizationRelationship cannot be run if the Organization Relationship TarGetApplicationUri and TarGetOwAUrl are not set"
+        $Script:html += "
+    <div> <span style='color:red'>&EmSp;; Exchange Online Test-OrganizationRelationship cannot be run if the Organization Relationship TarGetApplicationUri and TarGetOwAUrl are not set</span>"
+    } elseif ((([string]::IsNullOrWhitespace($exoOrgRelTarGetApplicationUri)) )) {
+        <# Action when all if and elseif conditions are false #>
+        Write-Host -ForegroundColor Red "  Error: Exchange Online Test-OrganizationRelationship cannot be run if the Organization Relationship TarGetApplicationUri is not set"
+        $Script:html += "
+    <div> <span style='color:red'>&EmSp;; Exchange Online Test-OrganizationRelationship cannot be run if the Organization Relationship TarGetApplicationUri is not set</span>"
+    } elseif ((([string]::IsNullOrWhitespace($exoOrgRelTarGetApplicationUri)) )) {
+        <# Action when all if and elseif conditions are false #>
+        Write-Host -ForegroundColor Red "  Error: Exchange Online Test-OrganizationRelationship cannot be run if the Organization Relationship TarGetOwAUrl is not set"
+        $Script:html += "
+    <div> <span style='color:red'>&EmSp;; Exchange Online Test-OrganizationRelationship cannot be run if the Organization Relationship TarGetApplicationUri is not set</span>"
+    }
 
     $Script:html += "</td>
     </tr>"
-    
-    $html | Out-File -FilePath $htmlfile
 
+    $html | Out-File -FilePath $htmlFile
 }
 
-Function SharingPolicyCheck {
-    Write-host $bar
-    Write-Host -foregroundcolor Green " Get-SharingPolicy | select Domains,Enabled,Name,Identity"
-    Write-Host $bar
+function SharingPolicyCheck {
+    Print-DynamicWidthLine
+    Write-Host -ForegroundColor Green " Get-SharingPolicy | select Domains,Enabled,Name,Identity"
+    Print-DynamicWidthLine
     $Script:SPOnline = Get-SharingPolicy | Select-Object  Domains, Enabled, Name, Identity
     $SPOnline | Format-List
-    
-        #creating variables and setting uniform variable names
+
+    #creating variables and setting uniform variable names
     $domain1 = (($SPOnline.domains[0] -split ":") -split " ")
     $domain2 = (($SPOnline.domains[1] -split ":") -split " ")
     $SPOnpremDomain1 = $SPOnprem.Domains.Domain[0]
@@ -2921,774 +2647,785 @@ Function SharingPolicyCheck {
     $SPOnlineDomain2 = $domain2[0]
     $SPOnlineAction2 = $domain2[1]
 
-
-    Write-Host $bar
-    Write-Host -foregroundcolor Green " Summary - Sharing Policy"
-    Write-Host $bar
-    Write-Host -foregroundcolor White " Exchange On Premises Sharing domains:`n"
-    Write-Host -foregroundcolor White "  Domain:"
+    Print-DynamicWidthLine
+    Write-Host -ForegroundColor Green " Summary - Sharing Policy"
+    Print-DynamicWidthLine
+    Write-Host -ForegroundColor White " Exchange On Premises Sharing domains:`n"
+    Write-Host -ForegroundColor White "  Domain:"
     Write-Host "   " $SPOnpremDomain1
-    Write-Host -foregroundcolor White "  Action:"
+    Write-Host -ForegroundColor White "  Action:"
     Write-Host "   " $SPOnpremAction1
-    Write-Host -foregroundcolor White "  Domain:"
+    Write-Host -ForegroundColor White "  Domain:"
     Write-Host "   " $SPOnpremDomain2
-    Write-Host -foregroundcolor White "  Action:"
+    Write-Host -ForegroundColor White "  Action:"
     Write-Host "   " $SPOnpremAction2
     Write-Host -ForegroundColor White "`n  Exchange Online Sharing Domains: `n"
-    Write-Host -foregroundcolor White "  Domain:"
+    Write-Host -ForegroundColor White "  Domain:"
     Write-Host "   " $SPOnlineDomain1
-    Write-Host -foregroundcolor White "  Action:"
+    Write-Host -ForegroundColor White "  Action:"
     Write-Host "   " $SPOnlineAction1
-    Write-Host -foregroundcolor White "  Domain:"
+    Write-Host -ForegroundColor White "  Domain:"
     Write-Host "   " $SPOnlineDomain2
-    Write-Host -foregroundcolor White "  Action:"
+    Write-Host -ForegroundColor White "  Action:"
     Write-Host "   " $SPOnlineAction2
-    #Write-Host $bar
+    #Print-DynamicWidthLine
 
-    if ($SPOnpremDomain1 -eq $SPOnlineDomain1 -and $SPOnpremAction1 -eq $SPOnlineAction1)
-    {
-         if ($SPOnpremDomain2 -eq $SPOnlineDomain2 -and $SPOnpremAction2 -eq $SPOnlineAction2)
-             { Write-Host -foregroundcolor Green "`n  Exchange Online Sharing Policy Domains match Exchange On Premise Sharing Policy Domains"
-        $tdSharpingPolicyCheck = "`n  Exchange Online Sharing Policy matches Exchange On Premise Sharing Policy Domain"
-        $tdSharpingPolicyCheckColor = "green"}
+    if ($SPOnpremDomain1 -eq $SPOnlineDomain1 -and $SPOnpremAction1 -eq $SPOnlineAction1) {
+        if ($SPOnpremDomain2 -eq $SPOnlineDomain2 -and $SPOnpremAction2 -eq $SPOnlineAction2) {
+            Write-Host -ForegroundColor Green "`n  Exchange Online Sharing Policy Domains match Exchange On Premise Sharing Policy Domains"
+            $tdSharpingPolicyCheck = "`n  Exchange Online Sharing Policy matches Exchange On Premise Sharing Policy Domain"
+            $tdSharpingPolicyCheckColor = "green"
+        }
 
-        else {Write-Host -foregroundcolor Red "`n   Sharing Domains appear not to be correct."
-        Write-Host -foregroundcolor White "   Exchange Online Sharing Policy Domains appear not to match Exchange On Premise Sharing Policy Domains"
-        $tdSharpingPolicyCheck = "`n  Exchange Online Sharing Policy Domains not match Exchange On Premise Sharing Policy Domains"
-        $tdSharpingPolicyCheckColor = "red"}
-    }
-    elseif ($SPOnpremDomain1 -eq $SPOnlineDomain2 -and $SPOnpremAction1 -eq $SPOnlineAction2)
-    { 
-        if ($SPOnpremDomain2 -eq $SPOnlineDomain1 -and $SPOnpremAction2 -eq $SPOnlineAction1)
-            { Write-Host -foregroundcolor Green "`n  Exchange Online Sharing Policy Domains match Exchange On Premise Sharing Policy Domains"
-        $tdSharpingPolicyCheck = "`n  Exchange Online Sharing Policy matches Exchange On Premise Sharing Policy Domain"
-        $tdSharpingPolicyCheckColor = "green"}
+        else {
+            Write-Host -ForegroundColor Red "`n   Sharing Domains appear not to be correct."
+            Write-Host -ForegroundColor White "   Exchange Online Sharing Policy Domains appear not to match Exchange On Premise Sharing Policy Domains"
+            $tdSharpingPolicyCheck = "`n  Exchange Online Sharing Policy Domains not match Exchange On Premise Sharing Policy Domains"
+            $tdSharpingPolicyCheckColor = "red"
+        }
+    } elseif ($SPOnpremDomain1 -eq $SPOnlineDomain2 -and $SPOnpremAction1 -eq $SPOnlineAction2) {
+        if ($SPOnpremDomain2 -eq $SPOnlineDomain1 -and $SPOnpremAction2 -eq $SPOnlineAction1) {
+            Write-Host -ForegroundColor Green "`n  Exchange Online Sharing Policy Domains match Exchange On Premise Sharing Policy Domains"
+            $tdSharpingPolicyCheck = "`n  Exchange Online Sharing Policy matches Exchange On Premise Sharing Policy Domain"
+            $tdSharpingPolicyCheckColor = "green"
+        }
 
-        else {Write-Host -foregroundcolor Red "`n   Sharing Domains appear not to be correct."
-        Write-Host -foregroundcolor White "   Exchange Online Sharing Policy Domains appear not to match Exchange On Premise Sharing Policy Domains"
-        $tdSharpingPolicyCheck = "`n  Exchange Online Sharing Policy Domains not match Exchange On Premise Sharing Policy Domains"
-        $tdSharpingPolicyCheckColor = "red"}
-    }
-    else {
-    Write-Host -foregroundcolor Red "`n   Sharing Domains appear not to be correct."
-        Write-Host -foregroundcolor White "   Exchange Online Sharing Policy Domains appear not to match Exchange On Premise Sharing Policy Domains"
+        else {
+            Write-Host -ForegroundColor Red "`n   Sharing Domains appear not to be correct."
+            Write-Host -ForegroundColor White "   Exchange Online Sharing Policy Domains appear not to match Exchange On Premise Sharing Policy Domains"
+            $tdSharpingPolicyCheck = "`n  Exchange Online Sharing Policy Domains not match Exchange On Premise Sharing Policy Domains"
+            $tdSharpingPolicyCheckColor = "red"
+        }
+    } else {
+        Write-Host -ForegroundColor Red "`n   Sharing Domains appear not to be correct."
+        Write-Host -ForegroundColor White "   Exchange Online Sharing Policy Domains appear not to match Exchange On Premise Sharing Policy Domains"
         $tdSharpingPolicyCheck = "`n  Exchange Online Sharing Policy Domains not match Exchange On Premise Sharing Policy Domains"
         $tdSharpingPolicyCheckColor = "red"
     }
-    
-    $bar
+
+    Print-DynamicWidthLine
 
     $script:html += "
     <tr>
-      <th colspan='2' style='color:white;'>Summary - Get-SharingPolicy</th>
+      <th ColSpan='2' style='color:white;'>Summary - Get-SharingPolicy</th>
     </tr>
     <tr>
       <td><b>  Get-SharingPolicy | select Domains,Enabled,Name,Identity</b></td>
       <td>
-        <div><b>Exchange On Premises Sharing domains:<b></div> 
+        <div><b>Exchange On Premises Sharing domains:<b></div>
         <div><b>Domain:</b>$($SPOnprem.Domains.Domain[0])</div>
         <div><b>Action:</b>$($SPOnprem.Domains.Actions[0])</div>
         <div><b>Domain:</b>$($SPOnprem.Domains.Domain[1])</div>
         <div><b>Action:</b>$($SPOnprem.Domains.Actions[1])</div>
-        <div><p></p></div> 
-        <div><b>Exchange Online Sharing domains:<b></div> 
+        <div><p></p></div>
+        <div><b>Exchange Online Sharing domains:<b></div>
         <div><b>Domain:</b>$($domain1[0])</div>
         <div><b>Action:</b>$( $domain1[1])</div>
         <div><b>Domain:</b>$($domain2[0])</div>
         <div><b>Action:</b>$( $domain2[1])</div>
-        <div><p></p></div> 
-        <div><b>Sharing Policy - Exchange Online vs Exchange On Premise:<b></div> 
+        <div><p></p></div>
+        <div><b>Sharing Policy - Exchange Online vs Exchange On Premise:<b></div>
         <div><span style='color: $tdSharpingPolicyCheckColor;'>$($tdSharpingPolicyCheck)</span></div>
-        
+
       </td>
     </tr>
   "
 
-
-    
-    $html | Out-File -FilePath $htmlfile
+    $html | Out-File -FilePath $htmlFile
 }
 
 #endregion
 
-#region ExoOauthFuntions
+#region ExoOauthFunctions
 
-Function EXOIntraOrgConCheck {
-    Write-Host -foregroundcolor Green " Get-IntraOrganizationConnector | Select TargetAddressDomains,DiscoveryEndpoint,Enabled"
-    Write-Host $bar
-    $exoIntraOrgCon = Get-IntraOrganizationConnector | Select-Object TargetAddressDomains, DiscoveryEndpoint, Enabled
+function EXOIntraOrgConCheck {
+    Print-DynamicWidthLine
+    Write-Host -ForegroundColor Green " Get-IntraOrganizationConnector | Select TarGetAddressDomains,DiscoveryEndpoint,Enabled"
+    Print-DynamicWidthLine
+    $exoIntraOrgCon = Get-IntraOrganizationConnector | Select-Object TarGetAddressDomains, DiscoveryEndpoint, Enabled
     #$IntraOrgConCheck
     $IOC = $exoIntraOrgCon | Format-List
     $IOC
-    Write-Host $bar
-    Write-Host -foregroundcolor Green " Summary - Online Intra Organization Connector"
-    Write-Host $bar
-    Write-Host -foregroundcolor White " Target Address Domains: "
-    if ($exoIntraOrgCon.TargetAddressDomains -like "*$ExchangeOnpremDomain*") {
-        Write-Host -foregroundcolor Green " " $exoIntraOrgCon.TargetAddressDomains
-        $tdexoIntraOrgConTargetAddressDomains = $exoIntraOrgCon.TargetAddressDomains
-        $tdexoIntraOrgConTargetAddressDomainsColor = "green"
-    
+    Print-DynamicWidthLine
+    Write-Host -ForegroundColor Green " Summary - Online Intra Organization Connector"
+    Print-DynamicWidthLine
+    Write-Host -ForegroundColor White " TarGet Address Domains: "
+    if ($exoIntraOrgCon.TarGetAddressDomains -like "*$ExchangeOnpremDomain*") {
+        Write-Host -ForegroundColor Green " " $exoIntraOrgCon.TarGetAddressDomains
+        $tdEXOIntraOrgConTarGetAddressDomains = $exoIntraOrgCon.TarGetAddressDomains
+        $tdEXOIntraOrgConTarGetAddressDomainsColor = "green"
+    } else {
+        Write-Host -ForegroundColor Red " TarGet Address Domains is NOT correct."
+        Write-Host -ForegroundColor White " Should contain the $ExchangeOnpremDomain"
+        $tdEXOIntraOrgConTarGetAddressDomains = " $($exoIntraOrgCon.TarGetAddressDomains) . Should contain the $ExchangeOnpremDomain"
+        $tdEXOIntraOrgConTarGetAddressDomainsColor = "red"
     }
-    else {
-        Write-Host -foregroundcolor Red " Target Address Domains is NOT correct."
-        Write-Host -foregroundcolor White " Should contain the $ExchangeOnpremDomain"
-        $tdexoIntraOrgConTargetAddressDomains = " $($exoIntraOrgCon.TargetAddressDomains) . Should contain the $ExchangeOnpremDomain"
-        $tdexoIntraOrgConTargetAddressDomainsColor = "red"
-    
-    }
-    Write-Host -foregroundcolor White " DiscoveryEndpoint: "
+    Write-Host -ForegroundColor White " DiscoveryEndpoint: "
     if ($exoIntraOrgCon.DiscoveryEndpoint -like $EDiscoveryEndpoint.OnPremiseDiscoveryEndpoint) {
-        Write-Host -foregroundcolor Green $exoIntraOrgCon.DiscoveryEndpoint
-        $tdexoIntraOrgConDiscoveryEndpoints = $exoIntraOrgCon.DiscoveryEndpoint
-        $tdexoIntraOrgConDiscoveryEndpointsColor = "green"
-    
-    
-    
+        Write-Host -ForegroundColor Green $exoIntraOrgCon.DiscoveryEndpoint
+        $tdEXOIntraOrgConDiscoveryEndpoints = $exoIntraOrgCon.DiscoveryEndpoint
+        $tdEXOIntraOrgConDiscoveryEndpointsColor = "green"
+    } else {
+        if ($exoIntraOrgCon.DiscoveryEndpoint -like "*resource.mailboxMigration.his.MSAppProxy.net*") {
+            Write-Host -ForegroundColor Green " " $exoIntraOrgCon.DiscoveryEndpoint
+            Write-Host -ForegroundColor Yellow " Discovery Endpoint includes resource.mailboxMigration.his.MSAppProxy.net. Hybrid configuration is implemented using Hybrid Agent "
+            $tdEXOIntraOrgConDiscoveryEndpoints = $exoIntraOrgCon.DiscoveryEndpoint
+            $tdEXOIntraOrgConDiscoveryEndpointsColor = "green"
+        } else {
+            Write-Host -ForegroundColor Red " DiscoveryEndpoint is NOT correct. "
+            Write-Host -ForegroundColor White "  Should be " $EDiscoveryEndpoint.OnPremiseDiscoveryEndpoint
+            $tdEXOIntraOrgConDiscoveryEndpoints = "$($exoIntraOrgCon.DiscoveryEndpoint) . Should be $($EDiscoveryEndpoint.OnPremiseDiscoveryEndpoint)"
+            $tdEXOIntraOrgConDiscoveryEndpointsColor = "red"
+        }
     }
-    else {
-        Write-Host -foregroundcolor Red " DiscoveryEndpoint is NOT correct. "
-        Write-Host -foregroundcolor White "  Should be " $EDiscoveryEndpoint.OnPremiseDiscoveryEndpoint
-        $tdexoIntraOrgConDiscoveryEndpoints = "$($exoIntraOrgCon.DiscoveryEndpoint) . Should be $($EDiscoveryEndpoint.OnPremiseDiscoveryEndpoint)"
-        $tdexoIntraOrgConDiscoveryEndpointsColor = "red"
-    
-    
-    
-    }
-    Write-Host -foregroundcolor White " Enabled: "
+    Write-Host -ForegroundColor White " Enabled: "
     if ($exoIntraOrgCon.Enabled -like "True") {
-        Write-Host -foregroundcolor Green "  True "
-        $tdexoIntraOrgConEnabled = "$($exoIntraOrgCon.Enabled)"
-        $tdexoIntraOrgConEnabledColor = "green"
-    
-    
-    
+        Write-Host -ForegroundColor Green "  True "
+        $tdEXOIntraOrgConEnabled = "True"
+        $tdEXOIntraOrgConEnabledColor = "green"
+    } else {
+        Write-Host -ForegroundColor Red "  False."
+        Write-Host -ForegroundColor White " Should be True"
+        $tdEXOIntraOrgConEnabled = "False . Should be True"
+        $tdEXOIntraOrgConEnabledColor = "red"
     }
-    else {
-        Write-Host -foregroundcolor Red "  False."
-        Write-Host -foregroundcolor White " Should be True"
-        $tdexoIntraOrgConEnabled = "$($exoIntraOrgCon.Enabled) . Should be True"
-        $tdexoIntraOrgConEnabledColor = "red"
-    
-    
-    }
-
-    
-    
 
     $script:html += "
     <tr>
-      <th colspan='2' style='text-align:center; color:white;'><b>Exchange Online OAuth Configuration</b></th>
+      <th ColSpan='2' style='text-align:center; color:white;'><b>Exchange Online OAuth Configuration</b></th>
     </tr>
     <tr>
-      <th colspan='2' style=' color:white;'><b>Summary - Get-IntraOrganizationConnector</b></th>
+      <th ColSpan='2' style=' color:white;'><b>Summary - Get-IntraOrganizationConnector</b></th>
     </tr>
     <tr>
-      <td><b>  Get-IntraOrganizationConnector | Select-Object TargetAddressDomains, DiscoveryEndpoint, Enabled</b></td>
+      <td><b>  Get-IntraOrganizationConnector | Select-Object TarGetAddressDomains, DiscoveryEndpoint, Enabled</b></td>
       <td>
-        <div><b>Target Address Domains:</b><span style='color: $tdexoIntraOrgConTargetAddressDomainsColor;'>' $($tdexoIntraOrgConTargetAddressDomains)'</span></div>
-        <div><b>DiscoveryEndpoint:</b><span style='color: $tdexoIntraOrgConDiscoveryEndpointsColor;'>' $($tdexoIntraOrgConDiscoveryEndpoints)'</span></div>
-        <div><b>Enabled:</b><span style='color:$tdexoIntraOrgConEnabledColor;'> $($tdexoIntraOrgConEnabled)</span></div>
-        
+        <div><b>TarGet Address Domains:</b><span style='color: $tdEXOIntraOrgConTarGetAddressDomainsColor;'>' $($tdEXOIntraOrgConTarGetAddressDomains)'</span></div>
+        <div><b>DiscoveryEndpoint:</b><span style='color: $tdEXOIntraOrgConDiscoveryEndpointsColor;'>' $($tdEXOIntraOrgConDiscoveryEndpoints)'</span></div>
+        <div><b>Enabled:</b><span style='color:$tdEXOIntraOrgConEnabledColor;'> $($tdEXOIntraOrgConEnabled)</span></div>
+
       </td>
     </tr>
   "
 
-
-    
-    $html | Out-File -FilePath $htmlfile
-
-
-
+    $html | Out-File -FilePath $htmlFile
 }
 
-Function EXOIntraOrgConfigCheck {
-    Write-Host -foregroundcolor Green " Get-IntraOrganizationConfiguration | Select OnPremiseTargetAddresses"
-    Write-Host $bar
+function EXOIntraOrgConfigCheck {
+    Write-Host -ForegroundColor Green " Get-IntraOrganizationConfiguration | Select OnPremiseTarGetAddresses"
+    Print-DynamicWidthLine
     #fix because there can be multiple on prem or guid's
-    #$exoIntraOrgConfig = Get-OnPremisesOrganization | select OrganizationGuid | Get-IntraOrganizationConfiguration | Select OnPremiseTargetAddresses
-    $exoIntraOrgConfig = Get-OnPremisesOrganization | Select-Object OrganizationGuid | Get-IntraOrganizationConfiguration | Select-Object * | Where-Object { $_.OnPremiseTargetAddresses -like "*$ExchangeOnPremDomain*" }
+    #$exoIntraOrgConfig = Get-OnPremisesOrganization | select OrganizationGuid | Get-IntraOrganizationConfiguration | Select OnPremiseTarGetAddresses
+    $exoIntraOrgConfig = Get-OnPremisesOrganization | Select-Object OrganizationGuid | Get-IntraOrganizationConfiguration | Select-Object * | Where-Object { $_.OnPremiseTarGetAddresses -like "*$ExchangeOnPremDomain*" }
     #$IntraOrgConCheck
     $IOConfig = $exoIntraOrgConfig | Format-List
     $IOConfig
-    Write-Host $bar
-    Write-Host -foregroundcolor Green " Summary - Online Intra Organization Configuration"
-    Write-Host $bar
-    Write-Host -foregroundcolor White " OnPremiseTargetAddresses: "
-    if ($exoIntraOrgConfig.OnPremiseTargetAddresses -like "*$ExchangeOnpremDomain*") {
-        Write-Host -foregroundcolor Green " " $exoIntraOrgConfig.OnPremiseTargetAddresses
-        $tdexoIntraOrgConfigOnPremiseTargetAddresses = $exoIntraOrgConfig.OnPremiseTargetAddresses
-        $tdexoIntraOrgConfigOnPremiseTargetAddressesColor = "green"
-    
+    Print-DynamicWidthLine
+    Write-Host -ForegroundColor Green " Summary - Exchange Online Intra Organization Configuration"
+    Print-DynamicWidthLine
+    Write-Host -ForegroundColor White " OnPremiseTarGetAddresses: "
+    if ($exoIntraOrgConfig.OnPremiseTarGetAddresses -like "*$ExchangeOnpremDomain*") {
+        Write-Host -ForegroundColor Green " " $exoIntraOrgConfig.OnPremiseTarGetAddresses
+        $tdEXOIntraOrgConfigOnPremiseTarGetAddresses = $exoIntraOrgConfig.OnPremiseTarGetAddresses
+        $tdEXOIntraOrgConfigOnPremiseTarGetAddressesColor = "green"
+    } else {
+        Write-Host -ForegroundColor Red " OnPremise TarGet Addresses are NOT correct."
+        Write-Host -ForegroundColor White " Should contain the $ExchangeOnpremDomain"
+        $tdEXOIntraOrgConfigOnPremiseTarGetAddresses = $exoIntraOrgConfig.OnPremiseTarGetAddresses
+        $tdEXOIntraOrgConfigOnPremiseTarGetAddressesColor = "red"
     }
-    else {
-        Write-Host -foregroundcolor Red " OnPremise Target Addressess are NOT correct."
-        Write-Host -foregroundcolor White " Should contain the $ExchangeOnpremDomain"
-        $tdexoIntraOrgConfigOnPremiseTargetAddresses = $exoIntraOrgConfig.OnPremiseTargetAddresses
-        $tdexoIntraOrgConfigOnPremiseTargetAddressesColor = "red"
-    }
-
 
     $script:html += "
-    
+
     <tr>
-      <th colspan='2' style=color:white;'><b>Summary - Get-IntraOrganizationConfiguration</b></th>
+      <th ColSpan='2' style=color:white;'><b>Summary - Get-IntraOrganizationConfiguration</b></th>
     </tr>
     <tr>
-      <td><b>  Get-IntraOrganizationConfiguration | Select OnPremiseTargetAddresses</b></td>
+      <td><b>  Get-IntraOrganizationConfiguration | Select OnPremiseTarGetAddresses</b></td>
       <td>
-        <div><b>OnPremiseTargetAddresses:</b><span style='color: $tdexoIntraOrgConfigOnPremiseTargetAddressesColor;'>$($tdexoIntraOrgConfigOnPremiseTargetAddresses)</span></div>
-        
+        <div><b>OnPremiseTarGetAddresses:</b><span style='color: $tdEXOIntraOrgConfigOnPremiseTarGetAddressesColor;'>$($tdEXOIntraOrgConfigOnPremiseTarGetAddresses)</span></div>
+
       </td>
     </tr>
   "
 
-
-    
-    $html | Out-File -FilePath $htmlfile
-
-
+    $html | Out-File -FilePath $htmlFile
 }
 
-Function EXOauthservercheck {
-    Write-Host -foregroundcolor Green " Get-AuthServer -Identity 00000001-0000-0000-c000-000000000000 | select name,issueridentifier,enabled"
-    Write-Host $bar
-    $exoauthserver = Get-AuthServer -Identity 00000001-0000-0000-c000-000000000000 | Select-Object name, issueridentifier, enabled
+function EXOAuthServerCheck {
+    Write-Host -ForegroundColor Green " Get-AuthServer -Identity 00000001-0000-0000-c000-000000000000 | select name,IssuerIdentifier,enabled"
+    Print-DynamicWidthLine
+    $exoAuthServer = Get-AuthServer -Identity 00000001-0000-0000-c000-000000000000 | Select-Object name, IssuerIdentifier, enabled
     #$IntraOrgConCheck
-    $authserver = $exoauthserver | Format-List
-    $authserver
-    $tdexoauthserverName = $exoauthserver.Name
-    Write-Host $bar
-    Write-Host -foregroundcolor Green " Summary - Exchange Online Authorization Server"
-    Write-Host $bar
-    Write-Host -foregroundcolor White " IssuerIdentifier: "
-    if ($exoauthserver.IssuerIdentifier -like "00000001-0000-0000-c000-000000000000") {
-        Write-Host -foregroundcolor Green " " $exoauthserver.IssuerIdentifier
-        $tdexoauthserverIssuerIdentifier = $exoauthserver.IssuerIdentifier
-        $tdexoauthserverIssuerIdentifierColor = "green"
-        if ($exoauthserver.Enabled -like "True") {
-            Write-Host -foregroundcolor Green "  True "
-            $tdexoauthserverEnabled = $exoauthserver.Enabled
-            $tdexoauthserverEnabledColor = "green"
-        
+    $AuthServer = $exoAuthServer | Format-List
+    $AuthServer
+    $tdEXOAuthServerName = $exoAuthServer.Name
+    Print-DynamicWidthLine
+    Write-Host -ForegroundColor Green " Summary - Exchange Online Authorization Server"
+    Print-DynamicWidthLine
+    Write-Host -ForegroundColor White " IssuerIdentifier: "
+    if ($exoAuthServer.IssuerIdentifier -like "00000001-0000-0000-c000-000000000000") {
+        Write-Host -ForegroundColor Green " " $exoAuthServer.IssuerIdentifier
+        $tdEXOAuthServerIssuerIdentifier = $exoAuthServer.IssuerIdentifier
+        $tdEXOAuthServerIssuerIdentifierColor = "green"
+        if ($exoAuthServer.Enabled -like "True") {
+            Write-Host -ForegroundColor Green "  True "
+            $tdEXOAuthServerEnabled = $exoAuthServer.Enabled
+            $tdEXOAuthServerEnabledColor = "green"
+        } else {
+            Write-Host -ForegroundColor Red "  Enabled is NOT correct."
+            Write-Host -ForegroundColor White " Should be True"
+            $tdEXOAuthServerEnabled = "$($exoAuthServer.Enabled) . Should be True"
+            $tdEXOAuthServerEnabledColor = "red"
         }
-        else {
-            Write-Host -foregroundcolor Red "  Enabled is NOT correct."
-            Write-Host -foregroundcolor White " Should be True"
-            $tdexoauthserverEnabled = "$($exoauthserver.Enabled) . Should be True"
-            $tdexoauthserverEnabledColor = "red"
-        
-        }
-    }
-    else {
-        Write-Host -foregroundcolor Red " Authorization Server object is NOT correct."
-        Write-Host -foregroundcolor White " Enabled: "
-        $tdexoauthserverIssuerIdentifier = "$($exoauthserver.IssuerIdentifier) - Authorization Server object should be 00000001-0000-0000-c000-000000000000"
-        $tdexoauthserverIssuerIdentifierColor = "red"
-        
-        if ($exoauthserver.Enabled -like "True") {
-            Write-Host -foregroundcolor Green "  True "
-            $tdexoauthserverEnabled = $exoauthserver.Enabled
-            $tdexoauthserverEnabledColor = "green"
-        
-        }
-        else {
-            Write-Host -foregroundcolor Red "  Enabled is NOT correct."
-            Write-Host -foregroundcolor White " Should be True"
-            $tdexoauthserverEnabled = "$($exoauthserver.Enabled) . Should be True"
-            $tdexoauthserverEnabledColor = "red"
-        
+    } else {
+        Write-Host -ForegroundColor Red " Authorization Server object is NOT correct."
+        Write-Host -ForegroundColor White " Enabled: "
+        $tdEXOAuthServerIssuerIdentifier = "$($exoAuthServer.IssuerIdentifier) - Authorization Server object should be 00000001-0000-0000-c000-000000000000"
+        $tdEXOAuthServerIssuerIdentifierColor = "red"
+
+        if ($exoAuthServer.Enabled -like "True") {
+            Write-Host -ForegroundColor Green "  True "
+            $tdEXOAuthServerEnabled = $exoAuthServer.Enabled
+            $tdEXOAuthServerEnabledColor = "green"
+        } else {
+            Write-Host -ForegroundColor Red "  Enabled is NOT correct."
+            Write-Host -ForegroundColor White " Should be True"
+            $tdEXOAuthServerEnabled = "$($exoAuthServer.Enabled) . Should be True"
+            $tdEXOAuthServerEnabledColor = "red"
         }
     }
 
     $script:html += "
-    
+
     <tr>
-      <th colspan='2' style='color:white;'>Summary - Get-AuthServer</th>
+      <th ColSpan='2' style='color:white;'>Summary - Get-AuthServer</th>
     </tr>
     <tr>
-      <td><b>  Get-AuthServer -Identity 00000001-0000-0000-c000-000000000000 | select name,issueridentifier,enabled</b></td>
+      <td><b>  Get-AuthServer -Identity 00000001-0000-0000-c000-000000000000 | select name,IssuerIdentifier,enabled</b></td>
       <td>
-        <div><b>Name:</b><span style='color: $tdexoauthserverNameColor;'>$($tdexoauthserverName)</span></div>
-        <div><b>IssuerIdentifier:</b><span style='color: $tdexoauthserverIssuerIdentifierColor;'>$($tdexoauthserverIssuerIdentifier)</span></div>
-        <div><b>Enabled:</b><span style='color: $tdexoauthserverEnabledColor;'>$($tdexoauthserverEnabled)</span></div>
-        
+        <div><b>Name:</b><span style='color: $tdEXOAuthServerNameColor;'>$($tdEXOAuthServerName)</span></div>
+        <div><b>IssuerIdentifier:</b><span style='color: $tdEXOAuthServerIssuerIdentifierColor;'>$($tdEXOAuthServerIssuerIdentifier)</span></div>
+        <div><b>Enabled:</b><span style='color: $tdEXOAuthServerEnabledColor;'>$($tdEXOAuthServerEnabled)</span></div>
+
       </td>
     </tr>
   "
 
-
-    
-    $html | Out-File -FilePath $htmlfile
-
+    $html | Out-File -FilePath $htmlFile
 }
 
-Function EXOtestoauthcheck {
-    Write-Host -foregroundcolor Green " Test-OAuthConnectivity -Service EWS -TargetUri $Global:ExchangeOnPremEWS -Mailbox $useronline "
-    Write-Host $bar
-    $exotestoauth = Test-OAuthConnectivity -Service EWS -TargetUri $Global:ExchangeOnPremEWS -Mailbox $useronline 
-    if ($exotestoauth.ResultType.Value -like 'Success' ) {
-        #$exotestoauth.ResultType.Value
-         
-        $tdOAuthConnectivityResultType = "$($exotestoauth.ResultType.Value) - OAuth Test was completed successfully"
+function ExoTestOAuthCheck {
+    Write-Host -ForegroundColor Green " Test-OAuthConnectivity -Service EWS -TarGetUri $Script:ExchangeOnPremEWS -Mailbox $UserOnline "
+    Print-DynamicWidthLine
+    $ExoTestOAuth = Test-OAuthConnectivity -Service EWS -TarGetUri $Script:ExchangeOnPremEWS -Mailbox $UserOnline
+    if ($ExoTestOAuth.ResultType.Value -like 'Success' ) {
+        #$ExoTestOAuth.ResultType.Value
+
+        $tdOAuthConnectivityResultType = "$($ExoTestOAuth.ResultType.Value) - OAuth Test was completed successfully"
         $tdOAuthConnectivityResultTypeColor = "green"
-    }
-    else {
-        $exotestoauth | Format-List
-        $tdOAuthConnectivityResultType = "$($exotestoauth.ResultType) - OAuth Test was completed with Error. Please rerun Test-OAuthConnectivity -Service EWS -TargetUri <EWS target URI> -Mailbox <On Premises Mailbox> | fl to confirm the test failure"
+    } else {
+        $ExoTestOAuth | Format-List
+        $tdOAuthConnectivityResultType = "$($ExoTestOAuth.ResultType) - OAuth Test was completed with Error. Please rerun Test-OAuthConnectivity -Service EWS -TarGetUri <EWS target URI> -Mailbox <On Premises Mailbox> | fl to confirm the test failure"
         $tdOAuthConnectivityResultTypeColor = "red"
     }
-    
-    if ($exotestoauth.Detail.FullId -like '*(401) Unauthorized*') {
-        write-host -ForegroundColor Red "The remote server returned an error: (401) Unauthorized"
 
+    if ($ExoTestOAuth.Detail.FullId -like '*(401) Unauthorized*') {
+        Write-Host -ForegroundColor Red "The remote Server returned an error: (401) Unauthorized"
     }
 
-    if ($exotestoauth.Detail.FullId -like '*The user specified by the user-context in the token does not exist*') {
-        write-host -ForegroundColor Yellow "The user specified by the user-context in the token does not exist"
-        write-host "Please run Test-OAuthConnectivity with a different Exchange Online Mailbox"
-        
-        
-        
+    if ($ExoTestOAuth.Detail.FullId -like '*The user specified by the user-context in the token does not exist*') {
+        Write-Host -ForegroundColor Yellow "The user specified by the user-context in the token does not exist"
+        Write-Host "Please run Test-OAuthConnectivity with a different Exchange Online Mailbox"
     }
 
-    if ($exotestoauth.Detail.FullId -like '*error_category="invalid_token"*') {
-        write-host -ForegroundColor Yellow "This token profile 'S2SAppActAs' is not applicable for the current protocol"
-        
-        
-        
-        
+    if ($ExoTestOAuth.Detail.FullId -like '*error_category="invalid_token"*') {
+        Write-Host -ForegroundColor Yellow "This token profile 'S2SAppActAs' is not applicable for the current protocol"
     }
-    #Write-Host $bar
+    #Print-DynamicWidthLine
     #$OAuthConnectivity.detail.LocalizedString
-    Write-Host -foregroundcolor Green " Summary - Test-OAuthConnectivity"
-    Write-Host $bar
-    if ($exotestoauth.ResultType.value -like "Success") {
-        Write-Host -foregroundcolor Green " OAuth Test was completed successfully "
+    Write-Host -ForegroundColor Green " Summary - Test-OAuthConnectivity"
+    Print-DynamicWidthLine
+    if ($ExoTestOAuth.ResultType.value -like "Success") {
+        Write-Host -ForegroundColor Green " OAuth Test was completed successfully "
         $tdOAuthConnectivityResultType = "  OAuth Test was completed successfully"
         $tdOAuthConnectivityResultTypeColor = "green"
-        
-    }
-    else {
-        Write-Host -foregroundcolor Red " OAuth Test was completed with Error. "
-        Write-Host -foregroundcolor White " Please rerun Test-OAuthConnectivity -Service EWS -TargetUri <EWS target URI> -Mailbox <On Premises Mailbox> | fl to confirm the test failure"
-        $tdOAuthConnectivityResultType = "$($exotestoauth.ResultType) - OAuth Test was completed with Error. Please rerun Test-OAuthConnectivity -Service EWS -TargetUri <EWS target URI> -Mailbox <On Premises Mailbox> | fl to confirm the test failure"
+    } else {
+        Write-Host -ForegroundColor Red " OAuth Test was completed with Error. "
+        Write-Host -ForegroundColor White " Please rerun Test-OAuthConnectivity -Service EWS -TarGetUri <EWS tarGet URI> -Mailbox <On Premises Mailbox> | fl to confirm the test failure"
+        $tdOAuthConnectivityResultType = "$($ExoTestOAuth.ResultType) - OAuth Test was completed with Error. Please rerun Test-OAuthConnectivity -Service EWS -TarGetUri <EWS tarGet URI> -Mailbox <On Premises Mailbox> | fl to confirm the test failure"
         $tdOAuthConnectivityResultTypeColor = "red"
-        
-        
     }
-    
-    
-    #Write-Host -foregroundcolor Yellow "NOTE: You can ignore the warning 'The SMTP address has no mailbox associated with it'"
-    #Write-Host -foregroundcolor Yellow " when the Test-OAuthConnectivity returns a Success"
-    Write-Host -foregroundcolor Green "`n References: "
-    Write-Host -foregroundcolor White " Configure OAuth authentication between Exchange and Exchange Online organizations"
-    Write-Host -foregroundcolor Yellow " https://technet.microsoft.com/en-us/library/dn594521(v=exchg.150).aspx"
 
+    #Write-Host -ForegroundColor Yellow "NOTE: You can ignore the warning 'The SMTP address has no mailbox associated with it'"
+    #Write-Host -ForegroundColor Yellow " when the Test-OAuthConnectivity returns a Success"
+    Write-Host -ForegroundColor Green "`n References: "
+    Write-Host -ForegroundColor White " Configure OAuth authentication between Exchange and Exchange Online organizations"
+    Write-Host -ForegroundColor Yellow " https://technet.microsoft.com/en-us/library/dn594521(v=exchg.150).aspx"
 
     $script:html += "
-   
+
     <tr>
-      <th colspan='2' style='color:white;'><b>Summary - Test-OAuthConnectivity</b></th>
+      <th ColSpan='2' style='color:white;'><b>Summary - Test-OAuthConnectivity</b></th>
     </tr>
     <tr>
-      <td><b>  Test-OAuthConnectivity -Service EWS -TargetUri $($Global:ExchangeOnPremEWS) -Mailbox $useronline </b></td>
+      <td><b>  Test-OAuthConnectivity -Service EWS -TarGetUri $($Script:ExchangeOnPremEWS) -Mailbox $UserOnline </b></td>
       <td>
         <div><b>Result:</b><span style='color: $tdOAuthConnectivityResultTypeColor;'>$($tdOAuthConnectivityResultType)</span></div>
-        
+
       </td>
     </tr>
   "
 
-
-    
-    $html | Out-File -FilePath $htmlfile
-
+    $html | Out-File -FilePath $htmlFile
 }
 
 #endregion
+
+
 #cls
-$IntraOrgCon = Get-IntraOrganizationConnector -WarningAction SilentlyContinue -ErrorAction SilentlyContinue | Select-Object Name, TargetAddressDomains, DiscoveryEndpoint, Enabled
+$IntraOrgCon = Get-IntraOrganizationConnector -WarningAction SilentlyContinue -ErrorAction SilentlyContinue | Select-Object Name, TarGetAddressDomains, DiscoveryEndpoint, Enabled
 #if($Auth -contains "DAuth" -and $IntraOrgCon.enabled -Like "True")
 
 ShowParameters
 
-if( $Auth -eq "All" ) {
 if ($IntraOrgCon.enabled -Like "True") {
-    Write-Host $bar
-    Write-Host -foregroundcolor yellow "  Warning: Intra Organization Connector Enabled True `n  " 
-    Write-Host -foregroundcolor White "    -> Free Busy Lookup is done using OAuth when the Intra Organization Connector is Enabled"
-    Write-Host -foregroundcolor White "`n         This script can be Run using the -Auth paramenter to check for OAuth configurations only. `n `n         Example: ./FreeBusyChecker.ps1 -Auth OAuth"
-    $Script:html += "<div><p></p></div><div>  <span style='color:orange;'><b>Warning: </b></span> Intra Organization Connector Enabled True `n <b>  -> Free Busy Lookup is done using OAuth when the Intra Organization Connector is Enabled<b></div>
-     <div><p></p></div><div>  This script can be Run using the -Auth paramenter to check for OAuth configurations only. `n Example: ./FreeBusyChecker.ps1 -Auth OAuth </div> <div><p></p></div>
+    Print-DynamicWidthLine
 
+    if ($Auth -Like "DAuth") {
+        Write-Host -ForegroundColor yellow "  Warning: Intra Organization Connector Enabled True -> Running for DAuth only as -Auth DAuth option was selected`n  "
+        if ($OrgRel.enabled -Like "True") {
+            Write-Host -ForegroundColor White "           Organization Relationship Enabled True `n  "
+        }
+
+        Write-Host -ForegroundColor White "      This script can be Run using the -Auth All parameter to Check for both OAuth and DAuth configuration. `n `n         Example: ./FreeBusyChecker.ps1 -Auth All"
+        $Script:html += "
+                        <div  style = 'padding-left: 0%;'>
+                          <h3>Intra Organization Connector Enabled: <b>True</b></h3>
+                          <p> <span style='color: green; font-wight: 550; padding-left:2%; '>Checking DAuth only as -Auth DAuth option was selected</span></p>
+
+                        </div>
+
+                        <div  style = 'padding-left: 0%;'>
+
+                          <ul>
+                            <li>
+                              This script can be run using the <b>-Auth OAuth</b> parameter to Check for DAuth configurations only.
+                              <br />
+                              <span style='padding-left: 2%;'>
+                                <br />
+                                <b>Example:</b> ./FreeBusyChecker.ps1 -Auth OAuth
+
+                              </span>
+                            </li>
+                            <br />
+                            <li>
+
+                              This script can be run using the <b>-Auth All</b> parameter to Check for both OAuth and DAuth configurations.
+                              <br />
+                              <span style='padding-left: 2%;'>
+                                <br />
+                                <b>Example:</b> ./FreeBusyChecker.ps1 -Auth All
+                              <span style='padding:2%;'>
+                            </li>
+                          </ul>
+                        </div>
     "
-    $html | Out-File -FilePath $htmlfile
+        $html | Out-File -FilePath $htmlFile
+    }
+    if ($Auth -Like "") {
+
+        $Auth = "OAuth"
+        Write-Host -ForegroundColor White "    -> Free Busy Lookup is done using OAuth when the Intra Organization Connector is Enabled"
+        Write-Host -ForegroundColor White "    -> Running for OAuth only as OAuth takes precedence over DAuth;"
+        Write-Host -ForegroundColor White "`n         This script can be Run using the -Auth All parameter to Check for both OAuth and DAuth configuration. `n `n         Example: ./FreeBusyChecker.ps1 -Auth All"
+        Write-Host -ForegroundColor White "`n         This script can be Run using the -Auth DAuth parameter to Check for DAuth configuration only. `n `n         Example: ./FreeBusyChecker.ps1 -Auth DAuth"
+        $Script:html += "
+                        <div  style = 'padding-left: 0%;'>
+                          <h3>Intra Organization Connector Enabled: <b>True</b></h3>
+                          <p> <span style='color: green; font-wight: 550; padding-left:2%; '>Checking OAuth only as Free Busy Lookup is done using OAuth when the Intra Organization Connector is Enabled</span></p>
+
+                        </div>
+
+                        <div  style = 'padding-left: 0%;'>
+
+                          <ul>
+                            <li>
+                              This script can be run using the <b>-Auth DAuth</b> parameter to Check for DAuth configurations only.
+                              <br />
+                              <span style='padding-left: 2%;'>
+                                <br />
+                                <b>Example:</b> ./FreeBusyChecker.ps1 -Auth DAuth
+
+                              </span>
+                            </li>
+                            <br />
+                            <li>
+
+                              This script can be run using the <b>-Auth All</b> parameter to Check for both OAuth and DAuth configurations.
+                              <br />
+                              <span style='padding-left: 2%;'>
+                                <br />
+                                <b>Example:</b> ./FreeBusyChecker.ps1 -Auth All
+                              <span style='padding:2%;'>
+                            </li>
+                          </ul>
+                        </div>
+    "
+        $html | Out-File -FilePath $htmlFile
+    }
+    if ($Auth -Like "All") {
+
+        $Auth = ""
+        Write-Host -ForegroundColor White "    -> Free Busy Lookup is done using OAuth when the Intra Organization Connector is Enabled"
+        Write-Host -ForegroundColor White "    -> Checking both OAuth and DAuth as -Auth All option was selected"
+
+        $Script:html += "
+                        <div  style = 'padding-left: 0%;'>
+
+                          <h3>Intra Organization Connector Enabled: <b>True</b></h3>
+
+                          <p> <span style='color: green; font-wight: 550; padding-left:2%; '>Checking both OAuth and DAuth as -Auth All option was selected</span></p>
+
+                        </div>
+
+                        <div  style = 'padding-left: 0%;'>
+
+                          <ul>
+                            <li>
+                              This script can be run using the <b>-Auth DAuth</b> parameter to Check for DAuth configurations only.
+                              <br />
+                              <span style='padding-left: 2%;'>
+                                <br />
+                                <b>Example:</b> ./FreeBusyChecker.ps1 -Auth DAuth
+
+                              </span>
+                            </li>
+                            <br />
+                            <li>
+
+                              This script can be run using the <b>-Auth All</b> parameter to Check for both OAuth and DAuth configurations.
+                              <br />
+                              <span style='padding-left: 2%;'>
+                                <br />
+                                <b>Example:</b> ./FreeBusyChecker.ps1 -Auth All
+                              <span style='padding:2%;'>
+                            </li>
+                          </ul>
+                        </div>
+    "
+        $html | Out-File -FilePath $htmlFile
+    }
 }
 
 if ($IntraOrgCon.enabled -Like "False") {
-    Write-Host $bar
-    Write-Host -foregroundcolor yellow "  Warning: Intra Organization Connector Enabled False -> Free Busy Lookup is done using DAuth (Organization Relationship) when the Intra Organization Connector is Disabled"
-    Write-Host -foregroundcolor White "`n  This script can be Run using the -Auth paramenter to check for OAuth configurations only. `n  Example: ./FreeBusyChecker.ps1 -Auth OAuth"
-    $Script:html += "<p>/p> <div>  <span style='color:yellow;'>Warning: </span> Intra Organization Connector Enabled True `n <b>       -> Free Busy Lookup is done using OAuth when the Intra Organization Connector is Enabled<b></div>
-     <div><p></p></div>
-     <div>  This script can be Run using the -Auth paramenter to check for OAuth configurations only. Example: ./FreeBusyChecker.ps1 -Auth OAuth</div> <div><p></p></div>
+    if ($Auth -like "" -or $Auth -like "DAuth") {
+
+        Print-DynamicWidthLine
+        Write-Host -ForegroundColor yellow "  Warning: Intra Organization Connector Enabled False -> Running for DAuth only as OAuth is not enabled"
+        Write-Host -ForegroundColor White "`n       This script can be Run using the '-Auth OAuth' parameter to Check for OAuth configurations only. `n"
+        Write-Host -ForegroundColor White "             Example: ./FreeBusyChecker.ps1 -Auth OAuth"
+        Write-Host -ForegroundColor White "`n       This script can be Run using the '-Auth All' parameter to Check for both OAuth and DAuth configuration. `n"
+        Write-Host -ForegroundColor White "             Example: ./FreeBusyChecker.ps1 -Auth All"
+
+        $Script:html += "
+                        <div  style = 'padding-left: 0%;'>
+
+                          <h3>Intra Organization Connector Enabled: <b>False</b></h3>
+
+                          <p> <span style='color: green; font-wight: 550; padding-left:2%; '>Checking DAuth as OAuth is not Enabled</span></p>
+
+                        </div>
+
+                        <div  style = 'padding-left: 0%;'>
+
+                          <ul>
+                            <li>
+                              This script can be run using the <b>-Auth OAuth</b> parameter to Check for OAuth configurations only.
+                              <br />
+                              <span style='padding-left: 2%;'>
+                                <br />
+                                <b>Example:</b> ./FreeBusyChecker.ps1 -Auth OAuth
+
+                              </span>
+                            </li>
+                            <br />
+                            <li>
+
+                              This script can be run using the <b>-Auth All</b> parameter to Check for both OAuth and DAuth configurations.
+                              <br />
+                              <span style='padding-left: 2%;'>
+                                <br />
+                                <b>Example:</b> ./FreeBusyChecker.ps1 -Auth All
+                              <span style='padding:2%;'>
+                            </li>
+                          </ul>
+                        </div>
     "
-    $html | Out-File -FilePath $htmlfile
-}
+
+        $html | Out-File -FilePath $htmlFile
+    }
+    if ($Auth -like "OAuth") {
+
+        Print-DynamicWidthLine
+        Write-Host -ForegroundColor yellow "  Warning: Intra Organization Connector Enabled False -> Running for OAuth only as -Auth OAuth parameter was selected"
+        Write-Host -ForegroundColor White "`n       This script can be Run using the '-Auth All' parameter to Check for both OAuth and DAuth configuration. `n"
+        Write-Host -ForegroundColor White "             Example: ./FreeBusyChecker.ps1 -Auth All"
+
+        $Script:html += "
+                        <div  style = 'padding-left: 0%;'>
+
+                          <h3>Intra Organization Connector Enabled: <b>False</b></h3>
+
+                          <p> <span style='color: green; font-wight: 550; padding-left:2%; '>Checking OAuth as -Auth OAuth parameter was selected</span></p>
+
+                        </div>
+
+                        <div  style = 'padding-left: 0%;'>
+
+                          <ul>
+                            <li>
+
+                              This script can be run using the <b>-Auth All</b> parameter to Check for both OAuth and DAuth configurations.
+                              <br />
+                              <span style='padding-left: 2%;'>
+                                <br />
+                                <b>Example:</b> ./FreeBusyChecker.ps1 -Auth All
+                              <span style='padding:2%;'>
+                            </li>
+                          </ul>
+                        </div>
+    "
+
+        $html | Out-File -FilePath $htmlFile
+    }
+
+    if ($Auth -like "All") {
+
+        Print-DynamicWidthLine
+        Write-Host -ForegroundColor yellow "  Warning: Intra Organization Connector Enabled False -> Running both for OAuth and DAuth as -Auth All parameter was selected"
+        Write-Host -ForegroundColor White "`n       This script can be Run using the '-Auth OAuth' parameter to Check for OAuth configuration only. `n"
+        Write-Host -ForegroundColor White "             Example: ./FreeBusyChecker.ps1 -Auth OAuth"
+
+        $Script:html += "
+                        <div  style = 'padding-left: 0%;'>
+
+                          <h3>Intra Organization Connector Enabled: <b>False</b></h3>
+
+                          <p> <span style='color: green; font-wight: 550; padding-left:2%; '>Checking both for OAuth and DAuth as -Auth All parameter was selected</span></p>
+
+                        </div>
+
+                        <div  style = 'padding-left: 0%;'>
+
+                          <ul>
+                            <li>
+
+                              This script can be run using the <b>-Auth OAuth</b> parameter to Check for OAuth only.
+                              <br />
+                              <span style='padding-left: 2%;'>
+                                <br />
+                                <b>Example:</b> ./FreeBusyChecker.ps1 -Auth OAuth
+                              <span style='padding:2%;'>
+                            </li>
+                          </ul>
+                        </div>
+    "
+
+        $html | Out-File -FilePath $htmlFile
+    }
 }
 
 do {
     #do while not Y or N
-    Write-Host $bar
-    $ParamOK = Read-Host " Are this values correct? Pess Y for YES and N for NO"
+    Print-DynamicWidthLine
+    Write-Host " Are these values correct? Press Y for YES and N for NO"
+    $ParamOK = [System.Console]::ReadLine()
     $ParamOK = $ParamOK.ToUpper()
 } while ($ParamOK -ne "Y" -AND $ParamOK -ne "N")
 #cls
-Write-Host $bar
+Print-DynamicWidthLine
 if ($ParamOK -eq "N") {
     UserOnlineCheck
     ExchangeOnlineDomainCheck
-    UseronpremCheck
+    UserOnPremCheck
     ExchangeOnPremDomainCheck
     ExchangeOnPremEWSCheck
     ExchangeOnPremLocalDomainCheck
 }
-
-if ( -not $Auth ) {
-
-if ( -not $org -or $org -eq 'ExchangeOnPremise' ) {
-    $IntraOrgCon = Get-IntraOrganizationConnector -WarningAction SilentlyContinue -ErrorAction SilentlyContinue | Where-Object { $_.Enabled -and $_.TargetAddressDomains.Contains($exchangeOnlineDomain) } | Select-Object Name, TargetAddressDomains, DiscoveryEndpoint, Enabled
-    $OrgRelation = Get-OrganizationRelationship -WarningAction SilentlyContinue -ErrorAction SilentlyContinue |  Where-Object { $_.Enabled -and $_.DomainNames.Contains($exchangeOnlineDomain) } | Select-Object Name, DomainNames, Enabled
-    if ($IntraOrgCon){
-    Write-Host -foregroundcolor White "    -> Found an Intra Organization Connector Enabled ($($IntraOrgCon.Name)) On-Premises for $exchangeOnlineDomain"
-    $Script:html += "<p> <div>  <span style='color:black;'> -> Found an Intra Organization Connector Enabled ($($IntraOrgCon.Name)) On-Premises for $exchangeOnlineDomain`n </div>
-     <div><p></p></div>
-    "
-    $html | Out-File -FilePath $htmlfile
-
-}
-    else {    Write-Host -foregroundcolor White "    -> No Intra Organization Connector Enabled was found On-Premises for $exchangeOnlineDomain"
-           $Script:html += "<p> <div>  <span style='color:black;'> -> No Intra Organization Connector Enabled was found On-Premises for $exchangeOnlineDomain`n </div>
-     <div><p></p></div>
-     "
-    $html | Out-File -FilePath $htmlfile
-
-        if ($ORgRelation){
-        Write-Host -foregroundcolor White "    -> Found an Organization Relationship Enabled ($($OrgRelation.Name)) On-Premises for $exchangeOnlineDomain"
-                       $Script:html += "<p> <div>  <span style='color:black;'> -> Found an Organization Relationship Enabled ($($OrgRelation.Name)) On-Premises for $exchangeOnlineDomain`n </div>
-     <div><p></p></div>
-     "
-    $html | Out-File -FilePath $htmlfile
-            }
-        else {    Write-Host -foregroundcolor White "    -> No Organization Relationship Enabled was found On-Premises for $exchangeOnlineDomain"
-                               $Script:html += "<p> <div>  <span style='color:black;'> -> No Organization Relationship Enabled was found On-Premises for $exchangeOnlineDomain`n </div>
-     <div><p></p></div>
-     "
-    $html | Out-File -FilePath $htmlfile
-            }
-    }
-}
-if ( -not $Org -or $Org -eq 'ExchangeOnline' ) {
-    
-    
-    
-    Install-Module -Name ExchangeOnlineManagement -Force -WarningAction SilentlyContinue -ErrorAction SilentlyContinue -SkipPublisherCheck -Confirm:$False
-    
-    
-    Connect-ExchangeOnline -ShowBanner:$false -Prefix ExchangeOnline -WarningAction SilentlyContinue -ErrorAction SilentlyContinue 
-    
-    $EXOIntraOrgCon = Get-ExchangeOnlineIntraOrganizationConnector -WarningAction SilentlyContinue -ErrorAction SilentlyContinue | Where-Object { $_.Enabled -and $_.TargetAddressDomains.Contains($ExchangeOnPremDomain) } | Select-Object Name, TargetAddressDomains, DiscoveryEndpoint, Enabled
-    $EXOOrgRelation = Get-ExchangeOnlineOrganizationRelationship -WarningAction SilentlyContinue -ErrorAction SilentlyContinue |  Where-Object { $_.Enabled -and $_.DomainNames.Contains($exchangeOnPremDomain) } | Select-Object Name, DomainNames, Enabled
-
-    if ($EXOIntraOrgCon){
-    Write-Host -foregroundcolor White "    -> Found an Intra Organization Connector Enabled ($($EXOIntraOrgCon.Name)) in the cloud for $ExchangeOnPremDomain"
-                                   $Script:html += "<p> <div>  <span style='color:black;'> -> Found an Intra Organization Connector Enabled ($($EXOIntraOrgCon.Name)) in the cloud for $ExchangeOnPremDomain`n </div>
-     <div><p></p></div>
-     "
-    $html | Out-File -FilePath $htmlfile
-
-    } else {
-     Write-Host -foregroundcolor White "    -> No Intra Organization Connector Enabled was found in the cloud for $ExchangeOnPremDomain"
-                                    $Script:html += "<p> <div>  <span style='color:black;'> -> No Intra Organization Connector Enabled was found in the cloud for $ExchangeOnPremDomain`n </div>
-     <div><p></p></div>
-     "
-    $html | Out-File -FilePath $htmlfile
-        if ($EXOORgRelation){
-        Write-Host -foregroundcolor White "    -> Found an Organization Relationship Enabled ($($EXOOrgRelation.Name)) in the cloud for $ExchangeOnPremDomain"
-                                         $Script:html += "<p> <div>  <span style='color:black;'> -> Found an Organization Relationship Enabled ($($EXOOrgRelation.Name)) in the cloud for $ExchangeOnPremDomain`n </div>
-     <div><p></p></div>
-     "
-    $html | Out-File -FilePath $htmlfile  }
-        else {    Write-Host -foregroundcolor White "    -> No Organization Relationship Enabled was found in the cloud for $ExchangeOnPremDomain"
-                                       $Script:html += "<p> <div>  <span style='color:black;'> -> No Organization Relationship Enabled was found in the cloud for $ExchangeOnPremDomain`n </div>
-     <div><p></p></div>
-     "
-    $html | Out-File -FilePath $htmlfile
-            } 
-    Disconnect-ExchangeOnline -InformationAction SilentlyContinue -WarningAction SilentlyContinue -Confirm:$False
-
-    }
-}
-
-Write-Host
-
-    if (-not $Org) {
-        if ($IntraOrgCon -or $EXOIntraOrgCon) {
-            Write-Host -foregroundcolor White " As there is at least one enabled Intra Organization Connector, On-Premises or in the cloud, and the -Auth parameter was not specified, the test will collect OAuth configuration."
-            $Auth = 'OAuth'
-            $Script:html += "<p> <div>  <span style='color:black;'>  As there is at least one enabled Intra Organization Connector, On-Premises or in the cloud, and the -Auth parameter was not specified, the test will collect OAuth configuration.`n </div>
-     <div><p></p></div>
-     "
-    $html | Out-File -FilePath $htmlfile
-        }     
-          elseif ($OrgRelation -or $EXOOrgRelation) {
-            Write-Host -foregroundcolor White " As there are no enabled Intra Organization Connectors, both On-Premises and in the cloud, and the -Auth parameter was not specified, the test will collect DAuth configuration."
-            $Auth = 'DAuth'
-                        $Script:html += "<p> <div>  <span style='color:black;'> As there are no enabled Intra Organization Connectors, both On-Premises and in the cloud, and the -Auth parameter was not specified, the test will collect DAuth configuration.`n </div>
-     <div><p></p></div>
-     "
-     $html | Out-File -FilePath $htmlfile
-        }
-        else {
-        Write-Host -foregroundcolor White " As there are no enabled Intra Organization Connectors or Organization Relationships, and the -Auth parameter was not specified, the test will collect both OAuth and DAuth configuration."
-            $Auth = 'All'
-                        $Script:html += "<p> <div>  <span style='color:black;'> As there are no enabled Intra Organization Connectors or Organization Relationships, and the -Auth parameter was not specified, the test will collect both OAuth and DAuth configuration.`n </div>
-     <div><p></p></div>
-     "
-     $html | Out-File -FilePath $htmlfile
-        }
-    }
-    elseif ( $Org -eq 'ExchangeOnPremise' ) {
-        if ( $IntraOrgCon ) {
-            Write-Host -foregroundcolor White " As there is an enabled Intra Organization Connector On-Premises and the -Auth parameter was not specified, the test will collect OAuth configuration."
-            $Auth = 'OAuth'
-                        $Script:html += "<p> <div>  <span style='color:black;'> As there is an enabled Intra Organization Connector On-Premises and the -Auth parameter was not specified, the test will collect OAuth configuration.`n </div>
-     <div><p></p></div>
-     "
-     $html | Out-File -FilePath $htmlfile
-        } elseif ($OrgRelation) {
-            Write-Host -foregroundcolor White " As there isn't any enabled Intra Organization Connector On-Premises and the -Auth parameter was not specified, the test will collect DAuth configuration."
-            $Auth = 'DAuth'
-                        $Script:html += "<p> <div>  <span style='color:black;'> As there isn't any enabled Intra Organization Connector On-Premises and the -Auth parameter was not specified, the test will collect DAuth configuration.`n </div>
-     <div><p></p></div>
-     "
-     $html | Out-File -FilePath $htmlfile
-        }
-        else {
-         Write-Host -foregroundcolor White " As there are no enabled Intra Organization Connectors or Organization Relationships, and the -Auth parameter was not specified, the test will collect both OAuth and DAuth configuration."
-            $Auth = 'All'
-                        $Script:html += "<p> <div>  <span style='color:black;'> As there are no enabled Intra Organization Connectors or Organization Relationships, and the -Auth parameter was not specified, the test will collect both OAuth and DAuth configuration.`n </div>
-     <div><p></p></div>
-     "
-     $html | Out-File -FilePath $htmlfile
-        }
-    }
-    elseif ( $Org -eq 'ExchangeOnline' ) {
-        if ( $EXOIntraOrgCon ) {
-            Write-Host -foregroundcolor White " As there is an enabled Intra Organization Connector in the cloud and the -Auth parameter was not specified, the test will collect OAuth configuration."
-            $Auth = 'OAuth'
-                                    $Script:html += "<p> <div>  <span style='color:black;'> As there is an enabled Intra Organization Connector in the cloud and the -Auth parameter was not specified, the test will collect OAuth configuration.`n </div>
-     <div><p></p></div>
-     "
-     $html | Out-File -FilePath $htmlfile
-        } elseif ($EXOOrgRelation) {
-            Write-Host -foregroundcolor White " As there isn't any enabled Intra Organization Connector in the cloud and the -Auth parameter was not specified, the test will collect DAuth configuration."
-            $Auth = 'DAuth'
-                                    $Script:html += "<p> <div>  <span style='color:black;'> As there isn't any enabled Intra Organization Connector in the cloud and the -Auth parameter was not specified, the test will collect DAuth configuration.`n </div>
-     <div><p></p></div>
-     "
-     $html | Out-File -FilePath $htmlfile
-        }
-        else {
-         Write-Host -foregroundcolor White " As there are no enabled Intra Organization Connectors or Organization Relationships, and the -Auth parameter was not specified, the test will collect both OAuth and DAuth configuration."
-            $Auth = 'All'
-                                    $Script:html += "<p> <div>  <span style='color:black;'> As there are no enabled Intra Organization Connectors or Organization Relationships, and the -Auth parameter was not specified, the test will collect both OAuth and DAuth configuration.`n </div>
-     <div><p></p></div>
-     "
-     $html | Out-File -FilePath $htmlfile
-        }
- 
-    }
-}
-
-
-
 # Free busy Lookup methods
-$OrgRel = Get-OrganizationRelationship | Where-Object { ($_.DomainNames -like $ExchangeOnlineDomain) } | Select-Object Enabled, Identity, DomainNames, FreeBusy*, Target*
+$OrgRel = Get-OrganizationRelationship | Where-Object { ($_.DomainNames -like $ExchangeOnlineDomain) } | Select-Object Enabled, Identity, DomainNames, FreeBusy*, TarGet*
 
 $EDiscoveryEndpoint = Get-IntraOrganizationConfiguration -WarningAction SilentlyContinue -ErrorAction SilentlyContinue | Select-Object OnPremiseDiscoveryEndpoint
 $SPDomainsOnprem = Get-SharingPolicy -WarningAction SilentlyContinue -ErrorAction SilentlyContinue | Format-List Domains
 $SPOnprem = Get-SharingPolicy  -WarningAction SilentlyContinue -ErrorAction SilentlyContinue | Select-Object *
 
 if ($Org -contains 'ExchangeOnPremise' -or -not $Org) {
-    #region DAutch Checks
-    if ($Auth -contains "DAuth" -OR $Auth -contains "All") {
-        Write-Host $bar
-        $StringTest = " Testing DAuth configuration "
-        $side = ($ConsoleWidth - $StringTest.Length - 2) / 2
-        $sideString = "*"
-        for ( $i = 1; $i -lt $side; $i++) {
-            $sideString += "*"
-        }
-        if ($ConsoleWidth % 2) {
-            $fullString = "`n`n$sideString$StringTest$sideString**"
-        }
-        else {
-            $fullString = "`n`n$sideString$StringTest$sideString*"
-        }
-        Write-Host -foregroundcolor Green $fullString 
-        
-        OrgRelCheck
-        Write-Host $bar
+    #region DAuth Checks
+    if ($Auth -like "DAuth" -OR -not $Auth -or $Auth -like "All") {
+        Write-Host " ---------------------------------------Testing DAuth Configuration----------------------------------------------- "
+        #  Print-DynamicWidthLine
+        OrgRelCheck -OrgRelParameter $OrgRel
+        Print-DynamicWidthLine
         if ($pause) {
-            $RH = Read- Host " Press Enter when ready to check the Federation Information Details."
-            Write-Host $bar
+            Write-Host " Press Enter when ready to Check the Federation Information Details."
+            $RH = [System.Console]::ReadLine()
+            Print-DynamicWidthLine
         }
         FedInfoCheck
         if ($pause) {
-            $RH = Read-Host " Press Enter when ready to check the Federation Trust configuration details. "
-            Write-Host $bar
+            Write-Host " Press Enter when ready to Check the Federation Trust configuration details. "
+            $RH = [System.Console]::ReadLine()
+            Print-DynamicWidthLine
         }
         FedTrustCheck
-        
+
         if ($pause) {
-            $RH = Read-Host " Press Enter when ready to check the On-Prem Autodiscover Virtual Directory configuration details. "
-            Write-Host $bar
+            Write-Host " Press Enter when ready to Check the On-Prem AutoDiscover Virtual Directory configuration details. "
+            $RH = [System.Console]::ReadLine()
+            Print-DynamicWidthLine
         }
         AutoDVirtualDCheck
-        Write-Host $bar
+        Print-DynamicWidthLine
         if ($pause) {
-            $RH = Read-Host " Press Enter when ready to check the On-Prem Web Services Virtual Directory configuration details. "
-            Write-Host $bar
+            Write-Host " Press Enter when ready to Check the On-Prem Web Services Virtual Directory configuration details. "
+            $RH = [System.Console]::ReadLine()
+            Print-DynamicWidthLine
         }
         EWSVirtualDirectoryCheck
         if ($pause) {
-            Write-Host $bar
-            $RH = Read-Host " Press Enter when ready to  check the Availability Address Space configuration details. "
+            Print-DynamicWidthLine
+            Write-Host " Press Enter when ready to  Check the Availability Address Space configuration details. "
+            $RH = [System.Console]::ReadLine()
         }
         AvailabilityAddressSpaceCheck
         if ($pause) {
-            Write-Host $bar
-            $RH = Read-Host " Press Enter when ready to test the Federation Trust. "
+            Print-DynamicWidthLine
+            Write-Host " Press Enter when ready to test the Federation Trust. "
+            $RH = [System.Console]::ReadLine()
         }
         #need to grab errors and provide alerts in error case
         TestFedTrust
         if ($pause) {
-            Write-Host $bar
-            $RH = Read-Host " Press Enter when ready to Test the Organization Relationship. "
+            Print-DynamicWidthLine
+            Write-Host " Press Enter when ready to Test the Organization Relationship. "
+            $RH = [System.Console]::ReadLine()
         }
         TestOrgRel
     }
     #endregion
     #region OAuth Check
-    if ($Auth -contains "OAuth" -or $Auth -contains "All") {
+    if ($Auth -like "OAuth" -or -not $Auth -or $Auth -like "All") {
         if ($pause) {
-            $RH = Read-Host " Press Enter when ready to check the OAuth configuration details. "  
+            Write-Host " Press Enter when ready to Check the OAuth configuration details. "
+            $RH = [System.Console]::ReadLine()
+            Print-DynamicWidthLine
         }
-        Write-Host $bar
-        $StringTest = " Testing OAuth configuration "
-        $side = ($ConsoleWidth - $StringTest.Length - 2) / 2
-        $sideString = "*"
-        for ( $i = 1; $i -lt $side; $i++) {
-            $sideString += "*"
-        }
-        if ($ConsoleWidth % 2) {
-            $fullString = "`n`n$sideString$StringTest$sideString**"
-        }
-        else {
-            $fullString = "`n`n$sideString$StringTest$sideString*"
-        }
-        Write-Host -foregroundcolor Green $fullString 
-        Write-Host $bar
+        Write-Host " ---------------------------------------Testing OAuth Configuration----------------------------------------------- "
+        # Print-DynamicWidthLine
         IntraOrgConCheck
-        Write-Host $bar
+        Print-DynamicWidthLine
         if ($pause) {
-            $RH = Read-Host " Press Enter when ready to check the Auth Server configuration details. "
-            Write-Host $bar
+            Write-Host " Press Enter when ready to Check the Auth Server configuration details. "
+            $RH = [System.Console]::ReadLine()
+            Print-DynamicWidthLine
         }
         AuthServerCheck
-        Write-Host $bar
+        Print-DynamicWidthLine
         if ($pause) {
-            $RH = Read-Host " Press Enter when ready to check the Partner Application configuration details. "
+            Write-Host " Press Enter when ready to Check the Partner Application configuration details. "
+            $RH = [System.Console]::ReadLine()
         }
         PartnerApplicationCheck
-        Write-Host $bar
+        Print-DynamicWidthLine
         if ($pause) {
-            $RH = Read-Host " Press Enter when ready to check the Exchange Online-ApplicationAccount configuration details. "
+            Write-Host " Press any key when ready to Check the Exchange Online-ApplicationAccount configuration details. "
+            $RH = [System.Console]::ReadLine()
         }
-        ApplicationAccounCheck
-        Write-Host $bar
+        ApplicationAccountCheck
+        Print-DynamicWidthLine
         if ($pause) {
-            $RH = Read-Host " Press Enter when ready to check the Management Role Assignments for the Exchange Online-ApplicationAccount. "
-            Write-Host $bar
+            Write-Host " Press Enter when ready to Check the Management Role Assignments for the Exchange Online-ApplicationAccount. "
+            $RH = [System.Console]::ReadLine()
+            Print-DynamicWidthLine
         }
         ManagementRoleAssignmentCheck
-        Write-Host $bar
+        Print-DynamicWidthLine
         if ($pause) {
-            $RH = Read-Host " Press Enter when ready to check Auth configuration details. "
-            Write-Host $bar
+            Write-Host " Press Enter when ready to Check Auth configuration details. "
+            $RH = [System.Console]::ReadLine()
+            Print-DynamicWidthLine
         }
         AuthConfigCheck
-        Write-Host $bar
+        Print-DynamicWidthLine
         if ($pause) {
-            $RH = Read-Host " Press Enter when ready to check the Auth Certificate configuration details. "
-            Write-Host $bar
+            Write-Host " Press Enter when ready to Check the Auth Certificate configuration details. "
+            $RH = [System.Console]::ReadLine()
+            Print-DynamicWidthLine
         }
         CurrentCertificateThumbprintCheck
-        Write-Host $bar
+        Print-DynamicWidthLine
         if ($pause) {
-            $RH = Read-Host " Press Enter when ready to  check the On Prem Autodiscover Virtual Directory configuration details. "
-            Write-Host $bar
+            Write-Host " Press any key when ready to  Check the On Prem AutoDiscover Virtual Directory configuration details. "
+            $RH = [System.Console]::ReadLine()
+            Print-DynamicWidthLine
         }
         AutoDVirtualDCheckOAuth
         $AutoDiscoveryVirtualDirectoryOAuth
-        Write-Host $bar
+        Print-DynamicWidthLine
         if ($pause) {
-            $RH = Read-Host " Press Enter when ready to check the On-Prem Web Services Virtual Directory configuration details. "
-            Write-Host $bar
+            Write-Host " Press any key when ready to Check the On-Prem Web Services Virtual Directory configuration details. "
+            $RH = [System.Console]::ReadLine()
+            Print-DynamicWidthLine
         }
         EWSVirtualDirectoryCheckOAuth
-        Write-Host $bar
+        Print-DynamicWidthLine
         if ($pause) {
-            $RH = Read-Host " Press Enter when ready to check the AvailabilityAddressSpace configuration details. "
-            Write-Host $bar
+            Write-Host " Press any key when ready to Check the AvailabilityAddressSpace configuration details. "
+            $RH = [System.Console]::ReadLine()
+            Print-DynamicWidthLine
         }
         AvailabilityAddressSpaceCheckOAuth
-        Write-Host $bar
+        Print-DynamicWidthLine
         if ($pause -eq "True") {
-            $RH = Read-Host " Press Enter when ready to test the OAuthConnectivity configuration details. "
-            Write-Host $bar
+            Write-Host " Press Enter when ready to test the OAuthConnectivity configuration details. "
+            $RH = [System.Console]::ReadLine()
+            Print-DynamicWidthLine
         }
         OAuthConnectivityCheck
-        Write-Host $bar
+        Print-DynamicWidthLine
     }
-    #$bar
+    #Print-DynamicWidthLine
     #endregion
 }
 # EXO Part
 if ($Org -contains 'ExchangeOnline' -OR -not $Org) {
     #region ConnectExo
-    #$bar
+    #Print-DynamicWidthLine
     Write-Host -ForegroundColor Green " Collecting Exchange Online Availability Information"
-    #$bar
-    #Exchange Online Management Shell
-    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-    install-module AzureAD -AllowClobber -Force -WarningAction SilentlyContinue 
-    #$CreateEXOPSSession = (Get-ChildItem -Path $env:userprofile -Filter CreateExoPSSession.ps1 -Recurse -ErrorAction SilentlyContinue -Force | Select -Last 1).DirectoryName. "$CreateEXOPSSession\CreateExoPSSession.ps1"
-    #Import-Module $((Get-ChildItem -Path $($env:LOCALAPPDATA+"\Apps\2.0\") -Filter CreateExoPSSession.ps1 -Recurse ).FullName | Select-Object -Last 1)
-    #Connect-EXOPSSession
-    #Connect-EXOPSSession
-    #RestV3 connection
-    Install-Module -Name ExchangeOnlineManagement -Force -WarningAction SilentlyContinue 
+    # Check if the ExchangeOnlineManagement module is already installed
+    if (-not (Get-Module -Name ExchangeOnlineManagement -ListAvailable)) {
+        # If not installed, then install the module
+        Write-Host -ForegroundColor Yellow "`n Exchange Online Powershell Module is required to Check Free Busy Configuration on Exchange Online side. Installing Module"
+        Install-Module -Name ExchangeOnlineManagement -Force
+        Print-DynamicWidthLine
+    } else {
+        Write-Host "`n ExchangeOnlineManagement module is available."
+        $ExoModuleVersion = Get-Module -Name ExchangeOnlineManagement -ListAvailable | Format-List name, Version
+        $ExoModuleVersion
+        Print-DynamicWidthLine
+    }
+
     Connect-ExchangeOnline -ShowBanner:$false
 
-    $Script:ExoOrgRel = Get-OrganizationRelationship | Where-Object { ($_.DomainNames -like $ExchangeOnPremDomain ) } | Select-Object Enabled, Identity, DomainNames, FreeBusy*, Target*
-    $ExoIntraOrgCon = Get-IntraOrganizationConnector | Select-Object Name, TargetAddressDomains, DiscoveryEndpoint, Enabled
-    $targetadepr1 = ("https://autodiscover." + $ExchangeOnPremDomain + "/autodiscover/autodiscover.svc/WSSecurity")
-    $targetadepr2 = ("https://" + $ExchangeOnPremDomain + "/autodiscover/autodiscover.svc/WSSecurity")
-    $exofedinfo = get-federationInformation -DomainName $exchangeOnpremDomain  -BypassAdditionalDomainValidation -ErrorAction SilentlyContinue | Select-Object *
-    
+    $Script:ExoOrgRel = Get-OrganizationRelationship | Where-Object { ($_.DomainNames -like $ExchangeOnPremDomain ) } | Select-Object Enabled, Identity, DomainNames, FreeBusy*, TarGet*
+    $ExoIntraOrgCon = Get-IntraOrganizationConnector | Select-Object Name, TarGetAddressDomains, DiscoveryEndpoint, Enabled
+    $tarGetAddressPr1 = ("https://AutoDiscover." + $ExchangeOnPremDomain + "/AutoDiscover/AutoDiscover.svc/WSSecurity")
+    $tarGetAddressPr2 = ("https://" + $ExchangeOnPremDomain + "/AutoDiscover/AutoDiscover.svc/WSSecurity")
+
+    ##Check why this is needed
+    $ExoFedInfo = Get-federationInformation -DomainName $exchangeOnpremDomain  -BypassAdditionalDomainValidation -ErrorAction SilentlyContinue | Select-Object *
+
     $Script:html += "
      </table>
 
@@ -3704,88 +3441,73 @@ if ($Org -contains 'ExchangeOnline' -OR -not $Org) {
      <table style='width:100%; margin-top:30px;'>
 
     "
-    
+
     #endregion
-    #region ExoDauthCheck
-    if ($Auth -contains "DAuth" -or $Auth -contains "All") {
-        Write-Host $bar
-        $StringTest = " Testing DAuth configuration "
-        $side = ($ConsoleWidth - $StringTest.Length - 2) / 2
-        $sideString = "*"
-        for ( $i = 1; $i -lt $side; $i++) {
-            $sideString += "*"
-        }
-        if ($ConsoleWidth % 2) {
-            $fullString = "`n`n$sideString$StringTest$sideString**"
-        }
-        else {
-            $fullString = "`n`n$sideString$StringTest$sideString*"
-        }
-        Write-Host -foregroundcolor Green $fullString 
-        Write-Host $bar
+    #region ExoDAuthCheck
+    if ($Auth -like "DAuth" -or -not $Auth -or $Auth -like "All") {
+        Print-DynamicWidthLine
+        Write-Host " ---------------------------------------Testing DAuth Configuration----------------------------------------------- "
+
+        #  Print-DynamicWidthLine
         ExoOrgRelCheck
-        Write-Host $bar
+        Print-DynamicWidthLine
         if ($pause) {
-            $RH = Read-Host " Press Enter when ready to check the Federation Organization Identifier configuration details. "
-            Write-Host $bar
+            Write-Host " Press Enter when ready to Check the Federation Organization Identifier configuration details. "
+            $RH = [System.Console]::ReadLine()
+            Print-DynamicWidthLine
         }
         EXOFedOrgIdCheck
-        Write-Host $bar
+        Print-DynamicWidthLine
         if ($pause) {
-            $RH = Read-Host " Press Enter when ready to check the Organization Relationship configuration details. "
-            Write-Host $bar
+            Write-Host " Press Enter when ready to Check the Organization Relationship configuration details. "
+            $RH = [System.Console]::ReadLine()
+            Print-DynamicWidthLine
         }
-        EXOTestOrgRelCheck
+        ExoTestOrgRelCheck
         if ($pause) {
-            Write-Host $bar
-            $RH = Read-Host " Press Enter when ready to check the Sharing Policy configuration details. "
+            Print-DynamicWidthLine
+            Write-Host " Press Enter when ready to Check the Sharing Policy configuration details. "
+            $RH = [System.Console]::ReadLine()
         }
         SharingPolicyCheck
     }
+
     #endregion
     #region ExoOauthCheck
-    if ($Auth -contains "OAuth" -or $Auth -contains "All") {
-        Write-Host $bar
-        $StringTest = " Testing OAuth configuration "
-        $side = ($ConsoleWidth - $StringTest.Length - 2 ) / 2
-        $sideString = "*"
-        for ( $i = 1; $i -lt $side; $i++) {
-            $sideString += "*"
-        }
-        if ($ConsoleWidth % 2) {
-            $fullString = "`n`n$sideString$StringTest$sideString**"
-        }
-        else {
-            $fullString = "`n`n$sideString$StringTest$sideString*"
-        }
-        Write-Host -foregroundcolor Green $fullString 
-        Write-Host $bar
+    if ($Auth -like "OAuth" -or -not $Auth -or $Auth -like "All") {
+        Write-Host " ---------------------------------------Testing OAuth Configuration----------------------------------------------- "
+
+        # Print-DynamicWidthLine
         ExoIntraOrgConCheck
-        Write-Host $bar
+        Print-DynamicWidthLine
         if ($pause) {
-            $RH = Read-Host " Press Enter when ready to check the Organizationconfiguration details. "
-            Write-Host $bar
+            Write-Host " Press Enter when ready to Check the OrganizationConfiguration details. "
+            $RH = [System.Console]::ReadLine()
+            Print-DynamicWidthLine
         }
         EXOIntraOrgConfigCheck
-        Write-Host $bar
+        Print-DynamicWidthLine
         if ($pause) {
-            $RH = Read-Host " Press Enter when ready to check the Authentication Server Authorization Details.  "
-            Write-Host $bar
+            Write-Host " Press Enter when ready to Check the Authentication Server Authorization Details.  "
+            $RH = [System.Console]::ReadLine()
+            Print-DynamicWidthLine
         }
-        EXOauthservercheck
-        Write-Host $bar
+        EXOAuthServerCheck
+        Print-DynamicWidthLine
         if ($pause) {
-            $RH = Read-Host " Press Enter when ready to test the OAuth Connectivity Details.  "
-            Write-Host $bar
+            Write-Host " Press Enter when ready to test the OAuth Connectivity Details.  "
+            $RH = [System.Console]::ReadLine()
+            Print-DynamicWidthLine
         }
-        EXOtestoauthcheck
-        Write-Host $bar
+        ExoTestOAuthCheck
+        Print-DynamicWidthLine
     }
     #endregion
-    disConnect-ExchangeOnline -Confirm:$False
-    Write-Host -foregroundcolor Green " That is all for the Exchange Online Side"
-    #Read-Host "Ctrl+C to exit. Enter to Exit."
-    $bar
+    Disconnect-ExchangeOnline  -Confirm:$False
+    Write-Host -ForegroundColor Green " That is all for the Exchange Online Side"
+
+    Print-DynamicWidthLine
 }
-stop-transcript
-#Read-Host " `n `n Ctrl+C to exit. Enter to Exit."
+
+Stop-Transcript
+ 
