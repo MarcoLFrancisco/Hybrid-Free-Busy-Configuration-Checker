@@ -1,3 +1,11 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseDeclaredVarsMoreThanAssignments', '', Justification = 'Variables are being used in functions')]
+[CmdletBinding()]
+param (
+    [Parameter(Mandatory = $false)]
+    [String] $tdEXOOrgRelDomainNamesColor
+)
 function ExoOrgRelCheck () {
     PrintDynamicWidthLine
     Write-Host -ForegroundColor Green " Get-OrganizationRelationship  | Where{($_.DomainNames -like $ExchangeOnPremDomain )} | Select Identity,DomainNames,FreeBusy*,TarGet*,Enabled"
@@ -7,7 +15,6 @@ function ExoOrgRelCheck () {
     Write-Host  -ForegroundColor Green " Summary - Organization Relationship"
     PrintDynamicWidthLine
     Write-Host  " Domain Names:"
-
     if ($exoOrgRel.DomainNames -like $ExchangeOnPremDomain) {
         Write-Host -ForegroundColor Green "  Domain Names Include the $ExchangeOnPremDomain Domain"
         $tdEXOOrgRelDomainNames = $exoOrgRel.DomainNames
@@ -41,7 +48,6 @@ function ExoOrgRelCheck () {
         $tdEXOOrgRelFreeBusyAccessLevel = "$($exoOrgRel.FreeBusyAccessLevel)"
         $tdEXOOrgRelFreeBusyAccessLevelColor = "green"
     }
-
     if ($exoOrgRel.FreeBusyAccessLevel -NE "AvailabilityOnly" -AND $exoOrgRel.FreeBusyAccessLevel -NE "LimitedDetails") {
         Write-Host -ForegroundColor Red "  FreeBusyAccessEnabled : False"
         $tdEXOOrgRelFreeBusyAccessLevel = "$($exoOrgRel.FreeBusyAccessLevel)"
@@ -52,7 +58,6 @@ function ExoOrgRelCheck () {
     $a = "FYDIBOHF25SPDLT." + $ExchangeOnPremDomain
     $HybridAgentTargetSharingEpr = "http://outlook.office.com/"
     $HATargetAutodiscoverEpr = "https://autodiscover-s.outlook.com/autodiscover/autodiscover.svc/"
-    
     if ($exoOrgRel.TarGetSharingEpr -like "*resource.mailboxMigration.his.MSAppProxy.net/EWS/Exchange.asmx") {
         if ($exoOrgRel.TarGetApplicationUri -like $HybridAgentTargetSharingEpr) {
             Write-Host -ForegroundColor Green "  TarGetApplicationUri is $($exoOrgRel.TarGetSharingEpr) . This is correct when Hybrid Agent is in use"
@@ -74,10 +79,8 @@ function ExoOrgRelCheck () {
             $tdEXOOrgRelTarGetApplicationUriColor = "red"
         }
     }
-
     #TarGetSharingEpr
     Write-Host  " TarGetSharingEpr:"
-
     if ($exoOrgRel.TarGetSharingEpr -like "*resource.mailboxMigration.his.MsAppProxy.net/EWS/Exchange.asmx") {
         Write-Host -ForegroundColor Green "  TarGetSharingEpr is points to resource.mailboxMigration.his.MsAppProxy.net/EWS/Exchange.asmx. This means Hybrid Agent is in use."
         $tdEXOOrgRelTarGetSharingEpr = "TarGetSharingEpr is points to resource.mailboxMigration.his.MsAppProxy.net/EWS/Exchange.asmx. This means Hybrid Agent is in use."
@@ -93,9 +96,7 @@ function ExoOrgRelCheck () {
             $tdEXOOrgRelTarGetSharingEprColor = "red"
         }
     }
-    
     Write-Host  " TarGetAutoDiscoverEpr:"
-
     if ($exoOrgRel.TarGetSharingEpr -like "*resource.mailboxMigration.his.MSAppProxy.net/EWS/Exchange.asmx") {
 
         if ($exoOrgRel.TarGetAutoDiscoverEpr -like $HATargetAutodiscoverEpr) {
@@ -114,17 +115,14 @@ function ExoOrgRelCheck () {
 
         if ($exoOrgRel.TarGetAutoDiscoverEpr -like $FedInfoEOP.TarGetAutoDiscoverEpr) {
             Write-Host -ForegroundColor Green "  TarGetAutoDiscoverEpr is" $exoOrgRel.TarGetAutoDiscoverEpr
-
             $tdEXOOrgRelTarGetAutoDiscoverEpr = $exoOrgRel.TarGetAutoDiscoverEpr
             $tdEXOOrgRelTarGetAutoDiscoverEprColor = "green"
         } else {
             Write-Host -ForegroundColor Red "  TarGetAutoDiscoverEpr is not" $FedInfoEOP.TarGetAutoDiscoverEpr
-            
             $tdEXOOrgRelTarGetAutoDiscoverEpr = "  TarGetAutoDiscoverEpr is not $($FedInfoEOP.TarGetAutoDiscoverEpr)"
             $tdEXOOrgRelTarGetAutoDiscoverEprColor = "red"
         }
     }
-
     #Enabled
     Write-Host  " Enabled:"
     if ($exoOrgRel.enabled -like "True" ) {
@@ -138,12 +136,10 @@ function ExoOrgRelCheck () {
     }
     ExoOrgRelCheckhtml
 }
-
 function EXOFedOrgIdCheck {
     Write-Host -ForegroundColor Green " Get-FederatedOrganizationIdentifier | select AccountNameSpace,Domains,Enabled"
     PrintDynamicWidthLine
     $exoFedOrgId = Get-FederatedOrganizationIdentifier | Select-Object AccountNameSpace, Domains, Enabled
-    #$IntraOrgConCheck
     $eFedOrgID = $exoFedOrgId | Format-List
     $eFedOrgID
     PrintDynamicWidthLine
@@ -172,18 +168,13 @@ function EXOFedOrgIdCheck {
         $tdEXOFedOrgIdEnabledColor = "green"
     }
     EXOFedOrgIdCheckHtml
-    
 }
-
-
 function SharingPolicyCheck {
     PrintDynamicWidthLine
     Write-Host -ForegroundColor Green " Get-SharingPolicy | select Domains,Enabled,Name,Identity"
     PrintDynamicWidthLine
     $Script:SPOnline = Get-SharingPolicy | Select-Object  Domains, Enabled, Name, Identity
     $SPOnline | Format-List
-
-    #creating variables and setting uniform variable names
     $domain1 = (($SPOnline.domains[0] -split ":") -split " ")
     $domain2 = (($SPOnline.domains[1] -split ":") -split " ")
     $SPOnpremDomain1 = $SPOnprem.Domains.Domain[0]
@@ -194,7 +185,6 @@ function SharingPolicyCheck {
     $SPOnlineAction1 = $domain1[1]
     $SPOnlineDomain2 = $domain2[0]
     $SPOnlineAction2 = $domain2[1]
-
     PrintDynamicWidthLine
     Write-Host -ForegroundColor Green " Summary - Sharing Policy"
     PrintDynamicWidthLine
@@ -250,31 +240,21 @@ function SharingPolicyCheck {
         $tdSharpingPolicyCheck = "`n  Exchange Online Sharing Policy Domains not match Exchange On Premise Sharing Policy Domains"
         $tdSharpingPolicyCheckColor = "red"
     }
-
     PrintDynamicWidthLine
     SharingPolicyCheckHtml
-
 }
-
 function ExoTestOrgRelCheck {
     $exoIdentity = $ExoOrgRel.Identity
-
     $exoOrgRelTarGetApplicationUri = $exoOrgRel.TarGetApplicationUri
     $exoOrgRelTarGetOWAUrl = $ExoOrgRel.TarGetOwAUrl
-
     Write-Host -ForegroundColor Green " Test-OrganizationRelationship -Identity $exoIdentity -UserIdentity $UserOnline"
     PrintDynamicWidthLine
-
     if ((![string]::IsNullOrWhitespace($exoOrgRelTarGetApplicationUri)) -and (![string]::IsNullOrWhitespace($exoOrgRelTarGetOWAUrl))) {
         $ExoTestOrgRel = Test-OrganizationRelationship -Identity $exoIdentity -UserIdentity $UserOnline -WarningAction SilentlyContinue
-
         $i = 2
-
         while ($i -lt $ExoTestOrgRel.Length) {
             $element = $ExoTestOrgRel[$i]
-
             $aux = "0"
-
             if ($element -like "*RESULT:*" -and $aux -like "0") {
                 $el = $element.TrimStart()
                 if ($element -like "*Success.*") {
@@ -297,11 +277,9 @@ function ExoTestOrgRelCheck {
                         if ($Status -like "*Success*") {
                             Write-Host -ForegroundColor White "  Status     : $Status"
                         }
-
                         if ($status -like "*error*") {
                             Write-Host -ForegroundColor White "  Status     : $Status"
                         }
-
                         Write-Host -ForegroundColor White "  Description: $Description"
                         Write-Host -ForegroundColor yellow "  Note: Test-Organization Relationship fails on Step 3 with error MismatchedFederation if Hybrid Agent is in use"
                     }
@@ -309,21 +287,17 @@ function ExoTestOrgRelCheck {
                     $aux = "1"
                 }
             }
-
             $i++
         }
     }
 
     elseif ((([string]::IsNullOrWhitespace($exoOrgRelTarGetApplicationUri)) -and ([string]::IsNullOrWhitespace($exoOrgRelTarGetOWAUrl)))) {
-        <# Action when all if and elseif conditions are false #>
         Write-Host -ForegroundColor Red "  Error: Exchange Online Test-OrganizationRelationship cannot be run if the Organization Relationship TarGetApplicationUri and TarGetOwAUrl are not set"
     } elseif ((([string]::IsNullOrWhitespace($exoOrgRelTarGetApplicationUri)) )) {
-        <# Action when all if and elseif conditions are false #>
         Write-Host -ForegroundColor Red "  Error: Exchange Online Test-OrganizationRelationship cannot be run if the Organization Relationship TarGetApplicationUri is not set"
     } elseif ((([string]::IsNullOrWhitespace($exoOrgRelTarGetApplicationUri)) )) {
-        <# Action when all if and elseif conditions are false #>
         Write-Host -ForegroundColor Red "  Error: Exchange Online Test-OrganizationRelationship cannot be run if the Organization Relationship TarGetOwAUrl is not set"
     }
-
     ExoTestOrgRelCheckhtml
 }
+
