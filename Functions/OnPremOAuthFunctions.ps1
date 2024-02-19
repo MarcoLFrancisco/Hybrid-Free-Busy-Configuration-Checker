@@ -1,3 +1,12 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseDeclaredVarsMoreThanAssignments', '', Justification = 'Variables are being used in functions')]
+[CmdletBinding()]
+param (
+    [Parameter(Mandatory = $false)]
+    [String] $tdIntraOrgTarGetAddressDomain
+)
+
 function IntraOrgConCheck {
     PrintDynamicWidthLine
     Write-Host -ForegroundColor Green " Get-IntraOrganizationConnector | Select Name,TarGetAddressDomains,DiscoveryEndpoint,Enabled"
@@ -22,7 +31,6 @@ function IntraOrgConCheck {
         Write-Host -ForegroundColor White " Should contain the $ExchangeOnlineDomain domain or the $ExchangeOnlineAltDomain domain."
         $tdIntraOrgTarGetAddressDomainColor = "red"
     }
-
     Write-Host -ForegroundColor White " DiscoveryEndpoint: "
     if ($IntraOrgCon.DiscoveryEndpoint -like "https://AutoDiscover-s.outlook.com/AutoDiscover/AutoDiscover.svc") {
         Write-Host -ForegroundColor Green "  https://AutoDiscover-s.outlook.com/AutoDiscover/AutoDiscover.svc"
@@ -43,12 +51,9 @@ function IntraOrgConCheck {
         Write-Host "  If it is set to False, the Organization Relationship (DAuth) , if enabled, is used for the Hybrid Availability Sharing"
         $tdEnabledColor = "red"
     }
-
     Write-Host -ForegroundColor Yellow "https://techcommunity.microsoft.com/t5/exchange-team-blog/demystifying-hybrid-free-busy-what-are-the-moving-parts/ba-p/607704"
     IntraOrgConCheckHtml
-    
 }
-
 function AuthServerCheck {
     #PrintDynamicWidthLine
     Write-Host -ForegroundColor Green " Get-AuthServer | Select Name,IssuerIdentifier,TokenIssuingEndpoint,AuthMetadatAUrl,Enabled"
@@ -99,15 +104,12 @@ function AuthServerCheck {
         $tDAuthServerEnabledColor = "red"
     }
     AuthServerCheckHtml
-    
 }
-
 function PartnerApplicationCheck {
     #PrintDynamicWidthLine
     Write-Host -ForegroundColor Green " Get-PartnerApplication |  ?{`$_.ApplicationIdentifier -eq '00000002-0000-0ff1-ce00-000000000000'
     -and `$_.Realm -eq ''} | Select Enabled, ApplicationIdentifier, CertificateStrings, AuthMetadatAUrl, Realm, UseAuthServer,
     AcceptSecurityIdentifierInformation, LinkedAccount, IssuerIdentifier, AppOnlyPermissions, ActAsPermissions, Name"
-
     PrintDynamicWidthLine
     $PartnerApplication = Get-PartnerApplication | Where-Object { $_.ApplicationIdentifier -eq '00000002-0000-0ff1-ce00-000000000000' -and $_.Realm -eq '' } | Select-Object Enabled, ApplicationIdentifier, CertificateStrings, AuthMetadatAUrl, Realm, UseAuthServer, AcceptSecurityIdentifierInformation, LinkedAccount, IssuerIdentifier, AppOnlyPermissions, ActAsPermissions, Name
     $PartnerApplication
@@ -123,7 +125,6 @@ function PartnerApplicationCheck {
     $tdPartnerApplicationAppOnlyPermissions = $PartnerApplication.AppOnlyPermissions
     $tdPartnerApplicationActAsPermissions = $PartnerApplication.ActAsPermissions
     $tdPartnerApplicationName = $PartnerApplication.Name
-
     PrintDynamicWidthLine
     Write-Host -ForegroundColor Green " Summary - Partner Application"
     PrintDynamicWidthLine
@@ -180,9 +181,7 @@ function PartnerApplicationCheck {
         $tdPartnerApplicationLinkedAccount
     }
     PartnerApplicationCheckHtml
-  
 }
-
 function ApplicationAccountCheck {
     #PrintDynamicWidthLine
     Write-Host -ForegroundColor Green " Get-user '$exchangeOnPremLocalDomain/Users/Exchange Online-ApplicationAccount' | Select Name, RecipientType, RecipientTypeDetails, UserAccountControl"
@@ -223,16 +222,13 @@ function ApplicationAccountCheck {
         $tdApplicationAccountUserAccountControlColor = "red"
     }
     ApplicationAccountCheckHtml
-    
 }
-
 function ManagementRoleAssignmentCheck {
     Write-Host -ForegroundColor Green " Get-ManagementRoleAssignment -RoleAssignee Exchange Online-ApplicationAccount | Select Name,Role -AutoSize"
     PrintDynamicWidthLine
     $ManagementRoleAssignment = Get-ManagementRoleAssignment -RoleAssignee "Exchange Online-ApplicationAccount" | Select-Object Name, Role
     $M = $ManagementRoleAssignment | Out-String
     $M
-
     PrintDynamicWidthLine
     Write-Host -ForegroundColor Green " Summary - Management Role Assignment for the Exchange Online-ApplicationAccount"
     PrintDynamicWidthLine
@@ -300,22 +296,17 @@ function ManagementRoleAssignmentCheck {
         $tdManagementRoleMeetingGraphApplication = " MeetingGraphApplication Role Not Assigned"
         $tdManagementRoleMeetingGraphApplicationColor = "red"
     }
-
     $tdManagementRoleMeetingGraphApplication = " MailboxSearchApplication Role Assigned"
     $tdManagementRoleMeetingGraphApplicationColor = "green"
     ManagementRoleAssignmentCheckHtml
-    
 }
-
 function AuthConfigCheck {
     Write-Host -ForegroundColor Green " Get-AuthConfig | Select *Thumbprint, ServiceName, Realm, Name"
     PrintDynamicWidthLine
     $AuthConfig = Get-AuthConfig | Select-Object *Thumbprint, ServiceName, Realm, Name
     $AC = $AuthConfig | Format-List
     $AC
-
     $tDAuthConfigName = $AuthConfig.Name
-
     PrintDynamicWidthLine
     Write-Host -ForegroundColor Green " Summary - Auth Config"
     PrintDynamicWidthLine
@@ -353,9 +344,7 @@ function AuthConfigCheck {
         $tDAuthConfigRealm = "$tDAuthConfig.Realm - Realm should be Blank"
     }
     AuthConfigCheckHtml
-    
 }
-
 function CurrentCertificateThumbprintCheck {
     $thumb = Get-AuthConfig | Select-Object CurrentCertificateThumbprint
     $thumbprint = $thumb.CurrentCertificateThumbprint
@@ -429,14 +418,10 @@ function CurrentCertificateThumbprintCheck {
         }
     }
     CurrentCertificateThumbprintCheckHtml
-   
 }
-
-
 function OAuthConnectivityCheck {
     Write-Host -ForegroundColor Green " Test-OAuthConnectivity -Service EWS -TarGetUri https://outlook.office365.com/EWS/Exchange.asmx -Mailbox $UserOnPrem"
     PrintDynamicWidthLine
-    
     $OAuthConnectivity = Test-OAuthConnectivity -Service EWS -TarGetUri https://outlook.office365.com/EWS/Exchange.asmx -Mailbox $UserOnPrem
     if ($OAuthConnectivity.ResultType -eq 'Success' ) {
         #$OAuthConnectivity.ResultType
@@ -450,7 +435,6 @@ function OAuthConnectivityCheck {
             Write-Host "Please run Test-OAuthConnectivity with a different Exchange On Premises Mailbox"
         }
     }
-
     Write-Host -ForegroundColor Green " Summary - Test OAuth Connectivity"
     PrintDynamicWidthLine
     if ($OAuthConnectivity.ResultType -like "Success") {
@@ -463,25 +447,18 @@ function OAuthConnectivityCheck {
         $OAuthConnectivityResultType = " <div>OAuth Test was completed with Error.</div><div>Please rerun Test-OAuthConnectivity -Service EWS -TarGetUri https://outlook.office365.com/EWS/Exchange.asmx -Mailbox <On Premises Mailbox> | fl to confirm the test failure</div>"
         $OAuthConnectivityResultTypeColor = "red"
     }
-   
     Write-Host -ForegroundColor Green " Reference: "
     Write-Host -ForegroundColor White " Configure OAuth authentication between Exchange and Exchange Online organizations"
     Write-Host -ForegroundColor Yellow " https://technet.microsoft.com/en-us/library/dn594521(v=exchg.150).aspx"
     OAuthConnectivityCheckHtml
-   
 }
-
 function AutoDVirtualDCheckOauth {
-    
     Write-Host -ForegroundColor Green " Get-AutoDiscoverVirtualDirectory -Server $($server) | Select Identity, Name,ExchangeVersion,*authentication*"
     PrintDynamicWidthLine
     $AutoDiscoveryVirtualDirectoryOAuth = Get-AutoDiscoverVirtualDirectory -Server $server | Select-Object Identity, Name, ExchangeVersion, *authentication* -ErrorAction SilentlyContinue
-    
     $AD = $AutoDiscoveryVirtualDirectoryOAuth | Format-List
     $AD
     AutoDVirtualDCheckOauthHtmlHead
-   
-  
     if ($Auth -contains "OAuth") {
     }
     PrintDynamicWidthLine
@@ -492,7 +469,6 @@ function AutoDVirtualDCheckOauth {
         foreach ( $EWS in $AutoDiscoveryVirtualDirectoryOAuth) {
             Write-Host " $($EWS.Identity) "
             Write-Host -ForegroundColor Green "  InternalAuthenticationMethods Include OAuth Authentication Method "
-  
             $AutoD_VD_Identity = $EWS.Identity
             $AutoD_VD_Name = $EWS.Name
             $AutoD_VD_InternalAuthenticationMethods = $EWS.InternalAuthenticationMethods
@@ -515,7 +491,6 @@ function AutoDVirtualDCheckOauth {
             $AutoD_VD_InternalUrl = $EWS.InternalUrl
             $AutoD_VD_ExternalUrl = $EWS.ExternalUrl
             AutoDVirtualDCheckOauthHtmlOk
-            
         }
     } else {
         Write-Host -ForegroundColor Red "  InternalAuthenticationMethods seems not to include OAuth Authentication Method."
@@ -535,7 +510,6 @@ function AutoDVirtualDCheckOauth {
         $AutoD_VD_InternalNblBypassUrl = $EWS.InternalNblBypassUrl
         $AutoD_VD_InternalUrl = $EWS.InternalUrl
         $AutoD_VD_ExternalUrl = $EWS.ExternalUrl
-        
     }
     Write-Host -ForegroundColor White "`n  ExternalAuthenticationMethods"
     if ($AutoDiscoveryVirtualDirectoryOAuth.ExternalAuthenticationMethods -like "*OAuth*") {
@@ -548,7 +522,6 @@ function AutoDVirtualDCheckOauth {
     }
     Write-Host -ForegroundColor White "`n  WSSecurityAuthentication:"
     if ($AutoDiscoveryVirtualDirectoryOAuth.WSSecurityAuthentication -like "True") {
-       
         foreach ( $AdVd in $AutoDiscoveryVirtualDirectoryOAuth) {
             Write-Host " $($AdVd.Identity) "
             Write-Host -ForegroundColor Green "  WSSecurityAuthentication: $($AdVd.WSSecurityAuthentication)"
@@ -575,11 +548,7 @@ function AutoDVirtualDCheckOauth {
         }
         Write-Host -ForegroundColor White "  Should be True "
     }
-   
-  
-   
 }
-
 function EWSVirtualDirectoryCheckOAuth {
     Write-Host -ForegroundColor Green " Get-WebServicesVirtualDirectory  -Server $($server)| Select Identity,Name,ExchangeVersion,*Authentication*,*url"
     PrintDynamicWidthLine
@@ -587,7 +556,6 @@ function EWSVirtualDirectoryCheckOAuth {
     $W = $WebServicesVirtualDirectoryOAuth | Format-List
     $W
     EWSVirtualDirectoryCheckOAuthHtmlHead
-   
     if ($Auth -contains "OAuth") {
     }
     PrintDynamicWidthLine
@@ -598,7 +566,6 @@ function EWSVirtualDirectoryCheckOAuth {
         foreach ( $EWS in $WebServicesVirtualDirectoryOAuth) {
             Write-Host " $($EWS.Identity) "
             Write-Host -ForegroundColor Green "  InternalAuthenticationMethods Include OAuth Authentication Method "
-
             $EwsVDIdentity = $EWS.Identity
             $EwsVDName = $EWS.Name
             $EwsVDInternalAuthenticationMethods = $EWS.InternalAuthenticationMethods
@@ -646,7 +613,6 @@ function EWSVirtualDirectoryCheckOAuth {
         $EwsVDInternalUrl = $EWS.InternalUrl
         $EwsVDExternalUrl = $EWS.ExternalUrl
         EWSVirtualDirectoryCheckOAuthHtmlNotOk
-        
     }
     Write-Host -ForegroundColor White "`n  ExternalAuthenticationMethods"
     if ($WebServicesVirtualDirectoryOAuth.ExternalAuthenticationMethods -like "*OAuth*") {
