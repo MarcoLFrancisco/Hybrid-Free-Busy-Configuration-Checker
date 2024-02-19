@@ -1,4 +1,11 @@
-
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseDeclaredVarsMoreThanAssignments', '', Justification = 'Variables are being used in functions')]
+[CmdletBinding()]
+param (
+    [Parameter(Mandatory = $false)]
+    [String] $tdEXOIntraOrgConTarGetAddressDomains
+)
 function EXOIntraOrgConCheck {
     PrintDynamicWidthLine
     Write-Host -ForegroundColor Green " Get-IntraOrganizationConnector | Select TarGetAddressDomains,DiscoveryEndpoint,Enabled"
@@ -50,10 +57,7 @@ function EXOIntraOrgConCheck {
         $tdEXOIntraOrgConEnabledColor = "red"
     }
     EXOIntraOrgConCheckHtml
-   
 }
-
-
 function EXOIntraOrgConfigCheck {
     Write-Host -ForegroundColor Green " Get-IntraOrganizationConfiguration | Select OnPremiseTarGetAddresses"
     PrintDynamicWidthLine
@@ -78,10 +82,7 @@ function EXOIntraOrgConfigCheck {
         $tdEXOIntraOrgConfigOnPremiseTarGetAddressesColor = "red"
     }
     EXOIntraOrgConfigCheckHtml
-   
 }
-
-
 function EXOAuthServerCheck {
     Write-Host -ForegroundColor Green " Get-AuthServer -Identity 00000001-0000-0000-c000-000000000000 | select name,IssuerIdentifier,enabled"
     PrintDynamicWidthLine
@@ -126,17 +127,12 @@ function EXOAuthServerCheck {
         }
     }
     EXOAuthServerCheckhtml
-   
 }
-
-
 function ExoTestOAuthCheck {
     Write-Host -ForegroundColor Green " Test-OAuthConnectivity -Service EWS -TarGetUri $Script:ExchangeOnPremEWS -Mailbox $UserOnline "
     PrintDynamicWidthLine
     $ExoTestOAuth = Test-OAuthConnectivity -Service EWS -TarGetUri $Script:ExchangeOnPremEWS -Mailbox $UserOnline
     if ($ExoTestOAuth.ResultType.Value -like 'Success' ) {
-        #$ExoTestOAuth.ResultType.Value
-
         $tdOAuthConnectivityResultType = "$($ExoTestOAuth.ResultType.Value) - OAuth Test was completed successfully"
         $tdOAuthConnectivityResultTypeColor = "green"
     } else {
@@ -169,10 +165,8 @@ function ExoTestOAuthCheck {
         $tdOAuthConnectivityResultType = "$($ExoTestOAuth.ResultType) - OAuth Test was completed with Error. Please rerun Test-OAuthConnectivity -Service EWS -TarGetUri <EWS tarGet URI> -Mailbox <On Premises Mailbox> | fl to confirm the test failure"
         $tdOAuthConnectivityResultTypeColor = "red"
     }
-
     Write-Host -ForegroundColor Green "`n References: "
     Write-Host -ForegroundColor White " Configure OAuth authentication between Exchange and Exchange Online organizations"
     Write-Host -ForegroundColor Yellow " https://technet.microsoft.com/en-us/library/dn594521(v=exchg.150).aspx"
     ExoTestOAuthCheckHtml
-    
 }
